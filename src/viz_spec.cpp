@@ -18,8 +18,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "iostream"
 #include "Shader.cpp"
 #include "Program.cpp"
+#include "FFT.cpp"
+#include "Input.cpp"
 
 const int AA_Samples = 4;
 const int WIN_Height = 1024;
@@ -35,24 +38,24 @@ float top_color[] = {0.827/2.0, 0.149/2.0, 0.008/2.0, 1.0};
 float bot_color[] = {0.275/2.0, 0.282/2.0, 0.294/2.0, 1.0};
 float line_color[] = {0.275, 0.282, 0.294, 1.0};
 
-std::vector<int16_t> v_data(n_samples);
+//std::vector<int16_t> v_data(n_samples);
 
 void init_x_data(const size_t);
-void update_y_buffer();
+void update_y_buffer(FFT&);
 void update_x_buffer();
-void init_buffers(Program&);
+void init_buffers(Program&, FFT&);
 void read_fifo(const int);
 
-void init_fft();
+/*void init_fft();
 void compute_fft();
 void destroy_fft();
-void calculate_window(const size_t);
+void calculate_window(const size_t);*/
 
 size_t fft_output_size = fft_size/2+1;
-double *fft_input;
+/*double *fft_input;
 std::vector<double> window;
 fftw_complex *fft_output;
-fftw_plan fft_plan;
+fftw_plan fft_plan;*/
 const float d_freq = (float) FS / (float) fft_output_size;
 const float fft_scale = 1.0f/((float)(n_samples/2+1)*32768.0f);
 const float slope = 0.5f;
@@ -130,33 +133,37 @@ int main(){
 		fprintf(stderr, "GLEW init failed!\n");
 		return -1;	
 	}
-
 	
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		
 	Program sh_spec;
 	Program sh_db;
 	init_shaders(sh_spec, sh_db);
 	
+	FFT fft(fft_size);
+	std::vector<int16_t> v_data(n_samples);
+	
 	init_x_data(output_size);
-	init_fft();
-	init_buffers(sh_spec);
+	//init_fft();
+	init_buffers(sh_spec, fft);
 	init_lines(sh_db);
 	
 	set_transformation(sh_spec);
 	set_transformation(sh_db);
-	int m_fifo = open("/tmp/mpd.fifo", O_RDONLY | O_NONBLOCK);
-	if (m_fifo >= 0){
+	
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	Input fifo("/tmp/mpd.fifo");
+	
+	if (fifo.is_open()){
 		// init read thread
 		std::thread th_read;	
 			
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
-			update_y_buffer();
+			update_y_buffer(fft);
 
 			//clear and draw		
-			glClear( GL_COLOR_BUFFER_BIT);
+			glClear(GL_COLOR_BUFFER_BIT);
 			
 			// render Lines
 			sh_db.use();
@@ -171,19 +178,16 @@ int main(){
 			// Swap buffers
 			glfwSwapBuffers(window);
 			glfwPollEvents();
-					
-			th_read = std::thread(read_fifo, m_fifo);
-		
+			
+			// start read thread	
+			th_read = std::thread([&]{ fifo.read_fifo(v_data, fft); });
+			
 			usleep(1000000 / fps);
 
 			th_read.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
-		destroy_fft();	
 	}	
-
-	close(m_fifo);
-
 	// clear buffers
 	glDeleteBuffers(1, &y_buffer);
 	glDeleteBuffers(1, &x_buffer);
@@ -198,9 +202,9 @@ int main(){
 }
 
 // update y_data buffer
-void update_y_buffer(){
+void update_y_buffer(FFT& fft){
 	glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
-	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft_output, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
 void update_x_buffer(){
@@ -208,7 +212,7 @@ void update_x_buffer(){
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_DYNAMIC_DRAW);
 }
 
-void init_buffers(Program& sh_spec){
+void init_buffers(Program& sh_spec, FFT& fft){
 	// generate spectrum vao
 	glGenVertexArrays(1, &vao_spec);
 
@@ -218,7 +222,7 @@ void init_buffers(Program& sh_spec){
 	// bind the y_buffer for modification
 	glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
 	// fill the y_buffer
-	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft_output, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_DOUBLE, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
 	
@@ -290,20 +294,7 @@ void init_x_data(const size_t size){
 	}
 }
 
-void read_fifo(const int handle){
-	//fill vector with new data and calculate fft
-	int16_t buf[n_samples];
-	int64_t data = read(handle, buf, sizeof(buf));
-	if(data > 0){
-		int64_t samples_read = data/sizeof(int16_t);
-		v_data.erase(v_data.begin(), v_data.begin() + samples_read);
-		v_data.insert(v_data.end(), buf, buf + samples_read);
-		
-		compute_fft();		
-	}
-}
-
-void init_fft(){
+/*void init_fft(){
 	// allocate memory for fft input/output
 	fft_input = (double*) (fftw_malloc(sizeof(double) * fft_size));
 	fft_output = (fftw_complex*) (fftw_malloc(sizeof(fftw_complex) * fft_output_size));
@@ -340,4 +331,4 @@ void calculate_window(const size_t size){
 	for(unsigned int i = 0; i < size; i++){
 		window[i] = 1.0 - cos(2.0*M_PI*(double)i * N_1);
 	}
-}
+}*/
