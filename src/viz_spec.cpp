@@ -38,8 +38,6 @@ float top_color[] = {0.827/2.0, 0.149/2.0, 0.008/2.0, 1.0};
 float bot_color[] = {0.275/2.0, 0.282/2.0, 0.294/2.0, 1.0};
 float line_color[] = {0.275, 0.282, 0.294, 1.0};
 
-//std::vector<int16_t> v_data(n_samples);
-
 void init_x_data(const size_t);
 void update_y_buffer(FFT&);
 void update_x_buffer();
@@ -139,10 +137,10 @@ int main(){
 	init_shaders(sh_spec, sh_db);
 	
 	FFT fft(fft_size);
+
 	std::vector<int16_t> v_data(n_samples);
-	
+
 	init_x_data(output_size);
-	//init_fft();
 	init_buffers(sh_spec, fft);
 	init_lines(sh_db);
 	
@@ -161,7 +159,7 @@ int main(){
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
 			update_y_buffer(fft);
-
+			
 			//clear and draw		
 			glClear(GL_COLOR_BUFFER_BIT);
 			
@@ -181,7 +179,9 @@ int main(){
 			
 			// start read thread	
 			th_read = std::thread([&]{ fifo.read_fifo(v_data, fft); });
-			
+			//fifo.read_fifo(v_data, fft);		
+			//fft.calculate(v_data);	
+
 			usleep(1000000 / fps);
 
 			th_read.join();
@@ -225,6 +225,7 @@ void init_buffers(Program& sh_spec, FFT& fft){
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_DOUBLE, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
+	
 	
 	/* X position buffer */
 	glGenBuffers(1, &x_buffer);
