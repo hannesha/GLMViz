@@ -1,28 +1,4 @@
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sstream>
-#include <thread>
-#include <math.h>
-
-// Include FFTW3
-#include <fftw3.h>
-
-// Include basic GL utility headers
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include "iostream"
-#include "Shader.cpp"
-#include "Program.cpp"
-#include "FFT.cpp"
-#include "Input.cpp"
+#include "viz.h"
 
 const int AA_Samples = 4;
 const int WIN_Height = 1024;
@@ -32,28 +8,19 @@ const uint16_t fps = 60;
 const uint16_t duration = 100; //(ms)
 const uint16_t FS = 44100;
 const size_t n_samples = FS * duration / 1000;
+const size_t buf_size = FS / fps;
 const size_t fft_size = 2<<13; //2^14
 
 float top_color[] = {0.827/2.0, 0.149/2.0, 0.008/2.0, 1.0};
 float bot_color[] = {0.275/2.0, 0.282/2.0, 0.294/2.0, 1.0};
 float line_color[] = {0.275, 0.282, 0.294, 1.0};
 
-void init_x_data(const size_t);
+void init_x_data(std::vector<float>&, const size_t);
 void update_y_buffer(FFT&);
-void update_x_buffer();
-void init_buffers(Program&, FFT&);
-void read_fifo(const int);
-
-/*void init_fft();
-void compute_fft();
-void destroy_fft();
-void calculate_window(const size_t);*/
+void update_x_buffer(std::vector<float>&);
+void init_buffers(Program&, std::vector<float>&, FFT&);
 
 size_t fft_output_size = fft_size/2+1;
-/*double *fft_input;
-std::vector<double> window;
-fftw_complex *fft_output;
-fftw_plan fft_plan;*/
 const float d_freq = (float) FS / (float) fft_output_size;
 const float fft_scale = 1.0f/((float)(n_samples/2+1)*32768.0f);
 const float slope = 0.5f;
@@ -75,7 +42,6 @@ GLuint vao_spec;
 const size_t output_size = 100; 
 GLuint y_buffer;
 GLuint x_buffer;
-std::vector<float> x_data(output_size);
 
 // buffers and shaders for dB lines
 GLuint vao_db;
@@ -138,10 +104,10 @@ int main(){
 	
 	FFT fft(fft_size);
 
-	std::vector<int16_t> v_data(n_samples);
+	std::vector<float> x_data(output_size);
 
-	init_x_data(output_size);
-	init_buffers(sh_spec, fft);
+	init_x_data(x_data, output_size);
+	init_buffers(sh_spec, x_data,fft);
 	init_lines(sh_db);
 	
 	set_transformation(sh_spec);
@@ -150,6 +116,8 @@ int main(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	Input fifo("/tmp/mpd.fifo");
+//	Pulse p(Pulse::get_default_sink(), buf_size);
+	std::vector<int16_t> v_data(n_samples);
 	
 	if (fifo.is_open()){
 		// init read thread
@@ -179,9 +147,9 @@ int main(){
 			
 			// start read thread	
 			th_read = std::thread([&]{ fifo.read_fifo(v_data, fft); });
-			//fifo.read_fifo(v_data, fft);		
-			//fft.calculate(v_data);	
-
+			//p.read(v_data);
+			//fft.calculate(v_data);		
+	
 			usleep(1000000 / fps);
 
 			th_read.join();
@@ -207,12 +175,12 @@ void update_y_buffer(FFT& fft){
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
-void update_x_buffer(){
+void update_x_buffer(std::vector<float>& data){
 	glBindBuffer(GL_ARRAY_BUFFER, x_buffer);
-	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_DYNAMIC_DRAW);
 }
 
-void init_buffers(Program& sh_spec, FFT& fft){
+void init_buffers(Program& sh_spec, std::vector<float>& x_data,FFT& fft){
 	// generate spectrum vao
 	glGenVertexArrays(1, &vao_spec);
 
@@ -258,7 +226,7 @@ void init_buffers(Program& sh_spec, FFT& fft){
 	glUniform4fv(i_bot_color, 1, bot_color);	
 }
 
-void init_lines(Program& sh_db){
+void init_lines(Program& sh_lines){
 	glGenVertexArrays(1, &vao_db);
 	
 	glBindVertexArray(vao_db);
@@ -269,15 +237,15 @@ void init_lines(Program& sh_db){
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glEnableVertexAttribArray(0);
 
-	sh_db.use();
+	sh_lines.use();
 	
-	GLint i_slope = sh_db.get_uniform("slope");
+	GLint i_slope = sh_lines.get_uniform("slope");
 	glUniform1f(i_slope, slope);
 	
-	GLint i_offset = sh_db.get_uniform("offset");
+	GLint i_offset = sh_lines.get_uniform("offset");
 	glUniform1f(i_offset, offset);
 
-	GLint i_line_color = sh_db.get_uniform("line_color");
+	GLint i_line_color = sh_lines.get_uniform("line_color");
 	glUniform4fv(i_line_color, 1, line_color);
 }
 
@@ -288,48 +256,9 @@ void set_transformation(Program& sh){
 	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
 }
 
-void init_x_data(const size_t size){
-	x_data.resize(size);
+void init_x_data(std::vector<float>& vec, const size_t size){
+	vec.resize(size);
 	for(unsigned int i = 0; i < size; i++){
-		x_data[i] = (((float) i + 0.5) - ((float)size * 0.5)) / ((float)size * 0.5);
+		vec[i] = (((float) i + 0.5) - ((float)size * 0.5)) / ((float)size * 0.5);
 	}
 }
-
-/*void init_fft(){
-	// allocate memory for fft input/output
-	fft_input = (double*) (fftw_malloc(sizeof(double) * fft_size));
-	fft_output = (fftw_complex*) (fftw_malloc(sizeof(fftw_complex) * fft_output_size));
-	fft_plan = fftw_plan_dft_r2c_1d(fft_size, fft_input, fft_output, FFTW_ESTIMATE);
-}
-
-void destroy_fft(){
-	// free fft input/output and delete fft plan
-	fftw_destroy_plan(fft_plan);
-	fftw_free(fft_input);
-	fftw_free(fft_output);
-}
-
-void compute_fft(){
-	// apply window function and pad data
-	size_t window_size = fft_size < n_samples ? fft_size : n_samples;
-	
-	// recalculate the window if the data size changes
-	if (window.size() != window_size){
-		calculate_window(window_size);
-	}
-	
-	for(unsigned int i = 0; i < fft_size; i++){
-		// apply hann window with corrected factors (a * 2)
-		fft_input[i] = i < n_samples ? (float)v_data[i] * window[i] : 0;
-	}	
-	// calculate fft
-	fftw_execute(fft_plan);
-}
-
-void calculate_window(const size_t size){
-	window.resize(size);
-	double N_1 = 1.0 / (double)(size-1);
-	for(unsigned int i = 0; i < size; i++){
-		window[i] = 1.0 - cos(2.0*M_PI*(double)i * N_1);
-	}
-}*/
