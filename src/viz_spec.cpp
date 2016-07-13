@@ -25,6 +25,7 @@ const float d_freq = (float) FS / (float) fft_output_size;
 const float fft_scale = 1.0f/((float)(n_samples/2+1)*32768.0f);
 const float slope = 0.5f;
 const float offset = 1.0f;
+const float gravity = 0.008f;
 
 glm::mat4 view = glm::lookAt(
     glm::vec3(0.8f, 0.0f, 2.0f),
@@ -42,6 +43,8 @@ GLuint vao_spec;
 const size_t output_size = 100; 
 GLuint y_buffer;
 GLuint x_buffer;
+// transform feedback buffers for gravity
+GLuint fb1, fb2;
 
 // buffers and shaders for dB lines
 GLuint vao_db;
@@ -119,13 +122,17 @@ int main(){
 //	Pulse p(Pulse::get_default_sink(), buf_size);
 	std::vector<int16_t> v_data(n_samples);
 	
+	GLint arg_gravity_old = sh_spec.get_attrib("gravity_old");
+	
 	if (fifo.is_open()){
 		// init read thread
-		std::thread th_read;	
+		std::thread th_read;
+		std::thread th_fps;
 			
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
+			th_fps = std::thread([]{usleep(1000000 / fps);});	
 			update_y_buffer(fft);
 			
 			//clear and draw		
@@ -139,8 +146,23 @@ int main(){
 			// render bars
 			sh_spec.use();	
 			glBindVertexArray(vao_spec);
-			glDrawArrays(GL_POINTS, 0, output_size);	
+			// use second feedback buffer for drawing
+			glBindBuffer(GL_ARRAY_BUFFER, fb2);
+			glVertexAttribPointer(arg_gravity_old, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), NULL);	
 			
+			// bind fist feedback buffer as TF buffer
+			glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, fb1);
+			glBeginTransformFeedback(GL_TRIANGLES);
+
+			glDrawArrays(GL_POINTS, 0, output_size);
+			// disable TF
+			glEndTransformFeedback();	
+
+			//undbind both feedback buffers and swap them
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
+			std::swap(fb1,fb2);
+
 			// Swap buffers
 			glfwSwapBuffers(window);
 			glfwPollEvents();
@@ -149,9 +171,7 @@ int main(){
 			th_read = std::thread([&]{ fifo.read_fifo(v_data, fft); });
 			//p.read(v_data);
 			//fft.calculate(v_data);		
-	
-			usleep(1000000 / fps);
-
+			th_fps.join();
 			th_read.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
@@ -160,6 +180,8 @@ int main(){
 	glDeleteBuffers(1, &y_buffer);
 	glDeleteBuffers(1, &x_buffer);
 	glDeleteBuffers(1, &line_buffer);
+	glDeleteBuffers(1, &fb1);
+	glDeleteBuffers(1, &fb2);
 	glDeleteVertexArrays(1, &vao_db);
 	glDeleteVertexArrays(1, &vao_spec);
 	
@@ -191,8 +213,9 @@ void init_buffers(Program& sh_spec, std::vector<float>& x_data,FFT& fft){
 	glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
 	// fill the y_buffer
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_DOUBLE, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
+	GLint arg_fft_output = sh_spec.get_attrib("a");
+	glVertexAttribPointer(arg_fft_output, 2, GL_DOUBLE, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(arg_fft_output);
 	
 	
 	/* X position buffer */
@@ -201,9 +224,22 @@ void init_buffers(Program& sh_spec, std::vector<float>& x_data,FFT& fft){
 	glBindBuffer(GL_ARRAY_BUFFER, x_buffer);
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_DYNAMIC_DRAW);
 
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(1);
+	GLint arg_x_data = sh_spec.get_attrib("x");
+	glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(arg_x_data);
 	
+	// init feedback buffers
+	glGenBuffers(1, &fb1);
+	glGenBuffers(1, &fb2);
+	glBindBuffer(GL_ARRAY_BUFFER, fb1);
+	glBufferData(GL_ARRAY_BUFFER, output_size * 12 *sizeof(float), 0, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, fb2);
+	glBufferData(GL_ARRAY_BUFFER, output_size * 12 *sizeof(float), 0, GL_DYNAMIC_DRAW);
+	// use second feedback buffer for drawing
+	GLint arg_gravity_old = sh_spec.get_attrib("gravity_old");
+	glVertexAttribPointer(arg_gravity_old, 2, GL_FLOAT, GL_FALSE, 12 * sizeof(float), NULL);
+	glEnableVertexAttribArray(arg_gravity_old);	
+
 	sh_spec.use();
 	// init the shader uniform values
 	GLint i_fft_scale = sh_spec.get_uniform("fft_scale");
@@ -223,7 +259,11 @@ void init_buffers(Program& sh_spec, std::vector<float>& x_data,FFT& fft){
 	glUniform4fv(i_top_color, 1, top_color);
 
 	GLint i_bot_color = sh_spec.get_uniform("bot_color");
-	glUniform4fv(i_bot_color, 1, bot_color);	
+	glUniform4fv(i_bot_color, 1, bot_color);
+
+	// set gravity
+	GLint i_gravity = sh_spec.get_uniform("gravity");
+	glUniform1f(i_gravity, gravity);	
 }
 
 void init_lines(Program& sh_lines){
@@ -234,8 +274,10 @@ void init_lines(Program& sh_lines){
 	glGenBuffers(1, &line_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(lines), lines, GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
+	
+	GLint arg_line_vert = sh_lines.get_attrib("pos");
+	glVertexAttribPointer(arg_line_vert, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(arg_line_vert);
 
 	sh_lines.use();
 	
