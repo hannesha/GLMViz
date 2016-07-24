@@ -14,6 +14,8 @@ class Program {
 		std::vector<GLuint> shaders;
 };
 void init_shaders(Program&, Program&);
+void init_line_shader(Program&);
+void init_bar_gravity_shader(Program&);
 
 Program::Program(){
 	program_id = glCreateProgram();
@@ -66,28 +68,13 @@ GLint Program::get_attrib(const char* name) const {
 void init_shaders(Program& sh_bars, Program& sh_lines){
 	const char* vertex_shader = 
 	"#version 150\n"
-	"in vec2 a;"
 	"in float x;"
-	"in vec2 gravity_old;"
-	"out vec2 v_gravity;"
-	"uniform float fft_scale;"
-	"uniform float slope;"
-	"uniform float offset;"
-	"uniform float gravity;"
-	"const float lg = 1 / log(10);"
+	"in float y;"
 	"void main () {"
-	"  float a_norm = length(a) * fft_scale;"
-	"  float y = slope * log(a_norm) * lg + offset;"
-	"  float yg = gravity_old.x - gravity * gravity_old.y * gravity_old.y;"
-	"  if(y > yg){"
-	"    v_gravity = vec2(y, 0.0);"
-	"  }else{"
-	"    v_gravity = vec2(gravity_old.x, gravity_old.y + 1.0);"
-	"    y = yg;"
-	"  }"
 	"  gl_Position = vec4(x, y, 0.0, 1.0);"
 	"}";
 	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
+
 
 	// fragment shader
 	const char* fragment_shader = 
@@ -105,15 +92,12 @@ void init_shaders(Program& sh_bars, Program& sh_lines){
 	"#version 150\n"
 	"layout (points) in;"
 	"layout (triangle_strip, max_vertices = 4) out;"
-	"in vec2 v_gravity[];"
 	"out vec4 color;"
-	"out vec2 g_gravity;"
 	"uniform float width;"
 	"uniform vec4 bot_color;"
 	"uniform vec4 top_color;"
 	"uniform mat4 trans;"
 	"void main () {"
-	"  g_gravity = v_gravity[0];"
 	"  float width_2 = width * 0.5;"
 	"  float x1 = gl_in[0].gl_Position.x - width_2;"
 	"  float x2 = gl_in[0].gl_Position.x + width_2;"
@@ -137,20 +121,23 @@ void init_shaders(Program& sh_bars, Program& sh_lines){
 	sh_bars.attach_shader(fs);
 	sh_bars.attach_shader(vs);
 	sh_bars.attach_shader(gs);
-	const char* varyings[1] = {"g_gravity"};
-	//glTransformFeedbackVaryings(sh_bars.get_id(), 1, varyings, GL_INTERLEAVED_ATTRIBS);	
-	//sh_bars.link();
-	sh_bars.link_TF(1, varyings);
 	
-	const char* fs_lines_code = 
+	sh_bars.link();
+	
+	init_line_shader(sh_lines);
+}
+
+void init_line_shader(Program& sh_lines){
+	// fragment shader
+	const char* fragment_shader = 
 	"#version 150\n"
 	"in vec4 color;"
 	"out vec4 f_color;"
 	"void main () {"
 	"  f_color = color;"
 	"}";
-	Shader fs_lines(fs_lines_code, GL_FRAGMENT_SHADER);
-
+	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
+	
 	const char* vs_lines_code = 
 	"#version 150\n"
 	"in vec2 pos;"
@@ -165,7 +152,43 @@ void init_shaders(Program& sh_bars, Program& sh_lines){
 	"}";
 	Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 	
-	sh_lines.attach_shader(fs_lines);
+	sh_lines.attach_shader(fs);
 	sh_lines.attach_shader(vs_lines);
 	sh_lines.link();
+}
+
+void init_bar_gravity_shader(Program& sh_bar_gravity){
+	const char* vertex_shader = 
+	"#version 150\n"
+	"in vec2 a;"
+	"in float gravity_old;"
+	"in float time_old;"
+	"out float v_gravity;"
+	"out float v_time;"
+	"out float v_y;"
+	"uniform float fft_scale;"
+	"uniform float slope;"
+	"uniform float offset;"
+	"uniform float gravity;"
+	"const float lg = 1 / log(10);"
+	"void main () {"
+	"  float a_norm = length(a) * fft_scale;"
+	"  float y = slope * log(a_norm) * lg + offset;"
+	"  float yg = gravity_old - gravity * time_old * time_old;"
+	"  if(y > yg){"
+	"    v_gravity = y;"
+	"    v_time = 0.0;"
+	"  }else{"
+	"    v_gravity = gravity_old;"
+	"    v_time = time_old + 1.0;"
+	"    y = yg;"
+	"  }"
+	"  v_y = y;"
+	"}";
+	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
+	
+	sh_bar_gravity.attach_shader(vs);
+	
+	const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
+	sh_bar_gravity.link_TF(3, varyings);	
 }
