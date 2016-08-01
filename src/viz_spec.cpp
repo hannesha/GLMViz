@@ -11,8 +11,11 @@ const size_t n_samples = FS * duration / 1000;
 const size_t buf_size = FS / fps;
 const size_t fft_size = 2<<13; //2^14
 
-float top_color[] = {0.827/2.0, 0.149/2.0, 0.008/2.0, 1.0};
-float bot_color[] = {0.275/2.0, 0.282/2.0, 0.294/2.0, 1.0};
+float top_color[] = {211.0/255, 38.0/255, 46.0/255, 1.0};
+float bot_color[] = {35.0/255, 36.0/255, 27.5/255, 1.0};
+//green to red bars
+//float top_color[] = {211.0/255, 38.0/255, 46.0/255, 1.0};
+//float bot_color[] = {126.3/255, 157.3/255, 76.0/255, 1.0};
 float line_color[] = {0.275, 0.282, 0.294, 1.0};
 
 void init_x_data(std::vector<float>&, const size_t);
