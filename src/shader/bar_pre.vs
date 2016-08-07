@@ -18,18 +18,22 @@ uniform float gravity;
 
 const float lg = 1 / log(10);
 
+// greater than comparison function
+float gt(float x, float y){
+	return max(sign(x - y), 0.0);
+}
+
 void main(){
 	float a_norm = length(a) * fft_scale;
 	float y = slope * log(a_norm) * lg + offset;
 	float yg = gravity_old - gravity * time_old * time_old;
-	if(y > yg){
-		v_gravity = y;
-		v_time = 0.0;
-	}else{
-		v_gravity = gravity_old;
-		v_time = time_old + 1.0;
-		y = yg;
-	}
-	v_y = y;
+
+	// fix shader gravity during track skip
+	y = clamp(y, -1.0, 1.0);
+
+	// elimitate branching using mix
+	v_gravity = mix(gravity_old, y, gt(y, yg));
+	v_time = mix(time_old + 1.0, 0.0, gt(y, yg));
+	v_y = mix(yg, y, gt(y, yg));
 }
 )"

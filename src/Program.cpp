@@ -13,7 +13,7 @@ class Program {
 		GLuint program_id;
 		std::vector<GLuint> shaders;
 };
-void init_shaders(Program&, Program&);
+void init_bar_shader(Program&);
 void init_line_shader(Program&);
 void init_bar_gravity_shader(Program&);
 
@@ -61,7 +61,7 @@ GLint Program::get_attrib(const char* name) const {
 	return glGetAttribLocation(program_id, name);
 }
 
-void init_shaders(Program& sh_bars, Program& sh_lines){
+void init_bar_shader(Program& sh_bars){
 	const char* vertex_shader = 
 	#include "shader/bar.vs"
 	;
@@ -71,6 +71,7 @@ void init_shaders(Program& sh_bars, Program& sh_lines){
 	// fragment shader
 	const char* fragment_shader = 
 	#include "shader/simple.fs"
+	//#include "shader/rainbow.fs"
 	;
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
@@ -87,8 +88,6 @@ void init_shaders(Program& sh_bars, Program& sh_lines){
 	sh_bars.attach_shader(gs);
 	
 	sh_bars.link();
-	
-	init_line_shader(sh_lines);
 }
 
 void init_line_shader(Program& sh_lines){

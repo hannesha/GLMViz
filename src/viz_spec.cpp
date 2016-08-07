@@ -11,6 +11,10 @@ const size_t n_samples = FS * duration / 1000;
 const size_t buf_size = FS / fps;
 const size_t fft_size = 2<<13; //2^14
 
+// colors for rainbow bars
+//float top_color[] = {1.0, 1.0, 1.0, 1.0};
+//float bot_color[] = {0.0, 0.0, 0.0, 1.0};
+//grey to red bars
 float top_color[] = {211.0/255, 38.0/255, 46.0/255, 1.0};
 float bot_color[] = {35.0/255, 36.0/255, 27.5/255, 1.0};
 //green to red bars
@@ -110,7 +114,8 @@ int main(){
 	Program sh_spec;
 	Program sh_spec_pre;
 	Program sh_db;
-	init_shaders(sh_spec, sh_db);
+	init_bar_shader(sh_spec);
+	init_line_shader(sh_db);
 	init_bar_gravity_shader(sh_spec_pre);
 	
 	FFT fft(fft_size);
@@ -125,6 +130,7 @@ int main(){
 	set_transformation(sh_db);
 	
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+//	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	Input fifo("/tmp/mpd.fifo");
 //	Pulse p(Pulse::get_default_sink(), buf_size);
