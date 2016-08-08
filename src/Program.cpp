@@ -1,21 +1,4 @@
-class Program {
-	public:
-		Program();
-		~Program();
-		void attach_shader(const Shader& s);
-		void link();
-		void link_TF(const size_t, const char**);
-		inline void use(){glUseProgram(program_id);};
-		GLuint get_id() const;
-		GLint get_uniform(const char*) const;
-		GLint get_attrib(const char*) const;
-	private:
-		GLuint program_id;
-		std::vector<GLuint> shaders;
-};
-void init_bar_shader(Program&);
-void init_line_shader(Program&);
-void init_bar_gravity_shader(Program&);
+#include "Program.hpp"
 
 Program::Program(){
 	program_id = glCreateProgram();
@@ -71,7 +54,7 @@ void init_bar_shader(Program& sh_bars){
 	// fragment shader
 	const char* fragment_shader = 
 	#include "shader/simple.fs"
-	//#include "shader/rainbow.fs"
+//	#include "shader/rainbow.fs"
 	;
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	

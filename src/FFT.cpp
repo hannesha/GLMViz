@@ -1,19 +1,4 @@
-class FFT {
-	public:
-		FFT(const size_t);
-		~FFT();
-
-		void calculate(const std::vector<int16_t>&);
-		size_t get_size() const;
-		fftw_complex* output;
-	private:
-		double* input;
-		fftw_plan plan;
-		size_t size;
-		
-		void calculate_window(const size_t);
-		std::vector<double> window;
-};
+#include "FFT.hpp"
 
 FFT::FFT(const size_t fft_size){
 	size = fft_size;

@@ -1,13 +1,4 @@
-class Input {
-	public:
-		Input(const char*);
-		~Input();
-		bool is_open() const;
-		void read_fifo(std::vector<int16_t>&, FFT&);
-	private:
-		int handle;
-};
-//extern void compute_fft();
+#include "Input.hpp"
 
 Input::Input(const char* file_name){
 	handle = open(file_name, O_RDONLY | O_NONBLOCK);

@@ -1,4 +1,4 @@
-#include "viz.h"
+#include "GLViz.hpp"
 
 const int AA_Samples = 4;
 const int WIN_Height = 1024;
@@ -22,6 +22,9 @@ float bot_color[] = {35.0/255, 36.0/255, 27.5/255, 1.0};
 //float bot_color[] = {126.3/255, 157.3/255, 76.0/255, 1.0};
 float line_color[] = {0.275, 0.282, 0.294, 1.0};
 
+const float gradient = 1.0f;
+
+
 void init_x_data(std::vector<float>&, const size_t);
 void update_y_buffer(FFT&);
 void update_x_buffer(std::vector<float>&);
@@ -34,6 +37,7 @@ const float fft_scale = 1.0f/((float)(n_samples/2+1)*32768.0f);
 const float slope = 0.5f;
 const float offset = 1.0f;
 const float gravity = 0.008f;
+
 
 glm::mat4 view = glm::lookAt(
     glm::vec3(0.8f, 0.0f, 2.0f),
@@ -304,7 +308,9 @@ void init_buffers(Program& sh_spec, std::vector<float>& x_data, FFT& fft, Progra
 
 	GLint i_bot_color = sh_spec.get_uniform("bot_color");
 	glUniform4fv(i_bot_color, 1, bot_color);
-
+	
+	GLint i_gradient = sh_spec.get_uniform("gradient");
+	glUniform1f(i_gradient, gradient);
 }
 
 void init_bars_pre(Program& sh_bars_pre){
