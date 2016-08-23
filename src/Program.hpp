@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <vector>
 #include "Shader.hpp"
+#include "Config.hpp"
 
 class Program {
 	public:
@@ -20,6 +21,6 @@ class Program {
 		std::vector<GLuint> shaders;
 };
 
-void init_bar_shader(Program&);
+void init_bar_shader(Program&, Config&);
 void init_line_shader(Program&);
 void init_bar_gravity_shader(Program&);

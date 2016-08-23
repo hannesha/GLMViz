@@ -13,16 +13,16 @@ uniform float width;
 uniform mat4 trans;
 
 void main () {
-	float width_2 = width * 0.5;
-	float x1 = gl_in[0].gl_Position.x - width_2;
-	float x2 = gl_in[0].gl_Position.x + width_2;
+	float x1 = gl_in[0].gl_Position.x - width;
+	float x2 = gl_in[0].gl_Position.x + width;
+	vec4 vwidth = vec4(width, 0.0, 0.0, 0.0);
 
 	color = v_bot_color[0];
 	gl_Position = trans * vec4(x1, -1.0, 0.0, 1.0);
 	EmitVertex();
 
 	color = v_top_color[0];
-	gl_Position = trans * (gl_in[0].gl_Position - vec4(width_2, 0.0, 0.0, 0.0));
+	gl_Position = trans * (gl_in[0].gl_Position - vwidth);
 	EmitVertex();
 
 	color = v_bot_color[0];
@@ -30,7 +30,7 @@ void main () {
 	EmitVertex();
 
 	color = v_top_color[0];
-	gl_Position = trans * (gl_in[0].gl_Position + vec4(width_2, 0.0, 0.0, 0.0));
+	gl_Position = trans * (gl_in[0].gl_Position + vwidth);
 	EmitVertex();
 
 	EndPrimitive();

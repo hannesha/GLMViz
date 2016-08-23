@@ -20,4 +20,5 @@
 #include "Program.hpp"
 #include "FFT.hpp"
 #include "Input.hpp"
+#include "Config.hpp"
 //#include "Pulse.cpp"

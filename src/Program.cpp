@@ -44,7 +44,7 @@ GLint Program::get_attrib(const char* name) const {
 	return glGetAttribLocation(program_id, name);
 }
 
-void init_bar_shader(Program& sh_bars){
+void init_bar_shader(Program& sh_bars, Config &cfg){
 	const char* vertex_shader = 
 	#include "shader/bar.vs"
 	;
@@ -52,10 +52,16 @@ void init_bar_shader(Program& sh_bars){
 
 
 	// fragment shader
-	const char* fragment_shader = 
-	#include "shader/simple.fs"
-//	#include "shader/rainbow.fs"
-	;
+	const char* fragment_shader;
+	if(cfg.rainbow){
+		fragment_shader =
+		#include "shader/rainbow.fs"
+		;
+	}else{
+		fragment_shader =
+		#include "shader/simple.fs"
+		;
+	}
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	// geometry shader
