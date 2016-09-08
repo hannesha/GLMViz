@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (GLViz)
+project (GLMViz)
 
 # Use C++0x
 include(CheckCXXCompilerFlag)
@@ -13,10 +13,12 @@ else()
         message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-# Optimize, turn on all Warnings
+# turn on all Warnings
 if(CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 endif()
+
+set(CMAKE_BUILD_TYPE Release)
 
 # add source subdirectory
 add_subdirectory (src)
