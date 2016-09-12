@@ -1,0 +1,37 @@
+/* copy this file into your ~/.config/GLMViz/ folder */
+
+Window = { AA = 4; }; //window options
+output_size = 100L; //number of displayed bars
+duration = 100; //buffer lenght in ms
+
+//gradient = 0 - each bar has the full gradient
+//gradient = 1 - bar color changes with the height of the bar (0db = top_color)
+//value inbetween 0 and 1 are possible
+gradient = 1.0;
+
+bar_width = 0.75;
+gravity = 0.1;
+
+fft_size = 16384L; // 2^14
+
+max_db = 0.0;
+min_db = -80.0;
+
+top_color = { 	r = 211.0; 
+		g = 38.0;
+		b = 46.0; };
+
+bot_color = {	r = 35.0;
+		g = 36.0;
+		b = 27.0; };
+
+rainbow = False;
+//colors represent the frequency component of the rainbow
+/*top_color = { r = 510.0; 
+		g = 510.0;
+		b = 510.0;
+	};
+bot_color = {	r = 0.0;
+		g = 0.0;
+		b = 0.0;
+	};*/

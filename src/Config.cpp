@@ -44,10 +44,16 @@ Config::Config(){
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		
 		// TODO: replace values with from/to dB range
-		cfg.lookupValue("slope", slope);
-		cfg.lookupValue("offset", offset);
-		
+		cfg.lookupValue("min_db", min_db);
+		cfg.lookupValue("max_db", max_db);
 
+		if(max_db > min_db){
+			float max_n = max_db * 0.05;
+			float min_n = min_db * 0.05;
+			slope = -2.0f / (min_n - max_n);
+			offset = 1.0f - slope * max_n;
+		}
+		
 		std::string color_path = "top_color";
 		read_rgba(color_path, top_color);
 		color_path = "botcolor";
