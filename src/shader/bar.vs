@@ -16,7 +16,7 @@ out vec4 v_top_color;
 const float div255 = 1.0/255.0;
 const vec4 n_color = vec4(div255, div255, div255, 1.0);
 void main () {
-	float y_clamp = clamp(y, -1.0, 1.0);
+	float y_clamp = clamp(y * 2.0 , -1.0, 1.0);
 	vec4 n_b_color = bot_color * n_color;
 	vec4 n_t_color = top_color * n_color;
 	

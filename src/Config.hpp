@@ -52,7 +52,7 @@ class Config {
 		float bot_color[4] = {35.0, 36.0, 27.5, 1.0};
 		float line_color[4] = {70.0, 72.0, 75.0, 1.0};
 		float gradient = 1.0f;
-		float gravity = 0.008f;		
+		float gravity = 0.1f;		
 
 		bool rainbow = false;	
 		

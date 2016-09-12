@@ -327,13 +327,13 @@ void init_bars_pre(Program& sh_bars_pre, Config& cfg){
 	glUniform1f(i_fft_scale, cfg.fft_scale);	
 
 	GLint i_slope = sh_bars_pre.get_uniform("slope");
-	glUniform1f(i_slope, cfg.slope);
+	glUniform1f(i_slope, cfg.slope * 0.5);
 	
 	GLint i_offset = sh_bars_pre.get_uniform("offset");
-	glUniform1f(i_offset, cfg.offset);
+	glUniform1f(i_offset, cfg.offset * 0.5);
 	
 	GLint i_gravity = sh_bars_pre.get_uniform("gravity");
-	glUniform1f(i_gravity, cfg.gravity);	
+	glUniform1f(i_gravity, cfg.gravity / cfg.fps);	
 }
 
 void init_lines(Program& sh_lines, Config &cfg){
