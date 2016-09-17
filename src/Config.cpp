@@ -21,8 +21,17 @@
 #include "Config.hpp"
 
 Config::Config(){
-	std::string file = "/.config/GLViz/config";
-	file = std::string(getenv("HOME")) + file;
+	std::string file;
+	xdgHandle xdghandle;
+
+	if(xdgInitHandle(&xdghandle)){
+                file = xdgConfigFind("GLMViz/config", &xdghandle);
+
+                xdgWipeHandle(&xdghandle);
+        }
+
+	if(file == "") file = "/etc/GLMViz/config";
+
 	try{
                 cfg.readFile(file.c_str());
 
@@ -43,7 +52,6 @@ Config::Config(){
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		
-		// TODO: replace values with from/to dB range
 		cfg.lookupValue("min_db", min_db);
 		cfg.lookupValue("max_db", max_db);
 

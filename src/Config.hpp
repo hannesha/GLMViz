@@ -25,6 +25,7 @@
 
 #include <string>
 #include <libconfig.h++>
+#include <basedir_fs.h>
 
 class Config {
 	public:
