@@ -18,14 +18,27 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Shader.hpp"
+#include <pulse/simple.h>
+#include <pulse/error.h>
+#include <pulse/pulseaudio.h>
 
-Shader::Shader(const char* code, GLuint type){
-	shader = glCreateShader(type);
-	glShaderSource(shader, 1, &code, nullptr);
-	glCompileShader(shader);
-}
+#include <string>
+#include <vector>
 
-Shader::~Shader(){
-	glDeleteShader(shader);
-}
+class Pulse{
+	public:
+		Pulse(const std::string&, const size_t);
+		~Pulse();
+		static std::string get_default_sink();
+		struct usr_data{
+			std::string* device;
+			pa_mainloop* mainloop;
+		};
+		void read(std::vector<int16_t>&);
+	private:
+		static void info_cb(pa_context*, const pa_server_info*, void*);
+		static void state_cb(pa_context* , void*);
+
+		pa_simple *stream;
+		size_t samples;
+};

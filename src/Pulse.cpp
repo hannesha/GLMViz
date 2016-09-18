@@ -1,24 +1,24 @@
-#include <pulse/simple.h>
-#include <pulse/error.h>
-#include <pulse/pulseaudio.h>
+/*
+ *	GLMViz is a OpenGL based Visualizer for mpd.
+ *	Copyright (C) 2016  Hannes Haberl
+ *	
+ *	This file is part of GLMViz.
+ *
+ *	GLMViz is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLMViz is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-class Pulse{
-	public:
-		Pulse(const std::string&, const size_t);
-		~Pulse();
-		static std::string get_default_sink();
-		struct usr_data{
-			std::string* device;
-			pa_mainloop* mainloop;
-		};
-		void read(std::vector<int16_t>&);
-	private:
-		static void info_cb(pa_context*, const pa_server_info*, void*);
-		static void state_cb(pa_context* , void*);
-
-		pa_simple *stream;
-		size_t samples;
-};
+#include "Pulse.hpp"
 
 Pulse::Pulse(const std::string& device, const size_t nsamples){
 	samples = nsamples;
@@ -29,11 +29,11 @@ Pulse::Pulse(const std::string& device, const size_t nsamples){
 	};
 
 	pa_buffer_attr buffer_attr = {
-		nsamples * 4, //maxlength
+		(uint32_t)nsamples * 4, //maxlength
 		(uint32_t)-1, 
 		(uint32_t)-1, 
 		(uint32_t)-1, 
-		nsamples * 2     //fragsize
+		(uint32_t)nsamples * 2     //fragsize
 	};
 	int error;
 	stream = pa_simple_new(NULL, "GLViz", PA_STREAM_RECORD, device.c_str(), "GLViz monitor", &sample_spec, NULL, &buffer_attr, &error);

@@ -18,14 +18,15 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Shader.hpp"
+#pragma once
 
-Shader::Shader(const char* code, GLuint type){
-	shader = glCreateShader(type);
-	glShaderSource(shader, 1, &code, nullptr);
-	glCompileShader(shader);
-}
+#include <GL/glew.h>
 
-Shader::~Shader(){
-	glDeleteShader(shader);
-}
+class Shader {
+	public:
+		inline GLuint get_shader() const {return shader;};
+		Shader(const char* , GLuint);
+		~Shader();
+	private:
+		GLuint shader;
+};

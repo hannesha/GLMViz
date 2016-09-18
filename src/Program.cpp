@@ -1,17 +1,24 @@
-class Program {
-	public:
-		Program();
-		~Program();
-		void attach_shader(const Shader& s);
-		void link();
-		void use();
-		GLuint get_id() const;
-		GLuint get_uniform(const char*) const;
-	private:
-		GLuint program_id;
-		std::vector<GLuint> shaders;
-};
-void init_shaders(Program&, Program&);
+/*
+ *	GLMViz is a OpenGL based Visualizer for mpd.
+ *	Copyright (C) 2016  Hannes Haberl
+ *	
+ *	This file is part of GLMViz.
+ *
+ *	GLMViz is free software: you can redistribute it and/or modify
+ *	it under the terms of the GNU General Public License as published by
+ *	the Free Software Foundation, either version 3 of the License, or
+ *	(at your option) any later version.
+ *
+ *	GLMViz is distributed in the hope that it will be useful,
+ *	but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *	GNU General Public License for more details.
+ *
+ *	You should have received a copy of the GNU General Public License
+ *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "Program.hpp"
 
 Program::Program(){
 	program_id = glCreateProgram();
@@ -29,6 +36,7 @@ void Program::attach_shader(const Shader& s){
 void Program::link(){
 	// link, cleanup
 	glLinkProgram(program_id);
+	//std::cout << glGetError() << std::endl;
 	
 	// detach all shaders
 	for (GLuint sh : shaders){
@@ -36,95 +44,86 @@ void Program::link(){
 	}
 }
 
-void Program::use(){
-	glUseProgram(program_id);
+void Program::link_TF(const size_t n, const char** fb_varyings){
+	// set TF varyings
+	glTransformFeedbackVaryings(program_id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);	
+	//std::cout << glGetError() << std::endl;
+
+	link();
 }
 
 GLuint Program::get_id() const {
 	return program_id;
 }
 
-GLuint Program::get_uniform(const char* name) const {
+GLint Program::get_uniform(const char* name) const {
 	return glGetUniformLocation(program_id, name);
 }
 
-void init_shaders(Program& sh_bars, Program& sh_lines){
+GLint Program::get_attrib(const char* name) const {
+	return glGetAttribLocation(program_id, name);
+}
+
+void init_bar_shader(Program& sh_bars, Config &cfg){
 	const char* vertex_shader = 
-	"#version 150\n"
-	"in vec2 a;"
-	"in float x;"
-	"uniform float fft_scale;"
-	"uniform float slope;"
-	"uniform float offset;"
-	"const float lg = 1 / log(10);"
-	"void main () {"
-	"  float a_norm = length(a) * fft_scale;"
-	"  gl_Position = vec4 (x, slope * log(a_norm) * lg + offset , 0.0, 1.0);"
-	"}";
+	#include "shader/bar.vs"
+	;
 	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
 
+
 	// fragment shader
-	const char* fragment_shader = 
-	"#version 150\n"
-	"in vec4 color;"
-	"out vec4 frag_color;"
-	"void main () {"
-	"  frag_color = color;"
-	"}";
+	const char* fragment_shader;
+	if(cfg.rainbow){
+		fragment_shader =
+		#include "shader/rainbow.fs"
+		;
+	}else{
+		fragment_shader =
+		#include "shader/simple.fs"
+		;
+	}
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	// geometry shader
 	// draw bars
 	const char* geometry_shader = 
-	"#version 150\n"
-	"layout (points) in;"
-	"layout (triangle_strip, max_vertices = 4) out;"
-	"out vec4 color;"
-	"uniform float width;"
-	"uniform vec4 bot_color;"
-	"uniform vec4 top_color;"
-	"uniform mat4 trans;"
-	"void main () {"
-	"  float width_2 = width * 0.5;"
-	"  float x1 = gl_in[0].gl_Position.x - width_2;"
-	"  float x2 = gl_in[0].gl_Position.x + width_2;"
-	"  color = bot_color;"
-	"  gl_Position = trans * vec4(x1, -1.0, 0.0, 1.0);"
-	"  EmitVertex();"
-	"  color = top_color;"
-	"  gl_Position = trans * (gl_in[0].gl_Position - vec4(width_2, 0.0, 0.0, 0.0));"
-	"  EmitVertex();"
-	"  color = bot_color;"
-	"  gl_Position = trans * vec4(x2, -1.0, 0.0, 1.0);"	
-	"  EmitVertex();"
-	"  color = top_color;"
-	"  gl_Position = trans * (gl_in[0].gl_Position + vec4(width_2, 0.0, 0.0, 0.0));"
-	"  EmitVertex();"
-	"  EndPrimitive();"
-	"}";	
+	#include "shader/bar.gs"
+	;
 	Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
 
 	// link shaders
 	sh_bars.attach_shader(fs);
 	sh_bars.attach_shader(vs);
 	sh_bars.attach_shader(gs);
+	
 	sh_bars.link();
+}
+
+void init_line_shader(Program& sh_lines){
+	// fragment shader
+	const char* fragment_shader = 
+	#include "shader/simple.fs"
+	;
+	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	const char* vs_lines_code = 
-	"#version 150\n"
-	"in vec2 pos;"
-	"out vec4 color;"
-	"uniform float slope;"
-	"uniform float offset;"
-	"uniform vec4 line_color;"
-	"uniform mat4 trans;"
-	"void main () {"
-	"  color = line_color;"
-	"  gl_Position = trans * vec4 (pos.x, clamp(slope * pos.y + offset, -1.0, 1.0) , 0.0, 1.0);"
-	"}";
+	#include "shader/lines.vs"
+	;
 	Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 	
 	sh_lines.attach_shader(fs);
 	sh_lines.attach_shader(vs_lines);
 	sh_lines.link();
+}
+
+void init_bar_gravity_shader(Program& sh_bar_gravity){
+	const char* vertex_shader = 
+	#include "shader/bar_pre.vs"
+	;
+	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
+	
+	sh_bar_gravity.attach_shader(vs);
+	
+	const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
+	sh_bar_gravity.link_TF(3, varyings);	
 }

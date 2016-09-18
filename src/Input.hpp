@@ -18,14 +18,21 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Shader.hpp"
+#pragma once
 
-Shader::Shader(const char* code, GLuint type){
-	shader = glCreateShader(type);
-	glShaderSource(shader, 1, &code, nullptr);
-	glCompileShader(shader);
-}
+#include <vector>
+#include <stdint.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-Shader::~Shader(){
-	glDeleteShader(shader);
-}
+#include "FFT.hpp"
+
+class Input {
+	public:
+		Input(const char*);
+		~Input();
+		bool is_open() const;
+		void read_fifo(std::vector<int16_t>&, FFT&);
+	private:
+		int handle;
+};
