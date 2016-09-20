@@ -39,6 +39,7 @@ Config::Config(){
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
+		cfg.lookupValue("fifo_file", fifo_file);
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("FS", FS);
 		cfg.lookupValue("fps", fps);

@@ -157,7 +157,7 @@ int main(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	Input fifo("/tmp/mpd.fifo");
+	Input fifo(config.fifo_file.c_str());
 //	Pulse p(Pulse::get_default_sink(), buf_size);
 	std::vector<int16_t> v_data(config.buf_size);
 	
@@ -220,6 +220,8 @@ int main(){
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
+	}else{
+		std::cerr << "Can't open file:" << config.fifo_file << std::endl;
 	}	
 	// clear buffers
 	glDeleteBuffers(1, &y_buffer);

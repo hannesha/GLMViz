@@ -35,6 +35,7 @@ class Config {
 		int w_height = 1024;
 		int w_width = 768;
 		
+		std::string fifo_file = "/tmp/mpd.fifo";
 		int duration = 100;
 		int FS = 44100;
 		int fps = 60;
