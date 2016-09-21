@@ -26,13 +26,14 @@
 #include <unistd.h>
 
 #include "FFT.hpp"
+#include "Buffer.hpp"
 
 class Input {
 	public:
 		Input(const char*);
 		~Input();
 		bool is_open() const;
-		void read_fifo(std::vector<int16_t>&, FFT&);
+		void read_fifo(Buffer&);
 	private:
 		int handle;
 };
