@@ -36,15 +36,15 @@ class Config {
 		int w_width = 768;
 		
 		std::string fifo_file = "/tmp/mpd.fifo";
-		int duration = 100;
+		int duration = 50;
 		int FS = 44100;
 		int fps = 60;
-		long long fft_size = 2<<13;
+		long long fft_size = 2<<12;
 		long long output_size = 100;
 
 		long long buf_size = FS * duration / 1000;		
 		long long fft_output_size = fft_size/2+1;	
-		float d_freq = (float) FS / (float) fft_output_size;
+		float d_freq = (float) FS / (float) (fft_output_size * 2);
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		float slope = 0.5f;
 		float offset = 1.0f;
