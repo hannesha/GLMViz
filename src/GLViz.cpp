@@ -97,6 +97,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 } 
 
+void dumpBuffer(Buffer& buffer){
+	auto lock = buffer.lock();
+	std::cout << buffer.v_buffer[0] << " " << buffer.v_buffer[1] << " " << buffer.v_buffer[2] << " " << buffer.v_buffer[3] << std::endl;
+}
+
 int main(){
 	
 	// init GLFW
@@ -183,6 +188,7 @@ int main(){
 			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
 
 			//fifo.read_fifo(buffer);
+			//dumpBuffer(buffer);
 			fft.calculate(buffer);
 			update_y_buffer(fft, config);
 			
