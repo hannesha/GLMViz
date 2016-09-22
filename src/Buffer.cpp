@@ -18,25 +18,22 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Input.hpp"
+#include "Buffer.hpp"
 
-Input::Input(const char* file_name){
-	handle = open(file_name, O_RDONLY | O_NONBLOCK);
+Buffer::Buffer(size_t size){
+	v_buffer.resize(size);
+	this->size = size;
+	new_data = true;
 }
 
-Input::~Input(){
-	close(handle);
+std::unique_lock<std::mutex> Buffer::lock(){
+	return std::unique_lock<std::mutex>(m);
 }
 
-bool Input::is_open() const {
-	return handle >= 0;
-}
-
-void Input::read_fifo(Buffer &buffer){
-	int16_t buf[buffer.size];
-	int64_t data = read(handle, buf, sizeof(buf));
-	if(data > 0){
-		int64_t samples_read = data/sizeof(int16_t);
-		buffer.write(buf, samples_read);
-	}
+void Buffer::write(int16_t buf[], size_t n){
+	auto lock = this->lock();
+	new_data = true;
+	
+	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + n);
+	v_buffer.insert(v_buffer.end(), buf, buf + n);
 }

@@ -1,6 +1,9 @@
 /* copy this file into your ~/.config/GLMViz/ folder */
 
 Window = { AA = 4; }; //window options
+
+fifo_file = "/tmp/mpd.fifo";
+
 output_size = 100L; //number of displayed bars
 duration = 100; //buffer lenght in ms
 

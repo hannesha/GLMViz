@@ -40,5 +40,6 @@
 #include "Program.hpp"
 #include "FFT.hpp"
 #include "Input.hpp"
+#include "Buffer.hpp"
 #include "Config.hpp"
 //#include "Pulse.cpp"

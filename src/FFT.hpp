@@ -26,13 +26,16 @@
 #include <vector>
 #include <math.h>
 #include <stdint.h>
+#include <algorithm>
+
+#include "Buffer.hpp"
 
 class FFT {
 	public:
 		FFT(const size_t);
 		~FFT();
 
-		void calculate(const std::vector<int16_t>&);
+		void calculate(Buffer&);
 		size_t get_size() const;
 		fftw_complex* output;
 	private:

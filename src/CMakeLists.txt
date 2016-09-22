@@ -20,7 +20,6 @@ include_directories(${BASEDIR_INCLUDE_DIRS})
 
 include_directories(${PULSEAUDIO_INCLUDE_DIRS})
 
-add_executable(Viz GLViz.cpp Program.cpp Shader.cpp FFT.cpp Input.cpp Pulse.cpp Config.cpp)
-
+add_executable(Viz GLViz.cpp Program.cpp Shader.cpp FFT.cpp Input.cpp Pulse.cpp Buffer.cpp Config.cpp)
 
 target_link_libraries(Viz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLM_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} pulse pulse-simple)

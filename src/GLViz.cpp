@@ -157,9 +157,9 @@ int main(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	Input fifo("/tmp/mpd.fifo");
+	Input fifo(config.fifo_file.c_str());
 //	Pulse p(Pulse::get_default_sink(), buf_size);
-	std::vector<int16_t> v_data(config.buf_size);
+	Buffer buffer(config.buf_size);
 	
 	GLint arg_y = sh_spec.get_attrib("y");
 	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
@@ -170,7 +170,9 @@ int main(){
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
 			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
-			fifo.read_fifo(v_data, fft);
+
+			fifo.read_fifo(buffer);
+			fft.calculate(buffer);
 			update_y_buffer(fft, config);
 			
 			//clear and draw		
@@ -220,6 +222,8 @@ int main(){
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
+	}else{
+		std::cerr << "Can't open file:" << config.fifo_file << std::endl;
 	}	
 	// clear buffers
 	glDeleteBuffers(1, &y_buffer);

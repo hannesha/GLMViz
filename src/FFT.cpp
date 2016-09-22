@@ -34,27 +34,34 @@ FFT::~FFT(){
 	fftw_destroy_plan(plan);
 }
 
-void FFT::calculate(const std::vector<int16_t>& data){
+void FFT::calculate(Buffer &buffer){
 	// find smallest value for window function
-	size_t window_size = size < data.size() ? size : data.size();
-	
+	size_t window_size = std::min(size, buffer.size);
+		
 	if (window.size() != window_size){
 		calculate_window(window_size);
 	}
 	
-	unsigned int i;
-	for(i = 0; i < window_size; i++){
-		// apply hann window with corrected factors (a * 2)
-		input[i] = (float) data[i] * window[i];
+	auto lock = buffer.lock();
+	if(buffer.new_data){
+		buffer.new_data = false;
+
+		unsigned int i;
+		for(i = 0; i < window_size; i++){
+			// apply hann window with corrected factors (a * 2)
+			input[i] = (float) buffer.v_buffer[i] * window[i];
+		}
+		
+		lock.unlock();
+		
+		// pad remainig values
+		for(; i < size; i++){
+			input[i] = 0;
+		}
+		
+		// execute fft
+		fftw_execute(plan);
 	}
-	
-	// pad remainig values
-	for(; i < size; i++){
-		input[i] = 0;
-	}
-	
-	// execute fft
-	fftw_execute(plan);
 }
 
 size_t FFT::get_size() const {
