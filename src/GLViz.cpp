@@ -157,21 +157,32 @@ int main(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	Input fifo(config.fifo_file.c_str());
-//	Pulse p(Pulse::get_default_sink(), buf_size);
+	//Input fifo(config.fifo_file.c_str());
 	Buffer buffer(config.buf_size);
 	
 	GLint arg_y = sh_spec.get_attrib("y");
 	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
 	GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
 	
-	if (fifo.is_open()){
+#ifdef WITH_PULSE
+	bool p_running = true;
+
+	Pulse pulse(Pulse::get_default_sink(), 44);
+
+	std::thread th_pulse = std::thread([&]{
+                while(p_running){
+                        pulse.read(buffer);
+                }
+        });
+#endif	
+
+	//if (fifo.is_open()){
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
 			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
 
-			fifo.read_fifo(buffer);
+			//fifo.read_fifo(buffer);
 			fft.calculate(buffer);
 			update_y_buffer(fft, config);
 			
@@ -222,9 +233,15 @@ int main(){
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
-	}else{
-		std::cerr << "Can't open file:" << config.fifo_file << std::endl;
-	}	
+	//}else{
+	//	std::cerr << "Can't open file:" << config.fifo_file << std::endl;
+	//}
+	
+#ifdef WITH_PULSE
+        p_running = false;
+        th_pulse.join();
+#endif
+
 	// clear buffers
 	glDeleteBuffers(1, &y_buffer);
 	glDeleteBuffers(1, &x_buffer);

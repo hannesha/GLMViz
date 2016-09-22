@@ -21,6 +21,7 @@
 #include "Pulse.hpp"
 
 Pulse::Pulse(const std::string& device, const size_t nsamples){
+#ifdef WITH_PULSE
 	samples = nsamples;
 	const pa_sample_spec sample_spec = {
 		format : PA_SAMPLE_S16LE,
@@ -29,29 +30,33 @@ Pulse::Pulse(const std::string& device, const size_t nsamples){
 	};
 
 	pa_buffer_attr buffer_attr = {
-		(uint32_t)nsamples * 4, //maxlength
-		(uint32_t)-1, 
-		(uint32_t)-1, 
-		(uint32_t)-1, 
-		(uint32_t)nsamples * 2     //fragsize
-	};
+                (uint32_t)-1, //maxlength
+                (uint32_t)-1, 
+                (uint32_t)-1, 
+                (uint32_t)-1, 
+                (uint32_t)-1     //fragsize
+        };
 	int error;
-	stream = pa_simple_new(NULL, "GLViz", PA_STREAM_RECORD, device.c_str(), "GLViz monitor", &sample_spec, NULL, &buffer_attr, &error);
+	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
+#endif
 }
 
 Pulse::~Pulse(){
+#ifdef WITH_PULSE
 	pa_simple_free(stream);
+#endif
 }
 
-void Pulse::read(std::vector<int16_t>& vbuf){
+void Pulse::read(Buffer& buffer){
+#ifdef WITH_PULSE
 	int16_t buf[samples];
 	pa_simple_read(stream, buf, sizeof(buf),NULL);
-	
-	vbuf.erase(vbuf.begin(), vbuf.begin() + samples);
-	vbuf.insert(vbuf.end(), buf, buf + samples);
+	buffer.write(buf, samples);
+#endif
 }
 
 
+#ifdef WITH_PULSE
 std::string Pulse::get_default_sink(){	
 	std::string device;
 	pa_mainloop_api *mainloop_api;
@@ -106,3 +111,4 @@ void Pulse::info_cb(pa_context* context, const pa_server_info* info, void* userd
 	//quit mainloop
 	pa_mainloop_quit(data->mainloop, 0);
 }
+#endif

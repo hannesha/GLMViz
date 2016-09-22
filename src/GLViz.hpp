@@ -42,4 +42,4 @@
 #include "Input.hpp"
 #include "Buffer.hpp"
 #include "Config.hpp"
-//#include "Pulse.cpp"
+#include "Pulse.hpp"

@@ -25,20 +25,33 @@
 #include <string>
 #include <vector>
 
+#include "Buffer.hpp"
+
+
+#ifdef WITH_PULSE
+#pragma message("Pulse support enabled")
+#endif
+
 class Pulse{
 	public:
 		Pulse(const std::string&, const size_t);
 		~Pulse();
+		
+		void read(Buffer&);
+#ifdef WITH_PULSE
 		static std::string get_default_sink();
 		struct usr_data{
 			std::string* device;
 			pa_mainloop* mainloop;
 		};
-		void read(std::vector<int16_t>&);
+#endif
 	private:
+		size_t samples;
+
+#ifdef WITH_PULSE
 		static void info_cb(pa_context*, const pa_server_info*, void*);
 		static void state_cb(pa_context* , void*);
 
 		pa_simple *stream;
-		size_t samples;
+#endif
 };

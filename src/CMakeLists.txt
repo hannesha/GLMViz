@@ -8,7 +8,7 @@ pkg_search_module(GLFW REQUIRED glfw3)
 pkg_search_module(CONFIG++ REQUIRED libconfig++)
 pkg_search_module(BASEDIR REQUIRED libxdg-basedir)
 
-find_package(PulseAudio REQUIRED)
+find_package(PulseAudio)
 
 include_directories(${OPENGL_INCLUDE_DIRS})
 include_directories(${GLEW_INCLUDE_DIRS})
@@ -18,8 +18,13 @@ include_directories(${FFTW3_INCLUDE_DIRS})
 include_directories(${CONFIG++_INCLUDE_DIRS})
 include_directories(${BASEDIR_INCLUDE_DIRS})
 
-include_directories(${PULSEAUDIO_INCLUDE_DIRS})
+if(PULSEAUDIO_FOUND)
+        Message("PulseAudio found. Building with PulseAudio support.")
+        include_directories(${PULSEAUDIO_INCLUDE_DIRS})
+        add_definitions(-DWITH_PULSE)
+        set(PULSE_LIBS ${PULSE_LIBS} "pulse" "pulse-simple")
+endif(PULSEAUDIO_FOUND)
 
 add_executable(Viz GLViz.cpp Program.cpp Shader.cpp FFT.cpp Input.cpp Pulse.cpp Buffer.cpp Config.cpp)
 
-target_link_libraries(Viz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLM_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} pulse pulse-simple)
+target_link_libraries(Viz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLM_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} ${PULSE_LIBS})
