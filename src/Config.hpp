@@ -44,7 +44,7 @@ class Config {
 
 		long long buf_size = FS * duration / 1000;		
 		long long fft_output_size = fft_size/2+1;	
-		float d_freq = (float) FS / (float) (fft_output_size * 2);
+		float d_freq = (float) FS / (float) fft_size;
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		float slope = 0.5f;
 		float offset = 1.0f;

@@ -48,7 +48,7 @@ Config::Config(){
 
 		buf_size = FS * duration / 1000;
 		fft_output_size = fft_size/2+1;
-		d_freq = (float) FS / (float) (fft_output_size * 2);
+		d_freq = (float) FS / (float) fft_size;
 		
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
