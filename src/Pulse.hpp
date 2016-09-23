@@ -18,40 +18,36 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pulse/simple.h>
-#include <pulse/error.h>
 #include <pulse/pulseaudio.h>
+#include <pulse/simple.h>
 
 #include <string>
-#include <vector>
 
 #include "Buffer.hpp"
-
+#include "Input.hpp"
 
 #ifdef WITH_PULSE
 #pragma message("Pulse support enabled")
 #endif
 
-class Pulse{
+class Pulse : public Input{
 	public:
 		Pulse(const std::string&, const size_t);
 		~Pulse();
 		
-		void read(Buffer&);
-#ifdef WITH_PULSE
+		bool is_open() const { return true; };
+		void read(Buffer&) const;
+
 		static std::string get_default_sink();
 		struct usr_data{
 			std::string* device;
 			pa_mainloop* mainloop;
 		};
-#endif
 	private:
 		size_t samples;
 
-#ifdef WITH_PULSE
 		static void info_cb(pa_context*, const pa_server_info*, void*);
 		static void state_cb(pa_context* , void*);
 
 		pa_simple *stream;
-#endif
 };

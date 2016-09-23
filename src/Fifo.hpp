@@ -18,25 +18,20 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#pragma once
+
+#include <stdint.h>
+#include <string>
+
 #include "Input.hpp"
 
-Input::Input(const char* file_name){
-	handle = open(file_name, O_RDONLY | O_NONBLOCK);
-}
-
-Input::~Input(){
-	close(handle);
-}
-
-bool Input::is_open() const {
-	return handle >= 0;
-}
-
-void Input::read_fifo(Buffer &buffer){
-	int16_t buf[buffer.size];
-	int64_t data = read(handle, buf, sizeof(buf));
-	if(data > 0){
-		int64_t samples_read = data/sizeof(int16_t);
-		buffer.write(buf, samples_read);
-	}
-}
+class Fifo : public Input{
+	public:
+		Fifo(const std::string&, const size_t);
+		~Fifo();
+		bool is_open() const;
+		void read(Buffer&) const;
+	private:
+		int handle;
+		size_t samples;
+};

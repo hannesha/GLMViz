@@ -20,7 +20,7 @@
 
 #include "Buffer.hpp"
 
-Buffer::Buffer(size_t size){
+Buffer::Buffer(const size_t size){
 	v_buffer.resize(size);
 	this->size = size;
 	new_data = true;
@@ -30,7 +30,7 @@ std::unique_lock<std::mutex> Buffer::lock(){
 	return std::unique_lock<std::mutex>(m);
 }
 
-void Buffer::write(int16_t buf[], size_t n){
+void Buffer::write(int16_t buf[], const size_t n){
 	auto lock = this->lock();
 	new_data = true;
 	

@@ -20,6 +20,10 @@
 
 #include "Config.hpp"
 
+#include <basedir_fs.h>
+#include <stdlib.h>
+#include <iostream>
+
 Config::Config(){
 	std::string file;
 	xdgHandle xdghandle;
@@ -39,7 +43,16 @@ Config::Config(){
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
+		std::string str_source;
+		cfg.lookupValue("source", str_source);
+		if(str_source == "Pulse" || str_source == "pulse"){
+			source = Source::PULSE;
+		}else{
+			source = Source::FIFO;
+		}
+		
 		cfg.lookupValue("fifo_file", fifo_file);
+
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("FS", FS);
 		cfg.lookupValue("fps", fps);

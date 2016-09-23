@@ -20,30 +20,13 @@
 
 #include "GLViz.hpp"
 
-/*const int AA_Samples = 4;
-const int WIN_Height = 1024;
-const int WIN_Width = 768;
+#include <memory>
 
-const uint16_t fps = 60;
-const uint16_t duration = 100; //(ms)
-const uint16_t FS = 44100;
-const size_t n_samples = FS * duration / 1000;
-const size_t buf_size = FS / fps;
-const size_t fft_size = 2<<13; //2^14*/
-
-// colors for rainbow bars
-//float top_color[] = {1.0, 1.0, 1.0, 1.0};
-//float bot_color[] = {0.0, 0.0, 0.0, 1.0};
-//grey to red bars
-//float top_color[] = {211.0/255, 38.0/255, 46.0/255, 1.0};
-//float bot_color[] = {35.0/255, 36.0/255, 27.5/255, 1.0};
-//green to red bars
-//float top_color[] = {211.0/255, 38.0/255, 46.0/255, 1.0};
-//float bot_color[] = {126.3/255, 157.3/255, 76.0/255, 1.0};
-//float line_color[] = {0.275, 0.282, 0.294, 1.0};
-
-//const float gradient = 1.0f;
-
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 void init_x_data(std::vector<float>&, const size_t);
 void update_y_buffer(FFT&, Config&);
@@ -52,13 +35,6 @@ void init_buffers(Program&, Config&);
 void init_bars_pre(Program&, Config&);
 
 void init_lines(Program&, Config&);
-
-/*size_t fft_output_size = fft_size/2+1;
-const float d_freq = (float) FS / (float) fft_output_size;
-const float fft_scale = 1.0f/((float)(n_samples/2+1)*32768.0f);
-const float slope = 0.5f;
-const float offset = 1.0f;
-const float gravity = 0.008f;*/
 
 glm::mat4 transformation = glm::ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
 
@@ -162,32 +138,37 @@ int main(){
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 //	glEnable(GL_FRAMEBUFFER_SRGB);
 
-	//Input fifo(config.fifo_file.c_str());
-	Buffer buffer(config.buf_size);
+	std::unique_ptr<Input> input;
 	
 	GLint arg_y = sh_spec.get_attrib("y");
 	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
 	GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
-	
+
+	switch (config.source){
 #ifdef WITH_PULSE
-	bool p_running = true;
-
-	Pulse pulse(Pulse::get_default_sink(), 44);
-
-	std::thread th_pulse = std::thread([&]{
-                while(p_running){
-                        pulse.read(buffer);
-                }
-        });
+	case Source::PULSE:
+		input = make_unique<Pulse>(Pulse::get_default_sink(), 44);
+		break;
 #endif	
+	default:
+		input = make_unique<Fifo>(config.fifo_file, 44);
+	}
 
-	//if (fifo.is_open()){
+	if (input->is_open()){
+		Buffer buffer(config.buf_size);
+
+		bool p_running = true;
+		std::thread th_input = std::thread([&]{
+			while(p_running){
+				input->read(buffer);
+			}
+		});
+
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
 			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
 
-			//fifo.read_fifo(buffer);
 			//dumpBuffer(buffer);
 			fft.calculate(buffer);
 			update_y_buffer(fft, config);
@@ -239,14 +220,12 @@ int main(){
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
-	//}else{
-	//	std::cerr << "Can't open file:" << config.fifo_file << std::endl;
-	//}
 	
-#ifdef WITH_PULSE
-        p_running = false;
-        th_pulse.join();
-#endif
+		p_running = false;
+		th_input.join();
+	}else{
+		std::cerr << "Can't open audio source:" << config.fifo_file << std::endl;
+	}
 
 	// clear buffers
 	glDeleteBuffers(1, &y_buffer);

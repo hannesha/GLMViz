@@ -20,20 +20,11 @@
 
 #pragma once
 
-#include <vector>
-#include <stdint.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-#include "FFT.hpp"
 #include "Buffer.hpp"
 
 class Input {
 	public:
-		Input(const char*);
-		~Input();
-		bool is_open() const;
-		void read_fifo(Buffer&);
-	private:
-		int handle;
+		virtual ~Input() {};
+		virtual bool is_open() const = 0;
+		virtual void read(Buffer&) const = 0;
 };

@@ -23,8 +23,9 @@ if(PULSEAUDIO_FOUND)
         include_directories(${PULSEAUDIO_INCLUDE_DIRS})
         add_definitions(-DWITH_PULSE)
         set(PULSE_LIBS ${PULSE_LIBS} "pulse" "pulse-simple")
+	set(PULSE_FILES "Pulse.cpp")
 endif(PULSEAUDIO_FOUND)
 
-add_executable(Viz GLViz.cpp Program.cpp Shader.cpp FFT.cpp Input.cpp Pulse.cpp Buffer.cpp Config.cpp)
+add_executable(Viz GLViz.cpp Program.cpp Shader.cpp FFT.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp)
 
 target_link_libraries(Viz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLM_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} ${PULSE_LIBS})

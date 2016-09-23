@@ -20,12 +20,10 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <iostream>
-
 #include <string>
 #include <libconfig.h++>
-#include <basedir_fs.h>
+
+enum class Source {FIFO, PULSE};
 
 class Config {
 	public:
@@ -35,6 +33,7 @@ class Config {
 		int w_height = 1024;
 		int w_width = 768;
 		
+		Source source = Source::PULSE;
 		std::string fifo_file = "/tmp/mpd.fifo";
 		int duration = 50;
 		int FS = 44100;

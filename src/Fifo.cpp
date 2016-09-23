@@ -18,32 +18,27 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <unistd.h>
-#include <sstream>
-#include <thread>
-
-#include <iostream>
-
-// Include basic GL utility headers
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-// Include helper files
-#include "Shader.hpp"
-#include "Program.hpp"
-#include "FFT.hpp"
-#include "Input.hpp"
 #include "Fifo.hpp"
-#include "Buffer.hpp"
-#include "Config.hpp"
 
-#ifdef WITH_PULSE
-#include "Pulse.hpp"
-#endif
+#include <fcntl.h>
+#include <unistd.h>
+
+Fifo::Fifo(const std::string& file_name, const size_t nsamples){
+	samples = nsamples;
+	handle = open(file_name.c_str(), O_RDONLY);
+}
+
+Fifo::~Fifo(){
+	close(handle);
+}
+
+bool Fifo::is_open() const {
+	return handle >= 0;
+}
+
+void Fifo::read(Buffer &buffer) const{
+	int16_t buf[samples];
+	int64_t data = ::read(handle, buf, sizeof(buf));
+
+	buffer.write(buf, samples);
+}

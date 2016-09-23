@@ -20,8 +20,9 @@
 
 #include "Pulse.hpp"
 
+#include <pulse/error.h>
+
 Pulse::Pulse(const std::string& device, const size_t nsamples){
-#ifdef WITH_PULSE
 	samples = nsamples;
 	const pa_sample_spec sample_spec = {
 		format : PA_SAMPLE_S16LE,
@@ -38,25 +39,19 @@ Pulse::Pulse(const std::string& device, const size_t nsamples){
         };
 	int error;
 	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
-#endif
 }
 
 Pulse::~Pulse(){
-#ifdef WITH_PULSE
 	pa_simple_free(stream);
-#endif
 }
 
-void Pulse::read(Buffer& buffer){
-#ifdef WITH_PULSE
+void Pulse::read(Buffer& buffer) const{
 	int16_t buf[samples];
-	pa_simple_read(stream, buf, sizeof(buf),NULL);
+	pa_simple_read(stream, buf, sizeof(buf), NULL);
 	buffer.write(buf, samples);
-#endif
 }
 
 
-#ifdef WITH_PULSE
 std::string Pulse::get_default_sink(){	
 	std::string device;
 	pa_mainloop_api *mainloop_api;
@@ -111,4 +106,3 @@ void Pulse::info_cb(pa_context* context, const pa_server_info* info, void* userd
 	//quit mainloop
 	pa_mainloop_quit(data->mainloop, 0);
 }
-#endif
