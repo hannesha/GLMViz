@@ -18,28 +18,40 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
+#include <pulse/simple.h>
+#include <pulse/error.h>
+#include <pulse/pulseaudio.h>
+
+#include <string>
 #include <vector>
-#include <unistd.h>
-#include <sstream>
-#include <thread>
 
-#include <iostream>
-
-// Include basic GL utility headers
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-// Include helper files
-#include "Shader.hpp"
-#include "Program.hpp"
-#include "FFT.hpp"
-#include "Input.hpp"
 #include "Buffer.hpp"
-#include "Config.hpp"
-#include "Pulse.hpp"
+
+
+#ifdef WITH_PULSE
+#pragma message("Pulse support enabled")
+#endif
+
+class Pulse{
+	public:
+		Pulse(const std::string&, const size_t);
+		~Pulse();
+		
+		void read(Buffer&);
+#ifdef WITH_PULSE
+		static std::string get_default_sink();
+		struct usr_data{
+			std::string* device;
+			pa_mainloop* mainloop;
+		};
+#endif
+	private:
+		size_t samples;
+
+#ifdef WITH_PULSE
+		static void info_cb(pa_context*, const pa_server_info*, void*);
+		static void state_cb(pa_context* , void*);
+
+		pa_simple *stream;
+#endif
+};
