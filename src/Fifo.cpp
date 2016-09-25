@@ -38,7 +38,7 @@ bool Fifo::is_open() const {
 
 void Fifo::read(Buffer &buffer) const{
 	int16_t buf[samples];
-	int64_t data = ::read(handle, buf, sizeof(buf));
+	::read(handle, buf, sizeof(buf));
 
 	buffer.write(buf, samples);
 }
