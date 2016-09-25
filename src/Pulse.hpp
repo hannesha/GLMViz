@@ -35,7 +35,7 @@ class Pulse : public Input{
 		Pulse(const std::string&, const size_t);
 		~Pulse();
 		
-		bool is_open() const { return true; };
+		bool is_open() const;
 		void read(Buffer&) const;
 
 		static std::string get_default_sink();

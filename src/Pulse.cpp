@@ -45,6 +45,10 @@ Pulse::~Pulse(){
 	pa_simple_free(stream);
 }
 
+bool Pulse::is_open() const{
+	return stream != nullptr;
+}
+
 void Pulse::read(Buffer& buffer) const{
 	int16_t buf[samples];
 	pa_simple_read(stream, buf, sizeof(buf), NULL);
