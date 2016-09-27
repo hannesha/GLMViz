@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.0.2)
 project (GLMViz)
 
 # Use C++0x
@@ -22,3 +22,6 @@ set(CMAKE_BUILD_TYPE Release)
 
 # add source subdirectory
 add_subdirectory (src)
+
+# install config
+install(FILES config DESTINATION "/etc/GLMViz/")
