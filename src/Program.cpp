@@ -66,7 +66,7 @@ GLint Program::get_attrib(const char* name) const {
 
 void init_bar_shader(Program& sh_bars, Config &cfg){
 	const char* vertex_shader = 
-	#include "shader/bar.vs"
+	#include "shader/bar.vert"
 	;
 	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
 
@@ -75,11 +75,11 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 	const char* fragment_shader;
 	if(cfg.rainbow){
 		fragment_shader =
-		#include "shader/rainbow.fs"
+		#include "shader/rainbow.frag"
 		;
 	}else{
 		fragment_shader =
-		#include "shader/simple.fs"
+		#include "shader/simple.frag"
 		;
 	}
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
@@ -87,7 +87,7 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 	// geometry shader
 	// draw bars
 	const char* geometry_shader = 
-	#include "shader/bar.gs"
+	#include "shader/bar.geom"
 	;
 	Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
 
@@ -102,12 +102,12 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 void init_line_shader(Program& sh_lines){
 	// fragment shader
 	const char* fragment_shader = 
-	#include "shader/simple.fs"
+	#include "shader/simple.frag"
 	;
 	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	const char* vs_lines_code = 
-	#include "shader/lines.vs"
+	#include "shader/lines.vert"
 	;
 	Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 	
@@ -118,7 +118,7 @@ void init_line_shader(Program& sh_lines){
 
 void init_bar_gravity_shader(Program& sh_bar_gravity){
 	const char* vertex_shader = 
-	#include "shader/bar_pre.vs"
+	#include "shader/bar_pre.vert"
 	;
 	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
 	
