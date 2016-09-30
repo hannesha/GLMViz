@@ -24,12 +24,14 @@ float gt(float x, float y){
 }
 
 void main(){
+	// normalize fft output
 	float a_norm = length(a) * fft_scale;
+	// convert fft output into dB and calculate gravity
 	float y = slope * log(a_norm) * lg + offset;
 	float yg = gravity_old - gravity * time_old * time_old;
 
 	// fix shader gravity during track skip
-	y = clamp(y, -1.0, 1.0);
+	y = clamp(y, -0.5, 0.5);
 
 	// elimitate branching using mix
 	v_gravity = mix(gravity_old, y, gt(y, yg));

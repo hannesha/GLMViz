@@ -109,4 +109,8 @@ void Config::read_rgba(const std::string &path, float rgba[]){
 	cfg.lookupValue(path + ".g", rgba[1]);
 	cfg.lookupValue(path + ".b", rgba[2]);
 	cfg.lookupValue(path + ".a", rgba[3]);
+	
+	for(int i = 0; i < 4; i++){
+		rgba[i] = rgba[i]/255;
+	}
 }
