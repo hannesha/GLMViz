@@ -28,33 +28,16 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-void init_x_data(std::vector<float>&, const size_t);
-void update_y_buffer(FFT&, Config&);
-void update_x_buffer(std::vector<float>&);
-void init_buffers(Program&, Config&);
-void init_bars_pre(Program&, Config&);
-
-void init_lines(Program&, Config&);
+// buffer init and update functions
+void update_b_fft(GL::Buffer&, FFT&, Config&);
+void update_x_buffer(GL::Buffer&, Config&);
+void init_bars(GL::VAO&, GL::Buffer&, Program&, Config&);
+void init_bars_pre(GL::VAO&, GL::Buffer&, GL::Buffer&, GL::Buffer&, Program&, Config&);
+void init_lines(GL::VAO&, GL::Buffer&, Program&, Config&);
 
 glm::mat4 transformation = glm::ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
 
 void set_transformation(Program&);
-
-// buffers and the corresponding vectors
-GLuint vao_spec_pre;
-
-GLuint vao_spec;
-
-//const size_t output_size = 100; 
-GLuint y_buffer;
-GLuint x_buffer;
-// transform feedback buffers for gravity
-GLuint fb1, fb2;
-
-// buffers and shaders for dB lines
-GLuint vao_db;
-
-GLuint line_buffer;
 
 const float lines[]  = {
 	-1.0,  0.0, 1.0,  0.0, //   0dB
@@ -72,11 +55,6 @@ const float lines[]  = {
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 } 
-
-void dumpBuffer(Buffer& buffer){
-	auto lock = buffer.lock();
-	std::cout << buffer.v_buffer[0] << " " << buffer.v_buffer[1] << " " << buffer.v_buffer[2] << " " << buffer.v_buffer[3] << std::endl;
-}
 
 int main(){
 	
@@ -115,35 +93,41 @@ int main(){
 	
 	Program sh_spec;
 	Program sh_spec_pre;
-	Program sh_db;
+	Program sh_lines;
 	init_bar_shader(sh_spec, config);
-	init_line_shader(sh_db);
+	init_line_shader(sh_lines);
 	init_bar_gravity_shader(sh_spec_pre);
 	
-	FFT fft(config.fft_size);
 
-	std::vector<float> x_data(config.output_size);
+	// create and initialize bar buffers
+	GL::VAO v_bars;
+	GL::Buffer b_x;
+	update_x_buffer(b_x, config);
+	init_bars(v_bars, b_x, sh_spec, config);
 
-	init_x_data(x_data, config.output_size);
-	init_buffers(sh_spec, config);
-	init_bars_pre(sh_spec_pre, config);
+	// create and initialize precompute buffers
+	GL::VAO v_bars_pre;
+	GL::Buffer b_fft, b_fb1, b_fb2;
+	init_bars_pre(v_bars_pre, b_fft, b_fb1, b_fb2, sh_spec_pre, config);
 
-	update_x_buffer(x_data);
-
-	init_lines(sh_db, config);
+	// initialize dB lines
+	GL::VAO v_lines;
+	GL::Buffer b_lines;
+	init_lines(v_lines, b_lines, sh_lines, config);
 	
 	set_transformation(sh_spec);
-	set_transformation(sh_db);
+	set_transformation(sh_lines);
 	
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-//	glEnable(GL_FRAMEBUFFER_SRGB);
 
 	std::unique_ptr<Input> input;
-	
+
+	// get TF specific attribute locations	
 	GLint arg_y = sh_spec.get_attrib("y");
 	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
 	GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
 
+	// audio source configuration
 	switch (config.source){
 #ifdef WITH_PULSE
 	case Source::PULSE:
@@ -156,6 +140,7 @@ int main(){
 
 	if (input->is_open()){
 		Buffer buffer(config.buf_size);
+		FFT fft(config.fft_size);
 
 		bool p_running = true;
 		std::thread th_input = std::thread([&]{
@@ -169,27 +154,27 @@ int main(){
 		do{
 			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
 
-			//dumpBuffer(buffer);
+			// apply fft and update fft buffer
 			fft.calculate(buffer);
-			update_y_buffer(fft, config);
-			
-			//clear and draw		
+			update_b_fft(b_fft, fft, config);
+					
 			glClear(GL_COLOR_BUFFER_BIT);
 			
 			// render Lines
-			sh_db.use();
-			glBindVertexArray(vao_db);
+			sh_lines.use();
+			v_lines.bind();
 			glDrawArrays(GL_LINES, 0, sizeof(lines) / sizeof(float));
 			
-		
-			glBindVertexArray(vao_spec_pre);
-			glBindBuffer(GL_ARRAY_BUFFER, fb2);			
+			// gravity processing shader
+			v_bars_pre.bind();
+			b_fb2.bind();
+			// set TF attribute pointers
 			glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
 			glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
 
 			sh_spec_pre.use();	
 			// bind fist feedback buffer as TF buffer
-			glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, fb1);
+			b_fb1.tfbind();
 			glBeginTransformFeedback(GL_POINTS);
 			
 			glEnable(GL_RASTERIZER_DISCARD);
@@ -201,13 +186,15 @@ int main(){
 			//undbind both feedback buffers and swap them
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
-			std::swap(fb1,fb2);
-				
+			std::swap(b_fb1.id, b_fb2.id);
+			
+
 			// render bars
 			sh_spec.use();	
-			glBindVertexArray(vao_spec);
+			v_bars.bind();
 			// use second feedback buffer for drawing
-			glBindBuffer(GL_ARRAY_BUFFER, fb2);
+			b_fb2.bind();
+			// reconfigure attribute pointer
 			glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));	
 			glDrawArrays(GL_POINTS, 0, config.output_size);
 
@@ -215,75 +202,51 @@ int main(){
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 			
-			//p.read(v_data);
-			//fft.calculate(v_data);		
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
-	
+
+		// stop Input thread	
 		p_running = false;
 		th_input.join();
 	}else{
 		std::cerr << "Can't open audio source:" << config.fifo_file << std::endl;
 	}
 
-	// clear buffers
-	glDeleteBuffers(1, &y_buffer);
-	glDeleteBuffers(1, &x_buffer);
-	glDeleteBuffers(1, &line_buffer);
-	glDeleteBuffers(1, &fb1);
-	glDeleteBuffers(1, &fb2);
-	glDeleteVertexArrays(1, &vao_db);
-	glDeleteVertexArrays(1, &vao_spec);
-	glDeleteVertexArrays(1, &vao_spec_pre);
-
 	glfwTerminate();
-
 	return 0;
 }
 
-// update y_data buffer
-void update_y_buffer(FFT& fft, Config &cfg){
-	glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
+void update_b_fft(GL::Buffer& b_fft, FFT& fft, Config& cfg){
+	//glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
+	b_fft.bind();
 	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
-void update_x_buffer(std::vector<float>& data){
-	glBindBuffer(GL_ARRAY_BUFFER, x_buffer);
-	glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_DYNAMIC_DRAW);
+void update_x_buffer(GL::Buffer& b_x, Config& cfg){
+	std::vector<float> x_data(cfg.output_size);
+	float size = (float)cfg.output_size;
+	
+	// generate x positions ranging from -1 to 1
+	for(unsigned int i = 0; i < size; i++){
+		x_data[i] = (((float) i + 0.5) - (size * 0.5)) / (size * 0.5);
+	}
+
+	b_x.bind();
+	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
 }
 
-void init_buffers(Program& sh_spec, Config &cfg){
-	// generate spectrum VAOs
-	glGenVertexArrays(1, &vao_spec);
+void init_bars(GL::VAO& v_bars, GL::Buffer& b_x, Program& sh_spec, Config& cfg){
+	v_bars.bind();
 
-	// init ping-pong feedback buffers
-	glGenBuffers(1, &fb1);
-	glGenBuffers(1, &fb2);
-	glBindBuffer(GL_ARRAY_BUFFER, fb1);
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 *sizeof(float), 0, GL_DYNAMIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, fb2);
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 *sizeof(float), 0, GL_DYNAMIC_DRAW);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, fb2);
-	
-	/* Post processing shader */
-	glBindVertexArray(vao_spec);
-	// X position buffer
-	glGenBuffers(1, &x_buffer);
-
-	glBindBuffer(GL_ARRAY_BUFFER, x_buffer);
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * sizeof(float), 0, GL_DYNAMIC_DRAW);
-
+	b_x.bind();
+	// set x position data in bar VAO
 	GLint arg_x_data = sh_spec.get_attrib("x");
 	glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_x_data);
 	
-	
-	glBindBuffer(GL_ARRAY_BUFFER, fb2);
+	// enable the preprocessed y attribute
 	GLint arg_y = sh_spec.get_attrib("y");
-	// use third float of TF 
-	//glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
 	glEnableVertexAttribArray(arg_y);	
 
 	sh_spec.use();
@@ -302,33 +265,33 @@ void init_buffers(Program& sh_spec, Config &cfg){
 	glUniform1f(i_gradient, cfg.gradient);
 }
 
-void init_bars_pre(Program& sh_bars_pre, Config& cfg){
-	glGenVertexArrays(1, &vao_spec_pre);
-
+void init_bars_pre(GL::VAO& v_bars_pre, GL::Buffer& b_fft, GL::Buffer& b_fb1, GL::Buffer& b_fb2, Program& sh_bars_pre, Config& cfg){
 	/* Pre compute shader */
-	glBindVertexArray(vao_spec_pre);
+	v_bars_pre.bind();
 	
-	// generate fft_data buffer
-	glGenBuffers(1, &y_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * sizeof(fftw_complex), 0, GL_DYNAMIC_DRAW);
+	// init ping-pong feedback buffers
+	b_fb1.bind();
+	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+
+	b_fb2.bind();
+	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+
+	b_fft.bind();
 	// set fft_data buffer as vec2 input for the shader
 	GLint arg_fft_output = sh_bars_pre.get_attrib("a");
 	glVertexAttribPointer(arg_fft_output, 2, GL_DOUBLE, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_fft_output);
-	
+
+	// enable precompute shader attributes	
 	GLint arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
-	// use first float of TF
-	//glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)0);
 	glEnableVertexAttribArray(arg_gravity_old);
 
 	GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
-	// use second float of TF
-	//glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
 	glEnableVertexAttribArray(arg_time_old);
 
+
 	sh_bars_pre.use();
-	// set Pre compute shader uniforms
+	// set precompute shader uniforms
 	GLint i_fft_scale = sh_bars_pre.get_uniform("fft_scale");
 	glUniform1f(i_fft_scale, cfg.fft_scale);	
 
@@ -342,21 +305,19 @@ void init_bars_pre(Program& sh_bars_pre, Config& cfg){
 	glUniform1f(i_gravity, cfg.gravity / cfg.fps);	
 }
 
-void init_lines(Program& sh_lines, Config &cfg){
-	glGenVertexArrays(1, &vao_db);
-	
-	glBindVertexArray(vao_db);
-	
-	glGenBuffers(1, &line_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, line_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(lines), lines, GL_DYNAMIC_DRAW);
+void init_lines(GL::VAO& v_lines, GL::Buffer& b_lines, Program& sh_lines, Config& cfg){
+	v_lines.bind();
+
+	b_lines.bind();
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lines), lines, GL_STATIC_DRAW);
 	
 	GLint arg_line_vert = sh_lines.get_attrib("pos");
 	glVertexAttribPointer(arg_line_vert, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_line_vert);
 
+
 	sh_lines.use();
-	
+	// set dB line specific arguments
 	GLint i_slope = sh_lines.get_uniform("slope");
 	glUniform1f(i_slope, cfg.slope);
 	
@@ -372,11 +333,4 @@ void set_transformation(Program& sh){
 	
 	GLint i_trans = sh.get_uniform("trans");
 	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
-}
-
-void init_x_data(std::vector<float>& vec, const size_t size){
-	vec.resize(size);
-	for(unsigned int i = 0; i < size; i++){
-		vec[i] = (((float) i + 0.5) - ((float)size * 0.5)) / ((float)size * 0.5);
-	}
 }

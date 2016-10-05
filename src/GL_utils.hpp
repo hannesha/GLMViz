@@ -18,33 +18,27 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <unistd.h>
-#include <sstream>
-#include <thread>
+#pragma once
 
-#include <iostream>
-
-// Include basic GL utility headers
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
-// Include helper files
-#include "Shader.hpp"
-#include "Program.hpp"
-#include "GL_utils.hpp"
-#include "FFT.hpp"
-#include "Input.hpp"
-#include "Fifo.hpp"
-#include "Buffer.hpp"
-#include "Config.hpp"
+namespace GL {
+	// VBO RAII wrapper
+	struct Buffer{
+			inline Buffer() { glGenBuffers(1, &id); };
+			inline ~Buffer() { glDeleteBuffers(1, &id); };
 
-#ifdef WITH_PULSE
-#include "Pulse.hpp"
-#endif
+			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
+			inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
+			GLuint id;
+	};
+
+	// VAO RAII wrapper
+	struct VAO{
+			inline VAO() { glGenVertexArrays(1, &id); };
+			inline ~VAO() { glDeleteVertexArrays(1, &id); };
+
+			inline void bind() { glBindVertexArray(id); };
+			GLuint id;
+	};
+}
