@@ -21,6 +21,7 @@
 #include "GLViz.hpp"
 
 #include <memory>
+#include <stdexcept>
 
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
@@ -120,28 +121,30 @@ int main(){
 	
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	std::unique_ptr<Input> input;
 
 	// get TF specific attribute locations	
 	GLint arg_y = sh_spec.get_attrib("y");
 	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
 	GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
+	
+	try{
+		Input::Ptr input;
 
-	// audio source configuration
-	switch (config.source){
+		// audio source configuration
+		switch (config.source){
 #ifdef WITH_PULSE
-	case Source::PULSE:
-		input = make_unique<Pulse>(Pulse::get_default_sink(), 44);
-		break;
+		case Source::PULSE:
+			input = make_unique<Pulse>(Pulse::get_default_sink(), 44);
+			break;
 #endif	
-	default:
-		input = make_unique<Fifo>(config.fifo_file, 44);
-	}
+		default:
+			input = make_unique<Fifo>(config.fifo_file, 44);
+		}
 
-	if (input->is_open()){
 		Buffer buffer(config.buf_size);
 		FFT fft(config.fft_size);
 
+		// start input thread
 		bool p_running = true;
 		std::thread th_input = std::thread([&]{
 			while(p_running){
@@ -209,8 +212,9 @@ int main(){
 		// stop Input thread	
 		p_running = false;
 		th_input.join();
-	}else{
-		std::cerr << "Can't open audio source:" << config.fifo_file << std::endl;
+
+	}catch(std::runtime_error& e){
+		std::cerr << e.what() << std::endl;
 	}
 
 	glfwTerminate();

@@ -20,7 +20,9 @@
 
 #include "Pulse.hpp"
 
-#include <pulse/error.h>
+//#include <pulse/error.h>
+#include <stdexcept>
+#include <sstream>
 
 Pulse::Pulse(const std::string& device, const size_t nsamples){
 	samples = nsamples;
@@ -39,6 +41,12 @@ Pulse::Pulse(const std::string& device, const size_t nsamples){
         };
 	int error;
 	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
+	
+	if(stream == nullptr){
+		std::stringstream msg;
+		msg << "PulseAudio initialization failed with error: " << pa_strerror(error) << " !";
+		throw std::runtime_error(msg.str());
+	}
 }
 
 Pulse::~Pulse(){

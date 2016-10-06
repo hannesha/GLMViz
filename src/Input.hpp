@@ -21,9 +21,11 @@
 #pragma once
 
 #include "Buffer.hpp"
+#include <memory>
 
 class Input {
 	public:
+		typedef std::unique_ptr<Input> Ptr;
 		virtual ~Input() {};
 		virtual bool is_open() const = 0;
 		virtual void read(Buffer&) const = 0;

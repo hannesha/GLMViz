@@ -22,10 +22,13 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdexcept>
 
 Fifo::Fifo(const std::string& file_name, const size_t nsamples){
 	samples = nsamples;
 	handle = open(file_name.c_str(), O_RDONLY);
+
+	if(handle < 0) throw std::runtime_error("Unable to open FIFO file: " + file_name + " !");
 }
 
 Fifo::~Fifo(){

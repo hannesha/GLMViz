@@ -36,7 +36,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Include helper files
-#include "Shader.hpp"
+//#include "Shader.hpp"
 #include "Program.hpp"
 #include "GL_utils.hpp"
 #include "FFT.hpp"
