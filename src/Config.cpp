@@ -84,7 +84,7 @@ Config::Config(){
 		
 		std::string color_path = "top_color";
 		read_rgba(color_path, top_color);
-		color_path = "botcolor";
+		color_path = "bot_color";
 		read_rgba(color_path, bot_color);
 		color_path = "line_color";
 		read_rgba(color_path, line_color);
