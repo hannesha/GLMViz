@@ -46,7 +46,9 @@ Config::Config(){
 
 		std::string str_source;
 		cfg.lookupValue("source", str_source);
-		if(str_source == "Pulse" || str_source == "pulse"){
+		// convert string to lowercase and evaluate source
+		std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
+		if(str_source == "pulse"){
 			source = Source::PULSE;
 		}else{
 			source = Source::FIFO;
