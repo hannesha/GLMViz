@@ -58,76 +58,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 } 
 
 int main(){
-	
-	// init GLFW
-	if(!glfwInit()){
-		fprintf(stderr, "GLFW init failed!\n");
-		return -1;
-	}
-	
-	Config config;
-		
-	glfwWindowHint(GLFW_SAMPLES, config.w_aa);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	
-	std::stringstream title;
-	title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)" ;
-	
-	GLFWwindow* window;
-	window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
-	if( window == NULL ){
-		fprintf(stderr, "GLFW Window init failed!\n");
-		glfwTerminate();
-		return -1;
-	}
 
-	glfwMakeContextCurrent(window); // init GLEW
-	glewExperimental = true;
-
-	if(glewInit() != GLEW_OK){
-		fprintf(stderr, "GLEW init failed!\n");
-		return -1;	
-	}
-	
-	Program sh_spec;
-	Program sh_spec_pre;
-	Program sh_lines;
-	init_bar_shader(sh_spec, config);
-	init_line_shader(sh_lines);
-	init_bar_gravity_shader(sh_spec_pre);
-	
-
-	// create and initialize bar buffers
-	GL::VAO v_bars;
-	GL::Buffer b_x;
-	update_x_buffer(b_x, config);
-	init_bars(v_bars, b_x, sh_spec, config);
-
-	// create and initialize precompute buffers
-	GL::VAO v_bars_pre;
-	GL::Buffer b_fft, b_fb1, b_fb2;
-	init_bars_pre(v_bars_pre, b_fft, b_fb1, b_fb2, sh_spec_pre, config);
-
-	// initialize dB lines
-	GL::VAO v_lines;
-	GL::Buffer b_lines;
-	init_lines(v_lines, b_lines, sh_lines, config);
-	
-	set_transformation(sh_spec);
-	set_transformation(sh_lines);
-	
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-
-	// get TF specific attribute locations	
-	GLint arg_y = sh_spec.get_attrib("y");
-	GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
-	GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
-	
 	try{
+		Config config;
+			
 		Input::Ptr input;
 
 		// audio source configuration
@@ -141,6 +75,71 @@ int main(){
 			input = make_unique<Fifo>(config.fifo_file, 44);
 		}
 
+		// init GLFW
+		if(!glfwInit()) throw std::runtime_error("GLFW init failed!");
+		
+		glfwWindowHint(GLFW_SAMPLES, config.w_aa);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		
+		std::stringstream title;
+		title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)" ;
+		
+		// create GLFW window		
+		GLFWwindow* window;
+		window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
+		if( window == NULL ){
+			glfwTerminate();
+			throw std::runtime_error("Failed to create GLFW Window!");
+		}
+
+		glfwMakeContextCurrent(window); 
+
+		// init GLEW
+		glewExperimental = true;
+		if(glewInit() != GLEW_OK){
+			glfwTerminate();
+			throw std::runtime_error("GLEW init failed!");
+		}
+		
+		// create shaders
+		Program sh_spec;
+		Program sh_spec_pre;
+		Program sh_lines;
+		init_bar_shader(sh_spec, config);
+		init_line_shader(sh_lines);
+		init_bar_gravity_shader(sh_spec_pre);
+		
+		// create and initialize bar buffers
+		GL::VAO v_bars;
+		GL::Buffer b_x;
+		update_x_buffer(b_x, config);
+		init_bars(v_bars, b_x, sh_spec, config);
+
+		// create and initialize precompute buffers
+		GL::VAO v_bars_pre;
+		GL::Buffer b_fft, b_fb1, b_fb2;
+		init_bars_pre(v_bars_pre, b_fft, b_fb1, b_fb2, sh_spec_pre, config);
+
+		// initialize dB lines
+		GL::VAO v_lines;
+		GL::Buffer b_lines;
+		init_lines(v_lines, b_lines, sh_lines, config);
+		
+		set_transformation(sh_spec);
+		set_transformation(sh_lines);
+		
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+
+		// get TF specific attribute locations	
+		GLint arg_y = sh_spec.get_attrib("y");
+		GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
+		GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
+	
+		// create audio buffer and FFT
 		Buffer buffer(config.buf_size);
 		FFT fft(config.fft_size);
 
@@ -213,11 +212,12 @@ int main(){
 		p_running = false;
 		th_input.join();
 
+		glfwTerminate();
 	}catch(std::runtime_error& e){
 		std::cerr << e.what() << std::endl;
+		return 1;
 	}
 
-	glfwTerminate();
 	return 0;
 }
 
