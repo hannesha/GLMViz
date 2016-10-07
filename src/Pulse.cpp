@@ -24,11 +24,11 @@
 #include <stdexcept>
 #include <sstream>
 
-Pulse::Pulse(const std::string& device, const size_t nsamples){
+Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples){
 	samples = nsamples;
-	const pa_sample_spec sample_spec = {
+	pa_sample_spec sample_spec = {
 		format : PA_SAMPLE_S16LE,
-		rate :  44100,
+		rate :  (uint32_t)FS,
 		channels : 1
 	};
 

@@ -68,7 +68,7 @@ int main(){
 		switch (config.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(Pulse::get_default_sink(), 44);
+			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, 44);
 			break;
 #endif	
 		default:

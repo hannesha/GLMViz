@@ -2,7 +2,7 @@
 
 Window = { AA = 4; }; //window options
 
-source = "pulse";
+source = "PULSE";
 fifo_file = "/tmp/mpd.fifo";
 
 output_size = 100L; //number of displayed bars
@@ -16,6 +16,7 @@ gradient = 1.0;
 bar_width = 0.75;
 gravity = 0.15;
 
+FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
 
 max_db = 0.0;
@@ -25,9 +26,9 @@ top_color = { 	r = 211.0;
 		g = 38.0;
 		b = 46.0; };
 
-bot_color = {	r = 35.0;
-		g = 36.0;
-		b = 27.0; };
+bot_color = {	r = 10.0;
+		g = 10.0;
+		b = 10.0; };
 
 rainbow = False;
 //colors represent the frequency component of the rainbow

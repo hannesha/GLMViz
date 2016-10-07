@@ -36,7 +36,7 @@ class Config {
 		Source source = Source::PULSE;
 		std::string fifo_file = "/tmp/mpd.fifo";
 		int duration = 50;
-		int FS = 44100;
+		long long FS = 44100;
 		int fps = 60;
 		long long fft_size = 2<<12;
 		long long output_size = 100;

@@ -32,7 +32,7 @@
 
 class Pulse : public Input{
 	public:
-		Pulse(const std::string&, const size_t);
+		Pulse(const std::string&, const size_t, const size_t);
 		~Pulse();
 		
 		bool is_open() const;
