@@ -37,12 +37,12 @@ class FFT {
 
 		void calculate(Buffer&);
 		size_t get_size() const;
-		fftw_complex* output;
+		fftwf_complex* output;
 	private:
-		double* input;
-		fftw_plan plan;
+		float* input;
+		fftwf_plan plan;
 		size_t size;
 		
 		void calculate_window(const size_t);
-		std::vector<double> window;
+		std::vector<float> window;
 };

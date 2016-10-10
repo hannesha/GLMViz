@@ -23,15 +23,15 @@
 FFT::FFT(const size_t fft_size){
 	size = fft_size;
 	size_t output_size = size/2+1;
-	input = static_cast<double *>(fftw_malloc(sizeof(double) * size));
-	output = static_cast<fftw_complex *>(fftw_malloc(sizeof(fftw_complex) * output_size));
-	plan = fftw_plan_dft_r2c_1d(size, input, output, FFTW_ESTIMATE);
+	input = static_cast<float *>(fftwf_malloc(sizeof(float) * size));
+	output = static_cast<fftwf_complex *>(fftwf_malloc(sizeof(fftwf_complex) * output_size));
+	plan = fftwf_plan_dft_r2c_1d(size, input, output, FFTW_ESTIMATE);
 }
 
 FFT::~FFT(){
-	fftw_free(output);	
-	fftw_free(input);
-	fftw_destroy_plan(plan);
+	fftwf_free(output);
+	fftwf_free(input);
+	fftwf_destroy_plan(plan);
 }
 
 void FFT::calculate(Buffer &buffer){
@@ -60,7 +60,7 @@ void FFT::calculate(Buffer &buffer){
 		}
 		
 		// execute fft
-		fftw_execute(plan);
+		fftwf_execute(plan);
 	}
 }
 
@@ -70,9 +70,9 @@ size_t FFT::get_size() const {
 
 void FFT::calculate_window(const size_t w_size){
 	window.resize(w_size);
-	double N_1 = 1.0 / (double)(w_size-1);
+	float N_1 = 1.0 / (float)(w_size-1);
 	
 	for(unsigned int i = 0; i < w_size; i++){
-		window[i] = 1.0 - cos(2.0 * M_PI * (double)i * N_1);
+		window[i] = 1.0 - cos(2.0 * M_PI * (float)i * N_1);
 	}
 }

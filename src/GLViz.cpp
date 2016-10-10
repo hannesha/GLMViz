@@ -68,11 +68,11 @@ int main(){
 		switch (config.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, 44);
+			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, 441);
 			break;
 #endif	
 		default:
-			input = make_unique<Fifo>(config.fifo_file, 44);
+			input = make_unique<Fifo>(config.fifo_file, 441);
 		}
 
 		// init GLFW
@@ -224,7 +224,7 @@ int main(){
 void update_b_fft(GL::Buffer& b_fft, FFT& fft, Config& cfg){
 	//glBindBuffer(GL_ARRAY_BUFFER, y_buffer);
 	b_fft.bind();
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * sizeof(fftw_complex), fft.output, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * sizeof(fftwf_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
 void update_x_buffer(GL::Buffer& b_x, Config& cfg){
@@ -283,7 +283,7 @@ void init_bars_pre(GL::VAO& v_bars_pre, GL::Buffer& b_fft, GL::Buffer& b_fb1, GL
 	b_fft.bind();
 	// set fft_data buffer as vec2 input for the shader
 	GLint arg_fft_output = sh_bars_pre.get_attrib("a");
-	glVertexAttribPointer(arg_fft_output, 2, GL_DOUBLE, GL_FALSE, 0, nullptr);
+	glVertexAttribPointer(arg_fft_output, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_fft_output);
 
 	// enable precompute shader attributes	
