@@ -108,7 +108,7 @@ void Pulse::state_cb(pa_context* context, void* userdata){
 
 void Pulse::info_cb(pa_context* context, const pa_server_info* info, void* userdata){
 	// recast userdata struct
-	struct Pulse::usr_data *data = static_cast<struct Pulse::usr_data*>(userdata);
+	struct Pulse::usr_data *data = reinterpret_cast<struct Pulse::usr_data*>(userdata);
 	//get default sink name
 	*(data->device) = std::string(info->default_sink_name);
 

@@ -23,8 +23,8 @@
 FFT::FFT(const size_t fft_size){
 	size = fft_size;
 	size_t output_size = size/2+1;
-	input = static_cast<float *>(fftwf_malloc(sizeof(float) * size));
-	output = static_cast<fftwf_complex *>(fftwf_malloc(sizeof(fftwf_complex) * output_size));
+	input = reinterpret_cast<float*>(fftwf_malloc(sizeof(float) * size));
+	output = reinterpret_cast<fftwf_complex*>(fftwf_malloc(sizeof(fftwf_complex) * output_size));
 	plan = fftwf_plan_dft_r2c_1d(size, input, output, FFTW_ESTIMATE);
 }
 
