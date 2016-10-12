@@ -140,7 +140,7 @@ int main(){
 		GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
 	
 		// create audio buffer and FFT
-		Buffer buffer(config.buf_size);
+		Buffer<int16_t> buffer(config.buf_size);
 		FFT fft(config.fft_size);
 
 		// start input thread

@@ -39,7 +39,7 @@ bool Fifo::is_open() const {
 	return handle >= 0;
 }
 
-void Fifo::read(Buffer& buffer) const{
+void Fifo::read(Buffer<int16_t>& buffer) const{
 	int16_t buf[samples];
 	::read(handle, buf, sizeof(buf));
 

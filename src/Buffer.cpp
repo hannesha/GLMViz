@@ -20,20 +20,25 @@
 
 #include "Buffer.hpp"
 
-Buffer::Buffer(const size_t size){
+template<typename T>
+Buffer<T>::Buffer(const size_t size){
 	v_buffer.resize(size);
 	this->size = size;
 	new_data = true;
 }
 
-std::unique_lock<std::mutex> Buffer::lock(){
+template<typename T>
+std::unique_lock<std::mutex> Buffer<T>::lock(){
 	return std::unique_lock<std::mutex>(m);
 }
 
-void Buffer::write(int16_t buf[], const size_t n){
+template<typename T>
+void Buffer<T>::write(T buf[], const size_t n){
 	auto lock = this->lock();
 	new_data = true;
 	
 	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + n);
 	v_buffer.insert(v_buffer.end(), buf, buf + n);
 }
+
+template class Buffer<int16_t>;

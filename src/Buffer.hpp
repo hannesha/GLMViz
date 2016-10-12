@@ -24,16 +24,17 @@
 #include <stdint.h>
 #include <mutex>
 
+template<typename T>
 class Buffer {
 	public:
 		Buffer(const size_t);
 
-		std::vector<int16_t> v_buffer;
+		std::vector<T> v_buffer;
 		bool new_data;
 		size_t size;
 
 		std::unique_lock<std::mutex> lock();
-		void write(int16_t buf[], const size_t);
+		void write(T buf[], const size_t);
 	private:
 		std::mutex m;
 };

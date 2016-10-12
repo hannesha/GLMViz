@@ -35,8 +35,8 @@ class FFT {
 		FFT(const size_t);
 		~FFT();
 
-		void calculate(Buffer&);
-		size_t get_size() const;
+		template<typename T> void calculate(Buffer<T>&);
+		
 		fftwf_complex* output;
 	private:
 		float* input;

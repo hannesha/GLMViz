@@ -36,7 +36,7 @@ class Pulse : public Input{
 		~Pulse();
 		
 		bool is_open() const;
-		void read(Buffer&) const;
+		void read(Buffer<int16_t>&) const;
 
 		static std::string get_default_sink();
 		struct usr_data{

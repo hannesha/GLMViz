@@ -30,7 +30,7 @@ class Fifo : public Input{
 		Fifo(const std::string&, const size_t);
 		~Fifo();
 		bool is_open() const;
-		void read(Buffer&) const;
+		void read(Buffer<int16_t>&) const;
 	private:
 		int handle;
 		size_t samples;

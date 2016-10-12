@@ -34,7 +34,8 @@ FFT::~FFT(){
 	fftwf_destroy_plan(plan);
 }
 
-void FFT::calculate(Buffer &buffer){
+template<typename T>
+void FFT::calculate(Buffer<T>& buffer){
 	// find smallest value for window function
 	size_t window_size = std::min(size, buffer.size);
 		
@@ -49,7 +50,7 @@ void FFT::calculate(Buffer &buffer){
 		unsigned int i;
 		for(i = 0; i < window_size; i++){
 			// apply hann window with corrected factors (a * 2)
-			input[i] = (float) buffer.v_buffer[i] * window[i];
+			input[i] = static_cast<float>(buffer.v_buffer[i]) * window[i];
 		}
 		
 		lock.unlock();
@@ -64,10 +65,6 @@ void FFT::calculate(Buffer &buffer){
 	}
 }
 
-size_t FFT::get_size() const {
-	return size;
-}
-
 void FFT::calculate_window(const size_t w_size){
 	window.resize(w_size);
 	float N_1 = 1.0 / (float)(w_size-1);
@@ -76,3 +73,5 @@ void FFT::calculate_window(const size_t w_size){
 		window[i] = 1.0 - cos(2.0 * M_PI * (float)i * N_1);
 	}
 }
+
+template void FFT::calculate(Buffer<int16_t>&);

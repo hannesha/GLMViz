@@ -57,7 +57,7 @@ bool Pulse::is_open() const{
 	return stream != nullptr;
 }
 
-void Pulse::read(Buffer& buffer) const{
+void Pulse::read(Buffer<int16_t>& buffer) const{
 	int16_t buf[samples];
 	pa_simple_read(stream, buf, sizeof(buf), NULL);
 	buffer.write(buf, samples);
