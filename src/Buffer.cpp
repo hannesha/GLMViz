@@ -19,9 +19,13 @@
  */
 
 #include "Buffer.hpp"
+#include <type_traits>
+#include <algorithm>
 
 template<typename T>
 Buffer<T>::Buffer(const size_t size){
+	static_assert(std::is_arithmetic<T>::value, "Buffer<T> only supports arithmetic types!");
+
 	v_buffer.resize(size);
 	this->size = size;
 	new_data = true;
@@ -37,8 +41,10 @@ void Buffer<T>::write(T buf[], const size_t n){
 	auto lock = this->lock();
 	new_data = true;
 	
-	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + n);
-	v_buffer.insert(v_buffer.end(), buf, buf + n);
+	// limit data to write
+	size_t length = std::min(n, size);
+	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + length);
+	v_buffer.insert(v_buffer.end(), buf, buf + length);
 }
 
 template class Buffer<int16_t>;
