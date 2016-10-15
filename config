@@ -22,21 +22,11 @@ fft_size = 8192L; // 2^13
 max_db = 0.0;
 min_db = -80.0;
 
-top_color = { 	r = 211.0; 
-		g = 38.0;
-		b = 46.0; };
-
-bot_color = {	r = 10.0;
-		g = 10.0;
-		b = 10.0; };
+top_color = "D3262E";
+bot_color = "0A0A0A";
+line_color = "46484B";
 
 rainbow = False;
 //colors represent the frequency component of the rainbow
-/*top_color = { r = 510.0; 
-		g = 510.0;
-		b = 510.0;
-	};
-bot_color = {	r = 0.0;
-		g = 0.0;
-		b = 0.0;
-	};*/
+//top_color = "FFFFFF";
+//bot_color = "000000";

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
+#include <stdexcept>
 
 Config::Config(){
 	std::string file;
@@ -107,10 +108,24 @@ Config::Config(){
 }
 
 void Config::read_rgba(const std::string &path, float rgba[]){
-	cfg.lookupValue(path + ".r", rgba[0]);
-	cfg.lookupValue(path + ".g", rgba[1]);
-	cfg.lookupValue(path + ".b", rgba[2]);
-	cfg.lookupValue(path + ".a", rgba[3]);
+	std::string color;
+	size_t pos = 0;
+	cfg.lookupValue(path, color);
+
+	try{	
+		// remove # character
+		if(color.at(0) == '#') pos = 1;
+
+		int value = std::stoi(color, &pos, 16);
+		// calculate rbg bytes
+		rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
+		rgba[1] = static_cast<float>((value / 0x100) % 0x100);	
+		rgba[2] = static_cast<float>(value % 0x100);
+	}catch(std::invalid_argument& e){
+		std::cerr << "Unable to parse color of setting: " << path << std::endl;
+	}catch(std::out_of_range& e){
+		// ignore empty strings
+	}
 	
 	for(int i = 0; i < 4; i++){
 		rgba[i] = rgba[i]/255;
