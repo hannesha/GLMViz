@@ -24,7 +24,8 @@
 
 namespace GL {
 	// VBO RAII wrapper
-	struct Buffer{
+	class Buffer{
+		public:
 			inline Buffer() { glGenBuffers(1, &id); };
 			inline ~Buffer() { glDeleteBuffers(1, &id); };
 
@@ -34,11 +35,25 @@ namespace GL {
 	};
 
 	// VAO RAII wrapper
-	struct VAO{
+	class VAO{
+		public:
 			inline VAO() { glGenVertexArrays(1, &id); };
 			inline ~VAO() { glDeleteVertexArrays(1, &id); };
 
 			inline void bind() { glBindVertexArray(id); };
+			GLuint id;
+	};
+
+	// Shader RAII wrapper
+	class Shader {
+		public:
+			inline Shader(const char* code, GLuint type){
+				id = glCreateShader(type);
+				glShaderSource(id, 1, &code, nullptr);
+				glCompileShader(id);
+			};
+			inline ~Shader(){ glDeleteShader(id); };
+
 			GLuint id;
 	};
 }

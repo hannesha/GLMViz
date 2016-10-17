@@ -22,17 +22,17 @@
 
 #include <GL/glew.h>
 #include <vector>
-#include "Shader.hpp"
+#include "GL_utils.hpp"
 #include "Config.hpp"
 
 class Program {
 	public:
 		Program();
 		~Program();
-		void attach_shader(const Shader& s);
+		void attach_shader(const GL::Shader& s);
 		void link();
 		void link_TF(const size_t, const char**);
-		inline void use(){glUseProgram(program_id);};
+		inline void use(){ glUseProgram(program_id); };
 		GLuint get_id() const;
 		GLint get_uniform(const char*) const;
 		GLint get_attrib(const char*) const;

@@ -28,9 +28,9 @@ Program::~Program(){
 	glDeleteProgram(program_id);
 }
 
-void Program::attach_shader(const Shader& s){
-	glAttachShader(program_id, s.get_shader());
-	shaders.push_back(s.get_shader());
+void Program::attach_shader(const GL::Shader& s){
+	glAttachShader(program_id, s.id);
+	shaders.push_back(s.id);
 }
 
 void Program::link(){
@@ -68,7 +68,7 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 	const char* vertex_shader = 
 	#include "shader/bar.vert"
 	;
-	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
+	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
 
 
 	// fragment shader
@@ -82,14 +82,14 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 		#include "shader/simple.frag"
 		;
 	}
-	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
+	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	// geometry shader
 	// draw bars
 	const char* geometry_shader = 
 	#include "shader/bar.geom"
 	;
-	Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
+	GL::Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
 
 	// link shaders
 	sh_bars.attach_shader(fs);
@@ -104,12 +104,12 @@ void init_line_shader(Program& sh_lines){
 	const char* fragment_shader = 
 	#include "shader/simple.frag"
 	;
-	Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
+	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
 	
 	const char* vs_lines_code = 
 	#include "shader/lines.vert"
 	;
-	Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
+	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 	
 	sh_lines.attach_shader(fs);
 	sh_lines.attach_shader(vs_lines);
@@ -120,7 +120,7 @@ void init_bar_gravity_shader(Program& sh_bar_gravity){
 	const char* vertex_shader = 
 	#include "shader/bar_pre.vert"
 	;
-	Shader vs(vertex_shader, GL_VERTEX_SHADER);	
+	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
 	
 	sh_bar_gravity.attach_shader(vs);
 	
