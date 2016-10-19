@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <chrono>
 
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
@@ -70,7 +71,7 @@ int main(){
 		case Source::PULSE:
 			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, 441);
 			break;
-#endif	
+#endif
 		default:
 			input = make_unique<Fifo>(config.fifo_file, 441);
 		}
@@ -130,7 +131,7 @@ int main(){
 		GL::VAO v_lines;
 		GL::Buffer b_lines;
 		init_lines(v_lines, b_lines, sh_lines, config);
-		
+
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// get TF specific attribute locations	
@@ -153,14 +154,16 @@ int main(){
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
-			std::thread th_fps = std::thread([&]{usleep(1000000 / config.fps);});
+			std::thread th_fps = std::thread([&]{
+				std::this_thread::sleep_for(std::chrono::milliseconds(1000 / config.fps));
+			});
 
 			// apply fft and update fft buffer
 			fft.calculate(buffer);
 			update_b_fft(b_fft, fft, config);
-					
+
 			glClear(GL_COLOR_BUFFER_BIT);
-			
+
 			if(config.draw_dB_lines) render_lines(v_lines, sh_lines);
 
 			// gravity processing shader
@@ -174,7 +177,7 @@ int main(){
 			// bind fist feedback buffer as TF buffer
 			b_fb1.tfbind();
 			glBeginTransformFeedback(GL_POINTS);
-			
+
 			glEnable(GL_RASTERIZER_DISCARD);
 			glDrawArrays(GL_POINTS, 0, config.output_size);
 			glDisable(GL_RASTERIZER_DISCARD);
@@ -185,7 +188,6 @@ int main(){
 			glBindBuffer(GL_ARRAY_BUFFER, 0);
 			glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
 			std::swap(b_fb1.id, b_fb2.id);
-			
 
 			// render bars
 			sh_spec.use();	
@@ -193,13 +195,13 @@ int main(){
 			// use second feedback buffer for drawing
 			b_fb2.bind();
 			// reconfigure attribute pointer
-			glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));	
+			glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
 			glDrawArrays(GL_POINTS, 0, config.output_size);
 
 			// Swap buffers
 			glfwSwapBuffers(window);
 			glfwPollEvents();
-			
+
 			th_fps.join();
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
