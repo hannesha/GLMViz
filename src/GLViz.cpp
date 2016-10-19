@@ -30,17 +30,18 @@ std::unique_ptr<T> make_unique(Args&&... args)
 }
 
 // buffer init and update functions
+void render_lines(GL::VAO&, Program&);
 void update_b_fft(GL::Buffer&, FFT&, Config&);
 void update_x_buffer(GL::Buffer&, Config&);
 void init_bars(GL::VAO&, GL::Buffer&, Program&, Config&);
 void init_bars_pre(GL::VAO&, GL::Buffer&, GL::Buffer&, GL::Buffer&, Program&, Config&);
 void init_lines(GL::VAO&, GL::Buffer&, Program&, Config&);
 
+// use default transformation
 glm::mat4 transformation = glm::ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
-
 void set_transformation(Program&);
 
-const float lines[]  = {
+const float lines[] = {
 	-1.0,  0.0, 1.0,  0.0, //   0dB
 	-1.0, -0.5, 1.0, -0.5, // -10dB
 	-1.0, -1.0, 1.0, -1.0, // -20dB
@@ -58,10 +59,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 } 
 
 int main(){
-
 	try{
 		Config config;
-			
+
 		Input::Ptr input;
 
 		// audio source configuration
@@ -77,16 +77,16 @@ int main(){
 
 		// init GLFW
 		if(!glfwInit()) throw std::runtime_error("GLFW init failed!");
-		
+
 		glfwWindowHint(GLFW_SAMPLES, config.w_aa);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		
+
 		std::stringstream title;
 		title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)" ;
-		
+
 		// create GLFW window		
 		GLFWwindow* window;
 		window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
@@ -103,7 +103,7 @@ int main(){
 			glfwTerminate();
 			throw std::runtime_error("GLEW init failed!");
 		}
-		
+
 		// create shaders
 		Program sh_spec;
 		Program sh_spec_pre;
@@ -111,7 +111,10 @@ int main(){
 		init_bar_shader(sh_spec, config);
 		init_line_shader(sh_lines);
 		init_bar_gravity_shader(sh_spec_pre);
-		
+
+		set_transformation(sh_spec);
+		set_transformation(sh_lines);
+
 		// create and initialize bar buffers
 		GL::VAO v_bars;
 		GL::Buffer b_x;
@@ -128,17 +131,13 @@ int main(){
 		GL::Buffer b_lines;
 		init_lines(v_lines, b_lines, sh_lines, config);
 		
-		set_transformation(sh_spec);
-		set_transformation(sh_lines);
-		
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
 
 		// get TF specific attribute locations	
 		GLint arg_y = sh_spec.get_attrib("y");
 		GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
 		GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
-	
+
 		// create audio buffer and FFT
 		Buffer<int16_t> buffer(config.buf_size);
 		FFT fft(config.fft_size);
@@ -162,11 +161,8 @@ int main(){
 					
 			glClear(GL_COLOR_BUFFER_BIT);
 			
-			// render Lines
-			sh_lines.use();
-			v_lines.bind();
-			glDrawArrays(GL_LINES, 0, sizeof(lines) / sizeof(float));
-			
+			if(config.draw_dB_lines) render_lines(v_lines, sh_lines);
+
 			// gravity processing shader
 			v_bars_pre.bind();
 			b_fb2.bind();
@@ -219,6 +215,12 @@ int main(){
 	}
 
 	return 0;
+}
+
+void render_lines(GL::VAO& v_lines, Program& sh_lines){
+	sh_lines.use();
+	v_lines.bind();
+	glDrawArrays(GL_LINES, 0, sizeof(lines) / sizeof(float));
 }
 
 void update_b_fft(GL::Buffer& b_fft, FFT& fft, Config& cfg){

@@ -54,7 +54,7 @@ Config::Config(){
 		}else{
 			source = Source::FIFO;
 		}
-		
+
 		cfg.lookupValue("fifo_file", fifo_file);
 
 		cfg.lookupValue("duration", duration);
@@ -72,7 +72,7 @@ Config::Config(){
 
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
-		
+
 		cfg.lookupValue("min_db", min_db);
 		cfg.lookupValue("max_db", max_db);
 
@@ -82,7 +82,7 @@ Config::Config(){
 			slope = -2.0f / (min_n - max_n);
 			offset = 1.0f - slope * max_n;
 		}
-		
+
 		std::string color_path = "top_color";
 		read_rgba(color_path, top_color);
 		color_path = "bot_color";
@@ -94,6 +94,7 @@ Config::Config(){
 		cfg.lookupValue("gravity", gravity);
 		cfg.lookupValue("rainbow", rainbow);
 		cfg.lookupValue("bar_width", bar_width);
+		cfg.lookupValue("draw_dB_lines", draw_dB_lines);
 
         }catch(const libconfig::FileIOException &fioex){
                 std::cerr << "I/O error while reading file." << std::endl;

@@ -27,6 +27,7 @@ bot_color = "0A0A0A";
 line_color = "46484B";
 
 rainbow = False;
+draw_dB_lines = true;
 //colors represent the frequency component of the rainbow
 //top_color = "FFFFFF";
 //bot_color = "000000";

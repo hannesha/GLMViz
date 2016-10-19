@@ -47,7 +47,6 @@ class Config {
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		float slope = 0.5f;
 		float offset = 1.0f;
-
 		
 		float top_color[4] = {211.0, 38.0, 46.0, 1.0};
 		float bot_color[4] = {35.0, 36.0, 27.5, 1.0};
@@ -58,7 +57,7 @@ class Config {
 		bool rainbow = false;	
 		
 		float bar_width = 0.75f;
-
+		bool draw_dB_lines = true;
 	private:
 		libconfig::Config cfg;
 		void read_rgba(const std::string &path, float rgba[]);
