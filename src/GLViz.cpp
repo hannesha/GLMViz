@@ -154,9 +154,7 @@ int main(){
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
-			std::thread th_fps = std::thread([&]{
-				std::this_thread::sleep_for(std::chrono::milliseconds(1000 / config.fps));
-			});
+			std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
 
 			// apply fft and update fft buffer
 			fft.calculate(buffer);
@@ -202,7 +200,7 @@ int main(){
 			glfwSwapBuffers(window);
 			glfwPollEvents();
 
-			th_fps.join();
+			std::this_thread::sleep_until(t_fps);
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
 
