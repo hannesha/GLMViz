@@ -61,7 +61,8 @@ class Config {
 	private:
 		libconfig::Config cfg;
 		void read_rgba(const std::string &path, float rgba[]);
-		
+		void to_srgb(float rgba[]);
+
 		float max_db = 0.0f;
 		float min_db = -80.0f;
 };

@@ -25,6 +25,7 @@
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
+#include <cmath>
 
 Config::Config(){
 	std::string file;
@@ -127,8 +128,18 @@ void Config::read_rgba(const std::string &path, float rgba[]){
 	}catch(std::out_of_range& e){
 		// ignore empty strings
 	}
-	
+
 	for(int i = 0; i < 4; i++){
 		rgba[i] = rgba[i]/255;
+	}
+
+	to_srgb(rgba);
+}
+
+void Config::to_srgb(float rgba[]){
+	// convert screen color(CRT gamma) to sRGB
+	const float inv_gamma = 1.0/2.2;
+	for(int i = 0; i < 3; i++){
+		rgba[i] = std::pow(rgba[i], inv_gamma);
 	}
 }
