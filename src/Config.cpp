@@ -84,16 +84,18 @@ Config::Config(){
 			offset = 1.0f - slope * max_n;
 		}
 
-		std::string color_path = "top_color";
-		read_rgba(color_path, top_color);
-		color_path = "bot_color";
-		read_rgba(color_path, bot_color);
-		color_path = "line_color";
-		read_rgba(color_path, line_color);
+		read_rgba("line_color", line_color);
+
+		cfg.lookupValue("rainbow.enabled", rainbow);
+		if(!rainbow){
+			read_rgba("bot_color", bot_color);
+			read_rgba("top_color", top_color);
+		}else{
+			read_rainbow("rainbow");
+		}
 
 		cfg.lookupValue("gradient", gradient);
 		cfg.lookupValue("gravity", gravity);
-		cfg.lookupValue("rainbow", rainbow);
 		cfg.lookupValue("bar_width", bar_width);
 		cfg.lookupValue("draw_dB_lines", draw_dB_lines);
 
@@ -129,7 +131,7 @@ void Config::read_rgba(const std::string &path, float rgba[]){
 		// ignore empty strings
 	}
 
-	for(int i = 0; i < 4; i++){
+	for(int i = 0; i < 3; i++){
 		rgba[i] = rgba[i]/255;
 	}
 
@@ -141,5 +143,22 @@ void Config::to_srgb(float rgba[]){
 	const float inv_gamma = 1.0/2.2;
 	for(int i = 0; i < 3; i++){
 		rgba[i] = std::pow(rgba[i], inv_gamma);
+	}
+}
+
+void Config::read_rainbow(const std::string& path){
+	// read phase and frequency for each color
+	char w_rgb[] = "rgb";
+	for(int i = 0; i < 3; i++){
+		cfg.lookupValue(path + ".phase." + w_rgb[i], rb_phase[i]);
+	}
+	for(int i = 0; i < 3; i++){
+		cfg.lookupValue(path + ".freq." + w_rgb[i], rb_freq[i]);
+	}
+
+	// calculate top and bottom color for the rainbow shader
+	for(int i = 0; i < 3; i++){
+		bot_color[i] = rb_phase[i];
+		top_color[i] = rb_phase[i] + rb_freq[i];
 	}
 }

@@ -1,13 +1,13 @@
 R"(
 #version 150
-
+/* simple frag shader with gamma correction */
 in vec4 color;
 
 out vec4 f_color;
 
 const vec3 gamma = vec3(2.2);
 void main () {
-	f_color.xyz = pow(color.xyz, gamma);
-	f_color.w = color.w;
+	f_color.rgb = pow(color.rgb, gamma);
+	f_color.a = color.a;
 }
 )"

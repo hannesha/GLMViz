@@ -23,11 +23,23 @@ max_db = 0.0;
 min_db = -80.0;
 
 top_color = "D3262E";
-bot_color = "0A0A0A";
+bot_color = "0F0A0A";
 line_color = "46484B";
-
-rainbow = False;
 draw_dB_lines = true;
-//colors represent the frequency component of the rainbow
-//top_color = "FFFFFF";
-//bot_color = "000000";
+
+// rainbow attributes
+rainbow = {
+	enabled = false;
+	// relative phase shift of each color
+	phase = {
+		r = 0.0;
+		g = 0.0;
+		b = 0.0;
+	};
+	// color frequency
+	freq = {
+		r = 1.0;
+		g = 1.0;
+		b = 1.0;
+	}
+};

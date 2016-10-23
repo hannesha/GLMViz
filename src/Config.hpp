@@ -28,11 +28,11 @@ enum class Source {FIFO, PULSE};
 class Config {
 	public:
 		Config();
-		
+
 		int w_aa = 4;
 		int w_height = 1024;
 		int w_width = 768;
-		
+
 		Source source = Source::PULSE;
 		std::string fifo_file = "/tmp/mpd.fifo";
 		int duration = 50;
@@ -41,8 +41,8 @@ class Config {
 		long long fft_size = 2<<12;
 		long long output_size = 100;
 
-		long long buf_size = FS * duration / 1000;		
-		long long fft_output_size = fft_size/2+1;	
+		long long buf_size = FS * duration / 1000;
+		long long fft_output_size = fft_size/2+1;
 		float d_freq = (float) FS / (float) fft_size;
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 		float slope = 0.5f;
@@ -52,17 +52,21 @@ class Config {
 		float bot_color[4] = {35.0, 36.0, 27.5, 1.0};
 		float line_color[4] = {70.0, 72.0, 75.0, 1.0};
 		float gradient = 1.0f;
-		float gravity = 0.1f;		
+		float gravity = 0.1f;
 
-		bool rainbow = false;	
+		bool rainbow = false;
 		
 		float bar_width = 0.75f;
 		bool draw_dB_lines = true;
 	private:
 		libconfig::Config cfg;
-		void read_rgba(const std::string &path, float rgba[]);
+		void read_rgba(const std::string& path, float rgba[]);
+		void read_rainbow(const std::string& path);
 		void to_srgb(float rgba[]);
 
 		float max_db = 0.0f;
 		float min_db = -80.0f;
+
+		float rb_phase[3] = {0.0, 0.0, 0.0};
+		float rb_freq[3]  = {1.0, 1.0, 1.0};
 };
