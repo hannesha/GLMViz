@@ -28,8 +28,11 @@ namespace GL {
 		public:
 			inline Buffer() { glGenBuffers(1, &id); };
 			inline ~Buffer() { glDeleteBuffers(1, &id); };
+			// disable copying
+			Buffer(const Buffer&) = delete;
 
 			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
+			inline void operator()(){ bind(); };
 			inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
 			GLuint id;
 	};
@@ -39,8 +42,11 @@ namespace GL {
 		public:
 			inline VAO() { glGenVertexArrays(1, &id); };
 			inline ~VAO() { glDeleteVertexArrays(1, &id); };
+			// disable copying
+			VAO(const VAO&) = delete;
 
 			inline void bind() { glBindVertexArray(id); };
+			inline void operator()(){ bind(); };
 			GLuint id;
 	};
 
@@ -53,6 +59,8 @@ namespace GL {
 				glCompileShader(id);
 			};
 			inline ~Shader(){ glDeleteShader(id); };
+			// disable copying
+			Shader(const Shader&) = delete;
 
 			GLuint id;
 	};

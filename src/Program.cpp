@@ -28,32 +28,27 @@ Program::~Program(){
 	glDeleteProgram(program_id);
 }
 
-void Program::attach_shader(const GL::Shader& s){
-	glAttachShader(program_id, s.id);
-	shaders.push_back(s.id);
-}
+void Program::link(std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
+	// attach compiled shaders
+	for (GL::Shader& sh : shaders){
+		glAttachShader(program_id, sh.id);
+	}
 
-void Program::link(){
-	// link, cleanup
 	glLinkProgram(program_id);
-	//std::cout << glGetError() << std::endl;
-	
-	// detach all shaders
-	for (GLuint sh : shaders){
-		glDetachShader(program_id, sh);
+
+	// detach shaders for later cleanup
+	for (GL::Shader& sh : shaders){
+		glDetachShader(program_id, sh.id);
 	}
 }
 
-void Program::link_TF(const size_t n, const char** fb_varyings){
+void Program::link_TF(const size_t n, const char** fb_varyings, std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
+	// link with transform feedback varyings
 	// set TF varyings
 	glTransformFeedbackVaryings(program_id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);	
 	//std::cout << glGetError() << std::endl;
 
-	link();
-}
-
-GLuint Program::get_id() const {
-	return program_id;
+	link(shaders);
 }
 
 GLint Program::get_uniform(const char* name) const {
@@ -69,7 +64,6 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 	#include "shader/bar.vert"
 	;
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
-
 
 	// fragment shader
 	const char* fragment_shader;
@@ -92,11 +86,7 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 	GL::Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
 
 	// link shaders
-	sh_bars.attach_shader(fs);
-	sh_bars.attach_shader(vs);
-	sh_bars.attach_shader(gs);
-	
-	sh_bars.link();
+	sh_bars.link({fs, vs, gs});
 }
 
 void init_line_shader(Program& sh_lines){
@@ -111,9 +101,7 @@ void init_line_shader(Program& sh_lines){
 	;
 	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 	
-	sh_lines.attach_shader(fs);
-	sh_lines.attach_shader(vs_lines);
-	sh_lines.link();
+	sh_lines.link({fs, vs_lines});
 }
 
 void init_bar_gravity_shader(Program& sh_bar_gravity){
@@ -121,9 +109,7 @@ void init_bar_gravity_shader(Program& sh_bar_gravity){
 	#include "shader/bar_pre.vert"
 	;
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
-	
-	sh_bar_gravity.attach_shader(vs);
-	
+
 	const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
-	sh_bar_gravity.link_TF(3, varyings);	
+	sh_bar_gravity.link_TF(3, varyings, {vs});
 }

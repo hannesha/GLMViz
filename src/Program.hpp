@@ -24,21 +24,23 @@
 #include <vector>
 #include "GL_utils.hpp"
 #include "Config.hpp"
+#include <initializer_list>
+#include <functional>
 
 class Program {
 	public:
 		Program();
 		~Program();
-		void attach_shader(const GL::Shader& s);
-		void link();
-		void link_TF(const size_t, const char**);
+
+		void link(std::initializer_list<const std::reference_wrapper<GL::Shader>>);
+		void link_TF(const size_t, const char**, std::initializer_list<const std::reference_wrapper<GL::Shader>>);
+
 		inline void use(){ glUseProgram(program_id); };
-		GLuint get_id() const;
+		inline void operator()(){ use(); };
 		GLint get_uniform(const char*) const;
 		GLint get_attrib(const char*) const;
 	private:
 		GLuint program_id;
-		std::vector<GLuint> shaders;
 };
 
 void init_bar_shader(Program&, Config&);
