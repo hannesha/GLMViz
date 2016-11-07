@@ -28,7 +28,6 @@
 #include <cmath>
 
 Config::Config(){
-	std::string file;
 	xdgHandle xdghandle;
 
 	if(xdgInitHandle(&xdghandle)){
@@ -39,6 +38,10 @@ Config::Config(){
 
 	if(file == "") file = "/etc/GLMViz/config";
 
+	reload();
+}
+
+void Config::reload(){
 	try{
                 cfg.readFile(file.c_str());
 

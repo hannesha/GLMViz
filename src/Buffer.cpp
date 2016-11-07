@@ -47,4 +47,12 @@ void Buffer<T>::write(T buf[], const size_t n){
 	v_buffer.insert(v_buffer.end(), buf, buf + length);
 }
 
+template<typename T>
+void Buffer<T>::resize(const size_t n){
+	auto lock = this->lock();
+	size = n;
+	v_buffer.resize(n);
+	new_data = true;
+}
+
 template class Buffer<int16_t>;

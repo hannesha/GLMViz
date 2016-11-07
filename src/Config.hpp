@@ -28,6 +28,7 @@ enum class Source {FIFO, PULSE};
 class Config {
 	public:
 		Config();
+		void reload();
 
 		int w_aa = 4;
 		int w_height = 1024;
@@ -60,6 +61,7 @@ class Config {
 		bool draw_dB_lines = true;
 	private:
 		libconfig::Config cfg;
+		std::string file;
 		void read_rgba(const std::string& path, float rgba[]);
 		void read_rainbow(const std::string& path);
 		void to_srgb(float rgba[]);

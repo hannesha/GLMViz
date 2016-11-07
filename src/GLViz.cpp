@@ -23,6 +23,8 @@
 #include <memory>
 #include <stdexcept>
 #include <chrono>
+#include <csignal>
+#include <atomic>
 
 template<typename T, typename... Args>
 std::unique_ptr<T> make_unique(Args&&... args)
@@ -34,9 +36,16 @@ std::unique_ptr<T> make_unique(Args&&... args)
 void render_lines(GL::VAO&, Program&);
 void update_b_fft(GL::Buffer&, FFT&, Config&);
 void update_x_buffer(GL::Buffer&, Config&);
+
 void init_bars(GL::VAO&, GL::Buffer&, Program&, Config&);
+void set_bar_uniforms(Program&, Config&);
+
 void init_bars_pre(GL::VAO&, GL::Buffer&, GL::Buffer&, GL::Buffer&, Program&, Config&);
+void fill_tf_buffers(GL::Buffer&, GL::Buffer&, Config&);
+void set_bar_pre_uniforms(Program&, Config&);
+
 void init_lines(GL::VAO&, GL::Buffer&, Program&, Config&);
+void set_line_uniforms(Program&, Config&);
 
 // use default transformation
 glm::mat4 transformation = glm::ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
@@ -54,10 +63,17 @@ const float lines[] = {
 	-1.0, -4.0, 1.0, -4.0  // -80dB
 };
 
+// config reload signal handler
+static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
+std::atomic<bool> config_reload (false);
+void sighandler(int signal){
+	config_reload = true;
+}
+
 // handle window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
-} 
+}
 
 int main(){
 	try{
@@ -75,6 +91,9 @@ int main(){
 		default:
 			input = make_unique<Fifo>(config.fifo_file, 441);
 		}
+
+		// attach SIGUSR1 signal handler
+		std::signal(SIGUSR1, sighandler);
 
 		// init GLFW
 		if(!glfwInit()) throw std::runtime_error("GLFW init failed!");
@@ -106,26 +125,26 @@ int main(){
 		}
 
 		// create shaders
-		Program sh_spec;
-		Program sh_spec_pre;
+		Program sh_bars;
+		Program sh_bars_pre;
 		Program sh_lines;
-		init_bar_shader(sh_spec, config);
+		init_bar_shader(sh_bars, config);
 		init_line_shader(sh_lines);
-		init_bar_gravity_shader(sh_spec_pre);
+		init_bar_gravity_shader(sh_bars_pre);
 
-		set_transformation(sh_spec);
+		set_transformation(sh_bars);
 		set_transformation(sh_lines);
 
 		// create and initialize bar buffers
 		GL::VAO v_bars;
 		GL::Buffer b_x;
 		update_x_buffer(b_x, config);
-		init_bars(v_bars, b_x, sh_spec, config);
+		init_bars(v_bars, b_x, sh_bars, config);
 
 		// create and initialize precompute buffers
 		GL::VAO v_bars_pre;
 		GL::Buffer b_fft, b_fb1, b_fb2;
-		init_bars_pre(v_bars_pre, b_fft, b_fb1, b_fb2, sh_spec_pre, config);
+		init_bars_pre(v_bars_pre, b_fft, b_fb1, b_fb2, sh_bars_pre, config);
 
 		// initialize dB lines
 		GL::VAO v_lines;
@@ -135,16 +154,16 @@ int main(){
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// get TF specific attribute locations	
-		GLint arg_y = sh_spec.get_attrib("y");
-		GLint arg_gravity_old = sh_spec_pre.get_attrib("gravity_old");
-		GLint arg_time_old = sh_spec_pre.get_attrib("time_old");
+		GLint arg_y = sh_bars.get_attrib("y");
+		GLint arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
+		GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
 
 		// create audio buffer and FFT
 		Buffer<int16_t> buffer(config.buf_size);
 		FFT fft(config.fft_size);
 
 		// start input thread
-		bool p_running = true;
+		std::atomic<bool> p_running (true);
 		std::thread th_input = std::thread([&]{
 			while(p_running){
 				input->read(buffer);
@@ -154,6 +173,20 @@ int main(){
 		// handle resizing	
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);	
 		do{
+			if(config_reload){
+				std::cout << "reloading config" << std::endl;
+				config_reload = false;
+				config.reload();
+
+				if(buffer.size != (size_t)config.buf_size) buffer.resize(config.buf_size);
+
+				//update_x_buffer(b_x, config);
+				//fill_tf_buffers(b_fb1, b_fb2, config);
+				set_bar_uniforms(sh_bars, config);
+				set_bar_pre_uniforms(sh_bars_pre, config);
+				set_line_uniforms(sh_lines, config);
+			}
+
 			std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
 
 			// apply fft and update fft buffer
@@ -171,7 +204,7 @@ int main(){
 			glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
 			glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
 
-			sh_spec_pre.use();	
+			sh_bars_pre.use();
 			// bind fist feedback buffer as TF buffer
 			b_fb1.tfbind();
 			glBeginTransformFeedback(GL_POINTS);
@@ -188,7 +221,7 @@ int main(){
 			std::swap(b_fb1.id, b_fb2.id);
 
 			// render bars
-			sh_spec.use();	
+			sh_bars.use();
 			v_bars.bind();
 			// use second feedback buffer for drawing
 			b_fb2.bind();
@@ -242,32 +275,36 @@ void update_x_buffer(GL::Buffer& b_x, Config& cfg){
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
 }
 
-void init_bars(GL::VAO& v_bars, GL::Buffer& b_x, Program& sh_spec, Config& cfg){
+void init_bars(GL::VAO& v_bars, GL::Buffer& b_x, Program& sh_bars, Config& cfg){
 	v_bars.bind();
 
 	b_x.bind();
 	// set x position data in bar VAO
-	GLint arg_x_data = sh_spec.get_attrib("x");
+	GLint arg_x_data = sh_bars.get_attrib("x");
 	glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_x_data);
 	
 	// enable the preprocessed y attribute
-	GLint arg_y = sh_spec.get_attrib("y");
+	GLint arg_y = sh_bars.get_attrib("y");
 	glEnableVertexAttribArray(arg_y);	
 
-	sh_spec.use();
+	set_bar_uniforms(sh_bars, cfg);
+}
+
+void set_bar_uniforms(Program& sh_bars, Config& cfg){
+	sh_bars.use();
 	// Post compute specific uniforms
-	GLint i_width = sh_spec.get_uniform("width");
+	GLint i_width = sh_bars.get_uniform("width");
 	glUniform1f(i_width, cfg.bar_width/(float)cfg.output_size);
 	
 	// set bar color gradients	
-	GLint i_top_color = sh_spec.get_uniform("top_color");
+	GLint i_top_color = sh_bars.get_uniform("top_color");
 	glUniform4fv(i_top_color, 1, cfg.top_color);
 
-	GLint i_bot_color = sh_spec.get_uniform("bot_color");
+	GLint i_bot_color = sh_bars.get_uniform("bot_color");
 	glUniform4fv(i_bot_color, 1, cfg.bot_color);
 	
-	GLint i_gradient = sh_spec.get_uniform("gradient");
+	GLint i_gradient = sh_bars.get_uniform("gradient");
 	glUniform1f(i_gradient, cfg.gradient);
 }
 
@@ -276,11 +313,7 @@ void init_bars_pre(GL::VAO& v_bars_pre, GL::Buffer& b_fft, GL::Buffer& b_fb1, GL
 	v_bars_pre.bind();
 	
 	// init ping-pong feedback buffers
-	b_fb1.bind();
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
-
-	b_fb2.bind();
-	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+	fill_tf_buffers(b_fb1, b_fb2, cfg);
 
 	b_fft.bind();
 	// set fft_data buffer as vec2 input for the shader
@@ -295,7 +328,18 @@ void init_bars_pre(GL::VAO& v_bars_pre, GL::Buffer& b_fft, GL::Buffer& b_fb1, GL
 	GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
 	glEnableVertexAttribArray(arg_time_old);
 
+	set_bar_pre_uniforms(sh_bars_pre, cfg);
+}
 
+void fill_tf_buffers(GL::Buffer& b_fb1, GL::Buffer& b_fb2, Config& cfg){
+	b_fb1.bind();
+	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+
+	b_fb2.bind();
+	glBufferData(GL_ARRAY_BUFFER, cfg.output_size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+}
+
+void set_bar_pre_uniforms(Program& sh_bars_pre, Config& cfg){
 	sh_bars_pre.use();
 	// set precompute shader uniforms
 	GLint i_fft_scale = sh_bars_pre.get_uniform("fft_scale");
@@ -321,7 +365,10 @@ void init_lines(GL::VAO& v_lines, GL::Buffer& b_lines, Program& sh_lines, Config
 	glVertexAttribPointer(arg_line_vert, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_line_vert);
 
+	set_line_uniforms(sh_lines, cfg);
+}
 
+void set_line_uniforms(Program& sh_lines, Config& cfg){
 	sh_lines.use();
 	// set dB line specific arguments
 	GLint i_slope = sh_lines.get_uniform("slope");
