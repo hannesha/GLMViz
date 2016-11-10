@@ -20,10 +20,7 @@
 
 #pragma once
 
-#include <GL/glew.h>
-#include <vector>
 #include "GL_utils.hpp"
-#include "Config.hpp"
 #include <initializer_list>
 #include <functional>
 
@@ -43,6 +40,6 @@ class Program {
 		GLuint program_id;
 };
 
-void init_bar_shader(Program&, Config&);
+void init_bar_shader(Program&, const bool);
 void init_line_shader(Program&);
 void init_bar_gravity_shader(Program&);

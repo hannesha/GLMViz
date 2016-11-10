@@ -36,7 +36,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Include helper files
-//#include "Shader.hpp"
 #include "Program.hpp"
 #include "GL_utils.hpp"
 #include "FFT.hpp"
@@ -44,6 +43,7 @@
 #include "Fifo.hpp"
 #include "Buffer.hpp"
 #include "Config.hpp"
+#include "Spectrum.hpp"
 
 #ifdef WITH_PULSE
 #include "Pulse.hpp"

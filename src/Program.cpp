@@ -20,6 +20,8 @@
 
 #include "Program.hpp"
 
+#include <GL/glew.h>
+
 Program::Program(){
 	program_id = glCreateProgram();
 }
@@ -45,7 +47,7 @@ void Program::link(std::initializer_list<const std::reference_wrapper<GL::Shader
 void Program::link_TF(const size_t n, const char** fb_varyings, std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
 	// link with transform feedback varyings
 	// set TF varyings
-	glTransformFeedbackVaryings(program_id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);	
+	glTransformFeedbackVaryings(program_id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);
 	//std::cout << glGetError() << std::endl;
 
 	link(shaders);
@@ -59,7 +61,7 @@ GLint Program::get_attrib(const char* name) const {
 	return glGetAttribLocation(program_id, name);
 }
 
-void init_bar_shader(Program& sh_bars, Config &cfg){
+void init_bar_shader(Program& sh_bars, const bool rainbow){
 	const char* vertex_shader = 
 	#include "shader/bar.vert"
 	;
@@ -67,7 +69,7 @@ void init_bar_shader(Program& sh_bars, Config &cfg){
 
 	// fragment shader
 	const char* fragment_shader;
-	if(cfg.rainbow){
+	if(rainbow){
 		fragment_shader =
 		#include "shader/rainbow.frag"
 		;
