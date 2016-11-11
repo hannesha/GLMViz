@@ -33,6 +33,11 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+class glfw_error : public std::runtime_error {
+public :
+	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
+};
+
 // config reload signal handler
 static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
 std::atomic<bool> config_reload (false);
@@ -83,7 +88,7 @@ int main(){
 		window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
 		if( window == NULL ){
 			glfwTerminate();
-			throw std::runtime_error("Failed to create GLFW Window!");
+			throw glfw_error("Failed to create GLFW Window!");
 		}
 
 		glfwMakeContextCurrent(window); 
@@ -92,14 +97,18 @@ int main(){
 		glewExperimental = true;
 		if(glewInit() != GLEW_OK){
 			glfwTerminate();
-			throw std::runtime_error("GLEW init failed!");
+			throw glfw_error("GLEW init failed!");
 		}
 
 		// set clear color to black
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+
 		// initialize spectrum renderer
 		Spectrum spec(config);
+		//Oscilloscope osc(config);
 
 		// create audio buffer and FFT
 		Buffer<int16_t> buffer(config.buf_size);
@@ -126,6 +135,8 @@ int main(){
 				if(buffer.size != (size_t)config.buf_size) buffer.resize(config.buf_size);
 				// update shader uniforms
 				spec.set_uniforms(config);
+				//osc.set_uniforms(config);
+				//osc.update_x_buffer(config.buf_size);
 			}
 
 			std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
@@ -135,10 +146,12 @@ int main(){
 
 			// update spectrum renderer buffer
 			spec.update_fft(fft, config.output_size);
+			//osc.update_buffer(buffer);
 
 			glClear(GL_COLOR_BUFFER_BIT);
 			
 			spec.draw(config.output_size, config.draw_dB_lines);
+			//osc.draw(config.buf_size);
 
 			// Swap buffers
 			glfwSwapBuffers(window);

@@ -18,34 +18,25 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-#include <vector>
-#include <unistd.h>
-#include <sstream>
-#include <thread>
+#pragma once
 
-#include <iostream>
-
-// Include basic GL utility headers
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-// Include helper files
-#include "Program.hpp"
-#include "GL_utils.hpp"
-#include "FFT.hpp"
-#include "Input.hpp"
-#include "Fifo.hpp"
 #include "Buffer.hpp"
 #include "Config.hpp"
-#include "Spectrum.hpp"
-#include "Oscilloscope.hpp"
+#include "Program.hpp"
 
-#ifdef WITH_PULSE
-#include "Pulse.hpp"
-#endif
+class Oscilloscope {
+	public:
+		Oscilloscope(Config&);
+		~Oscilloscope(){};
+
+		void draw(const size_t);
+		void update_x_buffer(const size_t);
+		void update_buffer(Buffer<int16_t>&);
+		void set_uniforms(Config&);
+	private:
+		Program sh_crt;
+		GL::VAO v_crt;
+		GL::Buffer b_crt_x, b_crt_y;
+
+		void init_crt();
+};
