@@ -147,7 +147,7 @@ void Spectrum::set_uniforms(Config& cfg){
 	glUniform1f(i_offset, cfg.offset * 0.5);
 
 	GLint i_gravity = sh_bars_pre.get_uniform("gravity");
-	glUniform1f(i_gravity, cfg.gravity / cfg.fps);
+	glUniform1f(i_gravity, cfg.gravity / (float)(cfg.fps * cfg.fps));
 
 
 	sh_lines.use();

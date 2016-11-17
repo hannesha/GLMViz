@@ -1,7 +1,7 @@
 /* copy this file into your ~/.config/GLMViz/ folder */
 
 Window = { AA = 4; }; //window options
-
+fps = 60;
 source = "PULSE";
 fifo_file = "/tmp/mpd.fifo";
 
@@ -14,7 +14,7 @@ duration = 50; //buffer lenght in ms
 gradient = 1.0;
 
 bar_width = 0.75;
-gravity = 0.15;
+gravity = 8.0;
 
 FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
