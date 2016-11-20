@@ -107,8 +107,8 @@ int main(){
 		//glEnable(GL_BLEND);
 
 		// initialize spectrum renderer
-		Spectrum spec(config);
-		//Oscilloscope osc(config);
+		//Spectrum spec(config);
+		Oscilloscope osc(config);
 
 		// create audio buffer and FFT
 		Buffer<int16_t> buffer(config.buf_size);
@@ -134,24 +134,24 @@ int main(){
 				// resize buffer if necessary
 				if(buffer.size != (size_t)config.buf_size) buffer.resize(config.buf_size);
 				// update shader uniforms
-				spec.set_uniforms(config);
-				//osc.set_uniforms(config);
-				//osc.update_x_buffer(config.buf_size);
+				//spec.set_uniforms(config);
+				osc.set_uniforms(config);
+				osc.update_x_buffer(config.buf_size);
 			}
 
 			std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
 
 			// apply fft and update fft buffer
-			fft.calculate(buffer);
+			//fft.calculate(buffer);
 
 			// update spectrum renderer buffer
-			spec.update_fft(fft, config.output_size);
-			//osc.update_buffer(buffer);
+			//spec.update_fft(fft, config.output_size);
+			osc.update_buffer(buffer);
 
 			glClear(GL_COLOR_BUFFER_BIT);
 			
-			spec.draw(config.output_size, config.draw_dB_lines);
-			//osc.draw(config.buf_size);
+			//spec.draw(config.output_size, config.draw_dB_lines);
+			osc.draw(config.buf_size);
 
 			// Swap buffers
 			glfwSwapBuffers(window);
