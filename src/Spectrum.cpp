@@ -39,14 +39,15 @@ Spectrum::Spectrum(Config& config){
 	set_transformation();
 	set_uniforms(config);
 
+	resize(config.output_size);
+
 	init_bars();
-	init_bars_pre(config);
+	init_bars_pre();
 	init_lines();
 
-	update_x_buffer(config.output_size);
 }
 
-void Spectrum::draw(const size_t size, const bool draw_lines){
+void Spectrum::draw(const bool draw_lines){
 	/* render lines */
 	if(draw_lines){
 		sh_lines.use();
@@ -70,7 +71,7 @@ void Spectrum::draw(const size_t size, const bool draw_lines){
 	glBeginTransformFeedback(GL_POINTS);
 	glEnable(GL_RASTERIZER_DISCARD);
 
-	glDrawArrays(GL_POINTS, 0, size);
+	glDrawArrays(GL_POINTS, 0, output_size);
 
 	// disable TF
 	glDisable(GL_RASTERIZER_DISCARD);
@@ -89,7 +90,7 @@ void Spectrum::draw(const size_t size, const bool draw_lines){
 	b_fb2.bind();
 	// reconfigure attribute pointer
 	glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
-	glDrawArrays(GL_POINTS, 0, size);
+	glDrawArrays(GL_POINTS, 0, output_size);
 }
 
 void Spectrum::fill_tf_buffers(const size_t size){
@@ -113,9 +114,9 @@ void Spectrum::update_x_buffer(const size_t size){
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
 }
 
-void Spectrum::update_fft(FFT& fft, const size_t size){
+void Spectrum::update_fft(FFT& fft){
 	b_fft.bind();
-	glBufferData(GL_ARRAY_BUFFER, size * sizeof(fftwf_complex), fft.output, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
 void Spectrum::set_uniforms(Config& cfg){
@@ -162,6 +163,14 @@ void Spectrum::set_uniforms(Config& cfg){
 	glUniform4fv(i_line_color, 1, cfg.line_color);
 }
 
+void Spectrum::resize(const size_t size){
+	if(size != output_size){
+		output_size = size;
+		fill_tf_buffers(size);
+		update_x_buffer(size);
+	}
+}
+
 void Spectrum::init_bars(){
 	v_bars.bind();
 
@@ -176,12 +185,12 @@ void Spectrum::init_bars(){
 	glEnableVertexAttribArray(arg_y);
 }
 
-void Spectrum::init_bars_pre(Config& config){
+void Spectrum::init_bars_pre(){
 	/* Pre compute shader */
 	v_bars_pre.bind();
 	
 	// init ping-pong feedback buffers
-	fill_tf_buffers(config.output_size);
+	//fill_tf_buffers(config.output_size);
 
 	b_fft.bind();
 	// set fft_data buffer as vec2 input for the shader

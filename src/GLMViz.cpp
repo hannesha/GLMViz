@@ -83,7 +83,7 @@ int main(){
 		std::stringstream title;
 		title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)" ;
 
-		// create GLFW window		
+		// create GLFW window
 		GLFWwindow* window;
 		window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
 		if( window == NULL ){
@@ -122,7 +122,7 @@ int main(){
 			}
 		});
 
-		// handle resizing	
+		// handle resizing
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 		do{
@@ -135,6 +135,7 @@ int main(){
 				if(buffer.size != (size_t)config.buf_size) buffer.resize(config.buf_size);
 				// update shader uniforms
 				spec.set_uniforms(config);
+				spec.resize(config.output_size);
 				//osc.set_uniforms(config);
 				//osc.update_x_buffer(config.buf_size);
 			}
@@ -145,12 +146,12 @@ int main(){
 			fft.calculate(buffer);
 
 			// update spectrum renderer buffer
-			spec.update_fft(fft, config.output_size);
+			spec.update_fft(fft);
 			//osc.update_buffer(buffer);
 
 			glClear(GL_COLOR_BUFFER_BIT);
 			
-			spec.draw(config.output_size, config.draw_dB_lines);
+			spec.draw(config.draw_dB_lines);
 			//osc.draw(config.buf_size);
 
 			// Swap buffers
@@ -162,7 +163,7 @@ int main(){
 		} // Wait until window is closed
 		while(glfwWindowShouldClose(window) == 0);
 
-		// stop Input thread	
+		// stop Input thread
 		p_running = false;
 		th_input.join();
 

@@ -29,16 +29,16 @@ class Spectrum {
 		Spectrum(Config&);
 		~Spectrum(){};
 
-		void draw(const size_t, const bool);
-		void fill_tf_buffers(const size_t);
-		void update_x_buffer(const size_t);
-		void update_fft(FFT&, const size_t);
+		void draw(const bool);
+		void update_fft(FFT&);
 		void set_uniforms(Config&);
+		void resize(const size_t);
 	private:
 		Program sh_bars, sh_bars_pre, sh_lines;
 		GL::VAO v_bars, v_bars_pre, v_lines;
 		GL::Buffer b_x, b_fft, b_fb1, b_fb2, b_lines;
 		GLint arg_y, arg_gravity_old, arg_time_old;
+		size_t output_size;
 
 		const float dB_lines[36] = {
 			-1.0,  0.0, 1.0,  0.0, //   0dB
@@ -53,8 +53,10 @@ class Spectrum {
 		};
 
 		void init_bars();
-		void init_bars_pre(Config&);
+		void init_bars_pre();
 		void init_lines();
+		void fill_tf_buffers(const size_t);
+		void update_x_buffer(const size_t);
 
 		void set_transformation();
 };
