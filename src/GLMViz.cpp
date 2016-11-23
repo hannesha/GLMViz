@@ -38,6 +38,13 @@ public :
 	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
 };
 
+// glfw raii wrapper
+class GLFW{
+	public:
+		GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
+		~GLFW(){ glfwTerminate(); };
+};
+
 // config reload signal handler
 static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
 std::atomic<bool> config_reload (false);
@@ -48,6 +55,12 @@ void sighandler(int signal){
 // handle window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
+}
+
+std::string generate_title(Config& config){
+	std::stringstream title;
+	title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)";
+	return title.str();
 }
 
 int main(){
@@ -72,7 +85,7 @@ int main(){
 		std::signal(SIGUSR1, sighandler);
 
 		// init GLFW
-		if(!glfwInit()) throw std::runtime_error("GLFW init failed!");
+		GLFW glfw;
 
 		glfwWindowHint(GLFW_SAMPLES, config.w_aa);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -80,14 +93,11 @@ int main(){
 		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-		std::stringstream title;
-		title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)" ;
-
+		std::string title = generate_title(config);
 		// create GLFW window
 		GLFWwindow* window;
-		window = glfwCreateWindow( config.w_height, config.w_width, title.str().c_str(), NULL, NULL);
+		window = glfwCreateWindow( config.w_height, config.w_width, title.c_str(), NULL, NULL);
 		if( window == NULL ){
-			glfwTerminate();
 			throw glfw_error("Failed to create GLFW Window!");
 		}
 
@@ -96,7 +106,6 @@ int main(){
 		// init GLEW
 		glewExperimental = true;
 		if(glewInit() != GLEW_OK){
-			glfwTerminate();
 			throw glfw_error("GLEW init failed!");
 		}
 
@@ -136,6 +145,9 @@ int main(){
 				// update shader uniforms
 				spec.set_uniforms(config);
 				spec.resize(config.output_size);
+				// update window title
+				title = generate_title(config);
+				glfwSetWindowTitle(window, title.c_str());
 				//osc.set_uniforms(config);
 				//osc.update_x_buffer(config.buf_size);
 			}
@@ -150,7 +162,7 @@ int main(){
 			//osc.update_buffer(buffer);
 
 			glClear(GL_COLOR_BUFFER_BIT);
-			
+
 			spec.draw(config.draw_dB_lines);
 			//osc.draw(config.buf_size);
 
@@ -167,7 +179,6 @@ int main(){
 		p_running = false;
 		th_input.join();
 
-		glfwTerminate();
 	}catch(std::runtime_error& e){
 		// print error message and terminate with error code 1
 		std::cerr << e.what() << std::endl;
