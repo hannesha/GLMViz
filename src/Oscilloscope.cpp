@@ -36,7 +36,7 @@ void Oscilloscope::draw(const size_t size){
 	sh_crt.use();
 	v_crt.bind();
 
-	glDrawArrays(GL_LINE_STRIP, 0, size);
+	glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, size);
 }
 
 void Oscilloscope::init_crt(){
@@ -44,15 +44,18 @@ void Oscilloscope::init_crt(){
 	"#version 150\n"
 	"in float y;"
 	"in float x;"
-	"out vec4 color;"
-	"uniform vec4 line_color;"
 	"uniform float scale;"
 	"void main(){"
-	"  color = line_color;"
 	"  gl_Position = vec4(x, clamp(y * scale, -1.0, 1.0), 0.0, 1.0);"
 	"}";
 
 	GL::Shader vert(vert_code, GL_VERTEX_SHADER);
+
+	const char* geom_code =
+	#include "shader/smooth_lines.geom"
+	;
+
+	GL::Shader geom(geom_code, GL_GEOMETRY_SHADER);
 
 	const char* frag_code =
 	#include "shader/simple.frag"
@@ -60,7 +63,7 @@ void Oscilloscope::init_crt(){
 
 	GL::Shader frag(frag_code, GL_FRAGMENT_SHADER);
 
-	sh_crt.link({vert, frag});
+	sh_crt.link({vert, geom, frag});
 
 	v_crt.bind();
 
@@ -82,7 +85,10 @@ void Oscilloscope::set_uniforms(Config& config){
 	glUniform1f(i_scale, 1.0/32768.0);
 
 	GLint i_color = sh_crt.get_uniform("line_color");
-	glUniform4fv(i_color, 1, config.line_color);
+	glUniform4fv(i_color, 1, config.top_color);
+
+	GLint i_width = sh_crt.get_uniform("width");
+	glUniform1f(i_width, 0.02);
 }
 
 void Oscilloscope::update_x_buffer(const size_t size){
