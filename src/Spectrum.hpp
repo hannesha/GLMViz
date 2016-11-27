@@ -33,6 +33,7 @@ class Spectrum {
 		void update_fft(FFT&);
 		void set_uniforms(Config&);
 		void resize(const size_t);
+		void set_transformation(const double, const double);
 	private:
 		Program sh_bars, sh_bars_pre, sh_lines;
 		GL::VAO v_bars, v_bars_pre, v_lines;
@@ -57,6 +58,4 @@ class Spectrum {
 		void init_lines();
 		void fill_tf_buffers(const size_t);
 		void update_x_buffer(const size_t);
-
-		void set_transformation();
 };

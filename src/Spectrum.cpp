@@ -36,7 +36,7 @@ Spectrum::Spectrum(Config& config){
 	arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
 	arg_time_old = sh_bars_pre.get_attrib("time_old");
 
-	set_transformation();
+	set_transformation(-1.0, 1.0);
 	set_uniforms(config);
 
 	resize(config.output_size);
@@ -171,6 +171,19 @@ void Spectrum::resize(const size_t size){
 	}
 }
 
+void Spectrum::set_transformation(const double y_min, const double y_max){
+	// apply simple ortho transformation
+	glm::mat4 transformation = glm::ortho(-1.0, 1.0, y_min, y_max);
+
+	sh_bars.use();
+	GLint i_trans = sh_bars.get_uniform("trans");
+	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
+
+	sh_lines.use();
+	i_trans = sh_lines.get_uniform("trans");
+	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
+}
+
 void Spectrum::init_bars(){
 	v_bars.bind();
 
@@ -215,17 +228,4 @@ void Spectrum::init_lines(){
 	GLint arg_line_vert = sh_lines.get_attrib("pos");
 	glVertexAttribPointer(arg_line_vert, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_line_vert);
-}
-
-void Spectrum::set_transformation(){
-	// apply simple ortho transformation
-	glm::mat4 transformation = glm::ortho(-1.0,1.0,-1.0,1.0,-1.0,1.0);
-
-	sh_bars.use();
-	GLint i_trans = sh_bars.get_uniform("trans");
-	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
-
-	sh_lines.use();
-	i_trans = sh_lines.get_uniform("trans");
-	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
 }
