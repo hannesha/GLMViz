@@ -68,9 +68,17 @@ void FFT::calculate(Buffer<T>& buffer){
 void FFT::calculate_window(const size_t w_size){
 	window.resize(w_size);
 	float N_1 = 1.0 / (float)(w_size-1);
-	
+
+	// compensated Blackman window constants
+	const float a1 = 4620.0 / 3969.0;
+	const float a2 = 715.0 / 3969.0;
+
 	for(unsigned int i = 0; i < w_size; i++){
-		window[i] = 1.0 - cos(2.0 * M_PI * (float)i * N_1);
+		/* Hann window */
+		//window[i] = 1.0 - cos(2.0 * M_PI * (float)i * N_1);
+
+		/* exact Blackman window */
+		window[i] = 1.0 - a1 * cos(2*M_PI * i * N_1) + a2 * cos(4*M_PI * i * N_1);
 	}
 }
 
