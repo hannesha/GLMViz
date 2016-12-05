@@ -30,16 +30,16 @@ void main(){
 	float y = slope * log(a_norm) * lg + offset;
 
 	// fix feedback buffer resize hang
-	float y_old = clamp(gravity_old, -0.5, 0.5);
+	float y_old = clamp(gravity_old, -0.5, 0.7);
 	float yg = y_old - gravity * time_old * time_old;
 
 	// fix shader gravity during track skip
-	y = clamp(y, -0.5, 0.5);
+	y = clamp(y, -0.5, 0.7);
 
 	// elimitate branching using mix
 	float gt_y = gt(y, yg);
 	v_gravity = mix(y_old, y, gt_y);
 	v_time = mix(time_old + 1.0, 0.0, gt_y);
-	v_y = mix(yg, y, gt_y);
+	v_y = max(yg, y);
 }
 )"
