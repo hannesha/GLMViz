@@ -29,7 +29,7 @@
 #include <iostream>
 
 // Include basic GL utility headers
-#include <GL/glew.h>
+#include "GL_utils.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -37,7 +37,6 @@
 
 // Include helper files
 #include "Program.hpp"
-#include "GL_utils.hpp"
 #include "FFT.hpp"
 #include "Input.hpp"
 #include "Fifo.hpp"

@@ -20,8 +20,6 @@
 
 #include "Program.hpp"
 
-#include <GL/glew.h>
-
 Program::Program(){
 	program_id = glCreateProgram();
 }

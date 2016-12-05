@@ -20,8 +20,6 @@
 
 #include "Oscilloscope.hpp"
 
-#include <GL/glew.h>
-
 #include <vector>
 
 Oscilloscope::Oscilloscope(Config& config){

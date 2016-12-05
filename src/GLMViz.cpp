@@ -103,12 +103,6 @@ int main(){
 
 		glfwMakeContextCurrent(window); 
 
-		// init GLEW
-		glewExperimental = true;
-		if(glewInit() != GLEW_OK){
-			throw glfw_error("GLEW init failed!");
-		}
-
 		// set clear color to black
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 

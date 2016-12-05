@@ -5,7 +5,7 @@ The main focus of this project is to create a high framerate, dB correct spectru
 
 ## Build Requirements
 GLMViz is NOT a lightweight program as it's build using GLFW and other OpenGL abstraction libraries.
-* OpenGL libraries: `libglfw`, `libglew`, `libglm`
+* OpenGL libraries: `libglfw`, `libglm`
 * FFT library: `fftw`
 * PulseAudio[Optional]: `libpulse`
 * Configuration libraries: `libconfig++`, `libxdg-basedir`

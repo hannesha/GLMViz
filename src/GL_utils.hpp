@@ -20,7 +20,8 @@
 
 #pragma once
 
-#include <GL/glew.h>
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glcorearb.h>
 
 namespace GL {
 	// VBO RAII wrapper
