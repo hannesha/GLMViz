@@ -36,9 +36,9 @@ class Spectrum {
 		void set_transformation(const double, const double);
 	private:
 		Program sh_bars, sh_bars_pre, sh_lines;
-		GL::VAO v_bars, v_bars_pre, v_lines;
-		GL::Buffer b_x, b_fft, b_fb1, b_fb2, b_lines;
-		GLint arg_y, arg_gravity_old, arg_time_old;
+		GL::VAO v_bars[2], v_bars_pre[2], v_lines;
+		GL::Buffer b_x, b_fft, b_fb[2], b_lines;
+		unsigned tf_index = 0;
 		size_t output_size;
 
 		const float dB_lines[36] = {

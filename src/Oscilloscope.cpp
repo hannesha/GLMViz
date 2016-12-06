@@ -74,6 +74,8 @@ void Oscilloscope::init_crt(){
 	GLint arg_x = sh_crt.get_attrib("x");
 	glVertexAttribPointer(arg_x, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_x);
+
+	GL::VAO::unbind();
 }
 
 void Oscilloscope::set_uniforms(Config& config){

@@ -33,6 +33,7 @@ namespace GL {
 			Buffer(const Buffer&) = delete;
 
 			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
+			static inline void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); };
 			inline void operator()(){ bind(); };
 			inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
 			GLuint id;
@@ -47,6 +48,7 @@ namespace GL {
 			VAO(const VAO&) = delete;
 
 			inline void bind() { glBindVertexArray(id); };
+			static inline void unbind() { glBindVertexArray(0); };
 			inline void operator()(){ bind(); };
 			GLuint id;
 	};

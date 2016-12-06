@@ -31,10 +31,6 @@ Spectrum::Spectrum(Config& config){
 	init_line_shader(sh_lines);
 	init_bar_gravity_shader(sh_bars_pre);
 
-	arg_y = sh_bars.get_attrib("y");
-	arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
-	arg_time_old = sh_bars_pre.get_attrib("time_old");
-
 	set_transformation(-1.0, 1.0);
 	set_uniforms(config);
 
@@ -43,7 +39,6 @@ Spectrum::Spectrum(Config& config){
 	init_bars();
 	init_bars_pre();
 	init_lines();
-
 }
 
 void Spectrum::draw(const bool draw_lines){
@@ -56,15 +51,10 @@ void Spectrum::draw(const bool draw_lines){
 
 
 	/* gravity processing shader */
-	v_bars_pre.bind();
-	b_fb2.bind();
-	// set TF attribute pointers
-	glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-	glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
-
 	sh_bars_pre.use();
-	// bind fist feedback buffer as TF buffer
-	b_fb1.tfbind();
+	v_bars_pre[tf_index].bind();
+	// bind first feedback buffer as TF buffer
+	b_fb[tf_index].tfbind();
 
 	// begin transform feedback
 	glBeginTransformFeedback(GL_POINTS);
@@ -76,27 +66,24 @@ void Spectrum::draw(const bool draw_lines){
 	glDisable(GL_RASTERIZER_DISCARD);
 	glEndTransformFeedback();
 
-	//undbind both feedback buffers and swap them
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	//undbind feedback buffer
 	glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
-	std::swap(b_fb1.id, b_fb2.id);
 
 
 	/* render bars */
 	sh_bars.use();
-	v_bars.bind();
-	// use second feedback buffer for drawing
-	b_fb2.bind();
-	// reconfigure attribute pointer
-	glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
+	v_bars[tf_index].bind();
 	glDrawArrays(GL_POINTS, 0, output_size);
+
+	// switch tf buffers
+	tf_index = !tf_index;
 }
 
 void Spectrum::fill_tf_buffers(const size_t size){
-	b_fb1.bind();
+	b_fb[0].bind();
 	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 
-	b_fb2.bind();
+	b_fb[1].bind();
 	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 }
 
@@ -184,38 +171,51 @@ void Spectrum::set_transformation(const double y_min, const double y_max){
 }
 
 void Spectrum::init_bars(){
-	v_bars.bind();
+	for(unsigned i = 0; i<2; i++){
+		v_bars[i].bind();
 
-	b_x.bind();
-	// set x position data in bar VAO
-	GLint arg_x_data = sh_bars.get_attrib("x");
-	glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-	glEnableVertexAttribArray(arg_x_data);
+		b_x.bind();
+		// set x position data in bar VAO
+		GLint arg_x_data = sh_bars.get_attrib("x");
+		glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
+		glEnableVertexAttribArray(arg_x_data);
 
-	// enable the preprocessed y attribute
-	GLint arg_y = sh_bars.get_attrib("y");
-	glEnableVertexAttribArray(arg_y);
+		// enable the preprocessed y attribute
+		b_fb[i].bind();
+		GLint arg_y = sh_bars.get_attrib("y");
+		glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
+		glEnableVertexAttribArray(arg_y);
+
+		GL::Buffer::unbind();
+		GL::VAO::unbind();
+	}
 }
 
 void Spectrum::init_bars_pre(){
-	/* Pre compute shader */
-	v_bars_pre.bind();
-	
-	// init ping-pong feedback buffers
-	//fill_tf_buffers(config.output_size);
+	for(unsigned i = 0; i<2; i++){
+		/* Pre compute shader */
+		v_bars_pre[i].bind();
 
-	b_fft.bind();
-	// set fft_data buffer as vec2 input for the shader
-	GLint arg_fft_output = sh_bars_pre.get_attrib("a");
-	glVertexAttribPointer(arg_fft_output, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-	glEnableVertexAttribArray(arg_fft_output);
+		b_fft.bind();
+		// set fft_data buffer as vec2 input for the shader
+		GLint arg_fft_output = sh_bars_pre.get_attrib("a");
+		glVertexAttribPointer(arg_fft_output, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+		glEnableVertexAttribArray(arg_fft_output);
 
-	// enable precompute shader attributes
-	GLint arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
-	glEnableVertexAttribArray(arg_gravity_old);
+		// enable precompute shader attributes
+		b_fb[!i].bind();
 
-	GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
-	glEnableVertexAttribArray(arg_time_old);
+		GLint arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
+		glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+		glEnableVertexAttribArray(arg_gravity_old);
+
+		GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
+		glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
+		glEnableVertexAttribArray(arg_time_old);
+
+		GL::Buffer::unbind();
+		GL::VAO::unbind();
+	}
 }
 
 void Spectrum::init_lines(){
@@ -227,4 +227,6 @@ void Spectrum::init_lines(){
 	GLint arg_line_vert = sh_lines.get_attrib("pos");
 	glVertexAttribPointer(arg_line_vert, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 	glEnableVertexAttribArray(arg_line_vert);
+
+	GL::VAO::unbind();
 }
