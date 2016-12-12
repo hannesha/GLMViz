@@ -103,7 +103,12 @@ void Spectrum::update_x_buffer(const size_t size){
 
 void Spectrum::update_fft(FFT& fft){
 	b_fft.bind();
-	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), fft.output, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output);
+}
+
+void Spectrum::resize_fft(const size_t size){
+	b_fft.bind();
+	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
 
 void Spectrum::configure(Config& cfg){
@@ -158,6 +163,7 @@ void Spectrum::resize(const size_t size){
 		output_size = size;
 		fill_tf_buffers(size);
 		update_x_buffer(size);
+		resize_fft(size);
 	}
 }
 

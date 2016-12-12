@@ -110,8 +110,12 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 	if(size != buffer.size){
 		size = buffer.size;
 		update_x_buffer(size);
+
+		b_crt_y.bind();
+		glBufferData(GL_ARRAY_BUFFER, size * sizeof(int16_t), &buffer.v_buffer[0], GL_DYNAMIC_DRAW);
+	}else{
+		b_crt_y.bind();
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(int16_t), &buffer.v_buffer[0]);
 	}
 
-	b_crt_y.bind();
-	glBufferData(GL_ARRAY_BUFFER, buffer.size * sizeof(int16_t), &buffer.v_buffer[0], GL_DYNAMIC_DRAW);
 }

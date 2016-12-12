@@ -59,4 +59,5 @@ class Spectrum {
 		void init_lines();
 		void fill_tf_buffers(const size_t);
 		void update_x_buffer(const size_t);
+		void resize_fft(const size_t);
 };
