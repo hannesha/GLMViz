@@ -31,6 +31,7 @@ class Fifo : public Input{
 		~Fifo();
 		bool is_open() const;
 		void read(Buffer<int16_t>&) const;
+		void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const;
 	private:
 		int handle;
 		size_t samples;

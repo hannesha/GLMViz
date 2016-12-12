@@ -55,7 +55,7 @@ void Buffer<T>::write_offset(T buf[], const size_t n, const size_t gap, const si
 	// limit data to write
 	size_t length = std::min(n, size);
 	size_t written = 0;
-	for(size_t i = offset; i<length; i = i+gap){
+	for(size_t i = offset; i<length; i += gap){
 		v_buffer.push_back(buf[i]);
 		written++;
 	}
@@ -65,9 +65,11 @@ void Buffer<T>::write_offset(T buf[], const size_t n, const size_t gap, const si
 template<typename T>
 void Buffer<T>::resize(const size_t n){
 	auto lock = this->lock();
-	size = n;
-	v_buffer.resize(n);
-	new_data = true;
+	if(size != n){
+		size = n;
+		v_buffer.resize(n);
+		new_data = true;
+	}
 }
 
 template class Buffer<int16_t>;

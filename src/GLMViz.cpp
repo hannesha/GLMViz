@@ -45,6 +45,21 @@ class GLFW{
 		~GLFW(){ glfwTerminate(); };
 };
 
+// input thread wrapper
+class Input_thread{
+	public:
+		template <typename Funct> Input_thread(Funct f):
+			running(true),
+			th_input([&]{while(running){ f(); };})
+			{ };
+
+		~Input_thread(){ running = false; th_input.join(); };
+
+	private:
+		std::atomic<bool> running;
+		std::thread th_input;
+};
+
 // config reload signal handler
 static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
 std::atomic<bool> config_reload (false);
@@ -63,6 +78,44 @@ std::string generate_title(Config& config){
 	return title.str();
 }
 
+// mainloop template
+template <typename Fupdate, typename Fdraw>
+void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
+	do{
+		if(config_reload){
+			std::cout << "reloading config" << std::endl;
+			config_reload = false;
+			config.reload();
+
+			// generate new title
+			std::string title = generate_title(config);
+			glfwSetWindowTitle(window, title.c_str());
+
+			// update uniforms, resize buffers
+			f_update();
+		}
+
+		std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// draw
+		f_draw();
+
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+		// wait for fps timer
+		std::this_thread::sleep_until(t_fps);
+	}
+	while(glfwWindowShouldClose(window) == 0);
+}
+
+// defines how many samples are read from the buffer during each loop iteration
+// this number has to be even in stereo mode
+#define SAMPLES 220
+
 int main(){
 	try{
 		// read config
@@ -74,11 +127,11 @@ int main(){
 		switch (config.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, 441);
+			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, SAMPLES, config.stereo);
 			break;
 #endif
 		default:
-			input = make_unique<Fifo>(config.fifo_file, 441);
+			input = make_unique<Fifo>(config.fifo_file, SAMPLES);
 		}
 
 		// attach SIGUSR1 signal handler
@@ -108,70 +161,80 @@ int main(){
 
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		//glEnable(GL_BLEND);
-
-		// initialize spectrum renderer
-		Spectrum spec(config);
-		//Oscilloscope osc(config);
-
-		// create audio buffer and FFT
-		Buffer<int16_t> buffer(config.buf_size);
-		FFT fft(config.fft_size);
-
-		// start input thread
-		std::atomic<bool> p_running (true);
-		std::thread th_input = std::thread([&]{
-			while(p_running){
-				input->read(buffer);
-			}
-		});
-
 		// handle resizing
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-		do{
-			if(config_reload){
-				std::cout << "reloading config" << std::endl;
-				config_reload = false;
-				config.reload();
+		if(!config.stereo){
+			// create audio buffer
+			Buffer<int16_t> buffer(config.buf_size);
 
-				// resize buffer if necessary
-				if(buffer.size != (size_t)config.buf_size) buffer.resize(config.buf_size);
-				// update shader uniforms
-				spec.set_uniforms(config);
-				spec.resize(config.output_size);
-				// update window title
-				title = generate_title(config);
-				glfwSetWindowTitle(window, title.c_str());
-				//osc.set_uniforms(config);
-				//osc.update_x_buffer(config.buf_size);
-			}
+			// start input thread
+			Input_thread inth([&]{
+				input->read(buffer);
+			});
 
-			std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
+			// initialize spectrum renderer
+			Spectrum spec(config);
+			// create fft
+			FFT fft(config.fft_size);
+			//Oscilloscope osc(config);
 
-			// apply fft and update fft buffer
-			fft.calculate(buffer);
+			// mono mainloop
+			mainloop(config, window,
+			[&]{
+				buffer.resize(config.buf_size);
+				spec.configure(config);
+			},
+			[&]{
+				fft.calculate(buffer);
+				spec.update_fft(fft);
+				spec.draw();
+				//osc.update_buffer(buffer);
+				//osc.draw();
+			});
+		}else{
+			// create left and right audio buffer
+			Buffer<int16_t> lbuffer(config.buf_size);
+			Buffer<int16_t> rbuffer(config.buf_size);
 
-			// update spectrum renderer buffer
-			spec.update_fft(fft);
-			//osc.update_buffer(buffer);
+			// start stereo input thread
+			Input_thread inth([&]{
+				input->read_stereo(lbuffer, rbuffer);
+			});
 
-			glClear(GL_COLOR_BUFFER_BIT);
+			// initialize spectrum renderer
+			Spectrum lspec(config);
+			lspec.set_transformation(-3.0, 1.0);
+			Spectrum rspec(config);
+			rspec.set_transformation(1.0, -3.0);
 
-			spec.draw(config.draw_dB_lines);
-			//osc.draw(config.buf_size);
+			// create two ffts, one for each channel
+			FFT lfft(config.fft_size);
+			FFT rfft(config.fft_size);
+			//Oscilloscope osc(config);
 
-			// Swap buffers
-			glfwSwapBuffers(window);
-			glfwPollEvents();
-
-			// wait for fps timer
-			std::this_thread::sleep_until(t_fps);
-		} // Wait until window is closed
-		while(glfwWindowShouldClose(window) == 0);
-
-		// stop Input thread
-		p_running = false;
-		th_input.join();
+			// stereo mainloop
+			mainloop(config, window,
+			[&]{
+				// resize buffers
+				lbuffer.resize(config.buf_size);
+				rbuffer.resize(config.buf_size);
+				// update spectrum renderer
+				lspec.configure(config);
+				rspec.configure(config);
+			},
+			[&]{
+				// calculate and update the spectrum render buffers
+				lfft.calculate(lbuffer);
+				rfft.calculate(rbuffer);
+				lspec.update_fft(lfft);
+				rspec.update_fft(rfft);
+				//osc.update_buffer(rbuffer);
+				lspec.draw();
+				rspec.draw();
+				//osc.draw();
+			});
+		}
 
 	}catch(std::runtime_error& e){
 		// print error message and terminate with error code 1

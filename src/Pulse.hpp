@@ -32,11 +32,12 @@
 
 class Pulse : public Input{
 	public:
-		Pulse(const std::string&, const size_t, const size_t);
+		Pulse(const std::string&, const size_t, const size_t, const bool);
 		~Pulse();
 		
 		bool is_open() const;
 		void read(Buffer<int16_t>&) const;
+		void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const;
 
 		static std::string get_default_sink();
 		struct usr_data{

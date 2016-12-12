@@ -27,10 +27,10 @@ Oscilloscope::Oscilloscope(Config& config){
 
 	set_uniforms(config);
 
-	update_x_buffer(config.buf_size);
+	//update_x_buffer(config.buf_size);
 }
 
-void Oscilloscope::draw(const size_t size){
+void Oscilloscope::draw(){
 	sh_crt.use();
 	v_crt.bind();
 
@@ -106,6 +106,11 @@ void Oscilloscope::update_x_buffer(const size_t size){
 
 void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 	auto lock = buffer.lock();
+	// resize x coordinate buffer if necessary
+	if(size != buffer.size){
+		size = buffer.size;
+		update_x_buffer(size);
+	}
 
 	b_crt_y.bind();
 	glBufferData(GL_ARRAY_BUFFER, buffer.size * sizeof(int16_t), &buffer.v_buffer[0], GL_DYNAMIC_DRAW);

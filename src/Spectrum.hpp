@@ -29,9 +29,9 @@ class Spectrum {
 		Spectrum(Config&);
 		~Spectrum(){};
 
-		void draw(const bool);
+		void draw();
 		void update_fft(FFT&);
-		void set_uniforms(Config&);
+		void configure(Config&);
 		void resize(const size_t);
 		void set_transformation(const double, const double);
 	private:
@@ -40,6 +40,7 @@ class Spectrum {
 		GL::Buffer b_x, b_fft, b_fb[2], b_lines;
 		unsigned tf_index = 0;
 		size_t output_size;
+		bool draw_lines;
 
 		const float dB_lines[36] = {
 			-1.0,  0.0, 1.0,  0.0, //   0dB

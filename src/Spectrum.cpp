@@ -32,16 +32,14 @@ Spectrum::Spectrum(Config& config){
 	init_bar_gravity_shader(sh_bars_pre);
 
 	set_transformation(-1.0, 1.0);
-	set_uniforms(config);
-
-	resize(config.output_size);
+	configure(config);
 
 	init_bars();
 	init_bars_pre();
 	init_lines();
 }
 
-void Spectrum::draw(const bool draw_lines){
+void Spectrum::draw(){
 	/* render lines */
 	if(draw_lines){
 		sh_lines.use();
@@ -77,6 +75,9 @@ void Spectrum::draw(const bool draw_lines){
 
 	// switch tf buffers
 	tf_index = !tf_index;
+
+	// unbind VAOs
+	GL::VAO::unbind();
 }
 
 void Spectrum::fill_tf_buffers(const size_t size){
@@ -105,7 +106,7 @@ void Spectrum::update_fft(FFT& fft){
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), fft.output, GL_DYNAMIC_DRAW);
 }
 
-void Spectrum::set_uniforms(Config& cfg){
+void Spectrum::configure(Config& cfg){
 	sh_bars.use();
 	// Post compute specific uniforms
 	GLint i_width = sh_bars.get_uniform("width");
@@ -147,6 +148,9 @@ void Spectrum::set_uniforms(Config& cfg){
 	
 	GLint i_line_color = sh_lines.get_uniform("line_color");
 	glUniform4fv(i_line_color, 1, cfg.line_color);
+
+	resize(cfg.output_size);
+	draw_lines = cfg.draw_dB_lines;
 }
 
 void Spectrum::resize(const size_t size){

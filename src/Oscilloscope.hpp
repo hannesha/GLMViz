@@ -29,7 +29,7 @@ class Oscilloscope {
 		Oscilloscope(Config&);
 		~Oscilloscope(){};
 
-		void draw(const size_t);
+		void draw();
 		void update_x_buffer(const size_t);
 		void update_buffer(Buffer<int16_t>&);
 		void set_uniforms(Config&);
@@ -37,6 +37,7 @@ class Oscilloscope {
 		Program sh_crt;
 		GL::VAO v_crt;
 		GL::Buffer b_crt_x, b_crt_y;
+		size_t size;
 
 		void init_crt();
 };

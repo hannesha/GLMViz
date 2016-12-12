@@ -24,12 +24,14 @@
 #include <stdexcept>
 #include <sstream>
 
-Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples){
+Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, const bool stereo){
 	samples = nsamples;
+	unsigned char ch = stereo ? 2 : 1;
+
 	pa_sample_spec sample_spec = {
 		format : PA_SAMPLE_S16LE,
 		rate :  (uint32_t)FS,
-		channels : 1
+		channels : ch
 	};
 
 	pa_buffer_attr buffer_attr = {
@@ -63,6 +65,12 @@ void Pulse::read(Buffer<int16_t>& buffer) const{
 	buffer.write(buf, samples);
 }
 
+void Pulse::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
+	int16_t buf[samples];
+	pa_simple_read(stream, buf, sizeof(buf), NULL);
+	lbuffer.write_offset(buf, samples, 2, 0);
+	rbuffer.write_offset(buf, samples, 2, 1);
+}
 
 std::string Pulse::get_default_sink(){	
 	std::string device;

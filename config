@@ -4,6 +4,7 @@ Window = { AA = 4; }; //window options
 fps = 60;
 source = "PULSE";
 fifo_file = "/tmp/mpd.fifo";
+//stereo = true;
 
 output_size = 100L; //number of displayed bars
 duration = 50; //buffer lenght in ms
@@ -19,8 +20,8 @@ gravity = 8.0;
 FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
 
-max_db = 0.0;
-min_db = -80.0;
+max_db = -10.0;
+min_db = -70.0;
 
 top_color = "D3262E";
 bot_color = "0F0A0A";

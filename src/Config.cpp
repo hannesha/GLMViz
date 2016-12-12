@@ -60,6 +60,7 @@ void Config::reload(){
 		}
 
 		cfg.lookupValue("fifo_file", fifo_file);
+		cfg.lookupValue("stereo", stereo);
 
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("FS", FS);

@@ -45,3 +45,11 @@ void Fifo::read(Buffer<int16_t>& buffer) const{
 
 	buffer.write(buf, samples);
 }
+
+void Fifo::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
+	int16_t buf[samples];
+	::read(handle, buf, sizeof(buf));
+
+	lbuffer.write_offset(buf, samples, 2, 0);
+	rbuffer.write_offset(buf, samples, 2, 1);
+}
