@@ -20,35 +20,30 @@
 
 #include "Fifo.hpp"
 
-#include <fcntl.h>
 #include <unistd.h>
 #include <stdexcept>
 
 Fifo::Fifo(const std::string& file_name, const size_t nsamples){
 	samples = nsamples;
-	handle = open(file_name.c_str(), O_RDONLY);
+	file.open(file_name, std::ifstream::in | std::ifstream::binary);
 
-	if(handle < 0) throw std::runtime_error("Unable to open FIFO file: " + file_name + " !");
-}
-
-Fifo::~Fifo(){
-	close(handle);
+	if(!file.is_open()) throw std::runtime_error("Unable to open FIFO file: " + file_name + " !");
 }
 
 bool Fifo::is_open() const {
-	return handle >= 0;
+	return file.is_open();
 }
 
 void Fifo::read(Buffer<int16_t>& buffer) const{
 	int16_t buf[samples];
-	::read(handle, buf, sizeof(buf));
+	file.read(reinterpret_cast<char *>(buf), sizeof(buf));
 
 	buffer.write(buf, samples);
 }
 
 void Fifo::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
 	int16_t buf[samples];
-	::read(handle, buf, sizeof(buf));
+	file.read(reinterpret_cast<char *>(buf), sizeof(buf));
 
 	lbuffer.write_offset(buf, samples, 2, 0);
 	rbuffer.write_offset(buf, samples, 2, 1);
