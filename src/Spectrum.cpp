@@ -26,12 +26,11 @@
 
 #include <vector>
 
-Spectrum::Spectrum(Config& config){
-	init_bar_shader(sh_bars, config.rainbow);
+Spectrum::Spectrum(Config& config, const unsigned s_id): id(s_id){
+	init_bar_shader(sh_bars, config.spectra[id].rainbow);
 	init_line_shader(sh_lines);
 	init_bar_gravity_shader(sh_bars_pre);
 
-	set_transformation(-1.0, 1.0);
 	configure(config);
 
 	init_bars();
@@ -106,26 +105,31 @@ void Spectrum::update_fft(FFT& fft){
 	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output);
 }
 
+void Spectrum::update_fft(std::vector<std::shared_ptr<FFT>>& ffts){
+	update_fft(*ffts[channel]);
+}
+
 void Spectrum::resize_fft(const size_t size){
 	b_fft.bind();
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
 
 void Spectrum::configure(Config& cfg){
+	Config::Spectrum scfg = cfg.spectra[id];
 	sh_bars.use();
 	// Post compute specific uniforms
 	GLint i_width = sh_bars.get_uniform("width");
-	glUniform1f(i_width, cfg.bar_width/(float)cfg.output_size);
+	glUniform1f(i_width, scfg.bar_width/(float)scfg.output_size);
 
 	// set bar color gradients
 	GLint i_top_color = sh_bars.get_uniform("top_color");
-	glUniform4fv(i_top_color, 1, cfg.top_color);
+	glUniform4fv(i_top_color, 1, scfg.top_color.rgba);
 
 	GLint i_bot_color = sh_bars.get_uniform("bot_color");
-	glUniform4fv(i_bot_color, 1, cfg.bot_color);
+	glUniform4fv(i_bot_color, 1, scfg.bot_color.rgba);
 
 	GLint i_gradient = sh_bars.get_uniform("gradient");
-	glUniform1f(i_gradient, cfg.gradient);
+	glUniform1f(i_gradient, scfg.gradient);
 
 
 	sh_bars_pre.use();
@@ -134,28 +138,31 @@ void Spectrum::configure(Config& cfg){
 	glUniform1f(i_fft_scale, cfg.fft_scale);
 
 	GLint i_slope = sh_bars_pre.get_uniform("slope");
-	glUniform1f(i_slope, cfg.slope * 0.5);
+	glUniform1f(i_slope, scfg.slope * 0.5);
 
 	GLint i_offset = sh_bars_pre.get_uniform("offset");
-	glUniform1f(i_offset, cfg.offset * 0.5);
+	glUniform1f(i_offset, scfg.offset * 0.5);
 
 	GLint i_gravity = sh_bars_pre.get_uniform("gravity");
-	glUniform1f(i_gravity, cfg.gravity / (float)(cfg.fps * cfg.fps));
+	glUniform1f(i_gravity, scfg.gravity / (float)(cfg.fps * cfg.fps));
 
 
 	sh_lines.use();
 	// set dB line specific arguments
 	i_offset = sh_lines.get_uniform("offset");
-	glUniform1f(i_offset, cfg.offset);
+	glUniform1f(i_offset, scfg.offset);
 
 	i_slope = sh_lines.get_uniform("slope");
-	glUniform1f(i_slope, cfg.slope);
+	glUniform1f(i_slope, scfg.slope);
 	
 	GLint i_line_color = sh_lines.get_uniform("line_color");
-	glUniform4fv(i_line_color, 1, cfg.line_color);
+	glUniform4fv(i_line_color, 1, scfg.line_color.rgba);
 
-	resize(cfg.output_size);
-	draw_lines = cfg.draw_dB_lines;
+	resize(scfg.output_size);
+	set_transformation(scfg.pos);
+	draw_lines = scfg.dB_lines;
+	// limit number of channels
+	channel = std::min(scfg.channel, 1);
 }
 
 void Spectrum::resize(const size_t size){
@@ -167,9 +174,9 @@ void Spectrum::resize(const size_t size){
 	}
 }
 
-void Spectrum::set_transformation(const double y_min, const double y_max){
+void Spectrum::set_transformation(const Config::Transformation& t){
 	// apply simple ortho transformation
-	glm::mat4 transformation = glm::ortho(-1.0, 1.0, y_min, y_max);
+	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
 
 	sh_bars.use();
 	GLint i_trans = sh_bars.get_uniform("trans");

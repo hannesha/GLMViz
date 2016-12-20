@@ -6,41 +6,69 @@ source = "PULSE";
 fifo_file = "/tmp/mpd.fifo";
 //stereo = true;
 
-output_size = 100L; //number of displayed bars
 duration = 50; //buffer lenght in ms
-
-//gradient = 0 - each bar has the full gradient
-//gradient = 1 - bar color changes with the height of the bar (0db = top_color)
-//value inbetween 0 and 1 are possible
-gradient = 1.0;
-
-bar_width = 0.75;
-gravity = 8.0;
 
 FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
 
-max_db = -10.0;
-min_db = -70.0;
+//Spectrum default values
+Spectrum = {
+	max_db = -10.0
+	min_db = -70.0
+	output_size = 100L; //number of displayed bars
 
-top_color = "D3262E";
-bot_color = "0F0A0A";
-line_color = "46484B";
-draw_dB_lines = true;
+	top_color = "D3262E"
+	bot_color = "0F0A0A"
+	line_color = "46484B"
+	dB_lines = true
 
-// rainbow attributes
-rainbow = {
-	enabled = false;
-	// relative phase shift of each color
-	phase = {
-		r = 0.0;
-		g = 0.0;
-		b = 0.0;
-	};
-	// color frequency
-	freq = {
-		r = 1.0;
-		g = 1.0;
-		b = 1.0;
+	bar_width = 0.75
+	gravity = 8.0
+
+	//gradient = 0 - each bar has the full gradient
+	//gradient = 1 - bar color changes with the height of the bar (0db = top_color)
+	//value inbetween 0 and 1 are possible
+	gradient = 1.0
+
+	// rainbow attributes
+	rainbow = {
+		enabled = false
+		// relative phase shift of each color
+		phase = {
+			r = 0.0
+			g = 0.0
+			b = 0.0
+		};
+		// color frequency
+		freq = {
+			r = 1.0
+			g = 1.0
+			b = 1.0
+		}
 	}
-};
+}
+
+//standard Spectrum
+Spectrum1 = {}
+
+//Spectrum rendered in the upper half of the window
+/*Spectrum2 = {
+	pos = {ymin = -3.0; ymax = 1.0;};
+	dB_lines = false;
+}*/
+
+//Oscilloscope default values
+Osc = {
+	//default line color
+	color = "D3262E"
+}
+
+//standard Oscilloscope
+//Osc1 = {}
+
+//Oscilloscope rendered in the upper half of the window
+/*Osc2 = {
+	pos = {
+		ymin = -3.0; ymax = 1.0;	
+	}
+}*/

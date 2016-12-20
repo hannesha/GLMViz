@@ -33,6 +33,9 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
+typedef std::unique_ptr<Spectrum> Spec_ptr;
+typedef std::unique_ptr<Oscilloscope> Osc_ptr;
+
 class glfw_error : public std::runtime_error {
 public :
 	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
@@ -74,7 +77,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 std::string generate_title(Config& config){
 	std::stringstream title;
-	title << "Spectrum (fmax=" << config.output_size * config.d_freq << "Hz)";
+	title << "Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
 	return title.str();
 }
 
@@ -149,7 +152,7 @@ int main(){
 		std::string title = generate_title(config);
 		// create GLFW window
 		GLFWwindow* window;
-		window = glfwCreateWindow( config.w_height, config.w_width, title.c_str(), NULL, NULL);
+		window = glfwCreateWindow(config.w_height, config.w_width, title.c_str(), NULL, NULL);
 		if( window == NULL ){
 			throw glfw_error("Failed to create GLFW Window!");
 		}
@@ -164,6 +167,17 @@ int main(){
 		// handle resizing
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+		std::vector<Spec_ptr> spectra;
+		std::vector<Osc_ptr> oscilloscopes;
+
+		for(unsigned i = 0; i < config.spectra.size(); i++){
+			spectra.push_back(make_unique<Spectrum>(config, i));
+		}
+
+		for(unsigned i = 0; i < config.oscilloscopes.size(); i++){
+			oscilloscopes.push_back(make_unique<Oscilloscope>(config, i));
+		}
+
 		if(!config.stereo){
 			// create audio buffer
 			Buffer<int16_t> buffer(config.buf_size);
@@ -173,24 +187,37 @@ int main(){
 				input->read(buffer);
 			});
 
-			// initialize spectrum renderer
-			Spectrum spec(config);
 			// create fft
 			FFT fft(config.fft_size);
-			//Oscilloscope osc(config);
 
 			// mono mainloop
 			mainloop(config, window,
 			[&]{
+				// resize buffers and reconfigure renderer
 				buffer.resize(config.buf_size);
-				spec.configure(config);
+
+				for(Spec_ptr& s : spectra){
+					s->configure(config);
+				}
+
+				for(Osc_ptr& o : oscilloscopes){
+					o->configure(config);
+				}
 			},
 			[&]{
+				// update all locking renderer first
 				fft.calculate(buffer);
-				spec.update_fft(fft);
-				spec.draw();
-				//osc.update_buffer(buffer);
-				//osc.draw();
+				for(Osc_ptr& o : oscilloscopes){
+					o->update_buffer(buffer);
+				}
+				// draw spectra and oscilloscopes
+				for(Spec_ptr& s : spectra){
+					s->update_fft(fft);
+					s->draw();
+				}
+				for(Osc_ptr& o : oscilloscopes){
+					o->draw();
+				}
 			});
 		}else{
 			// create left and right audio buffer
@@ -202,16 +229,10 @@ int main(){
 				input->read_stereo(lbuffer, rbuffer);
 			});
 
-			// initialize spectrum renderer
-			Spectrum lspec(config);
-			lspec.set_transformation(-3.0, 1.0);
-			Spectrum rspec(config);
-			rspec.set_transformation(1.0, -3.0);
-
-			// create two ffts, one for each channel
-			FFT lfft(config.fft_size);
-			FFT rfft(config.fft_size);
-			//Oscilloscope osc(config);
+			// create shared FFT pointer vector
+			std::vector<std::shared_ptr<FFT>> ffts;
+			ffts.push_back(std::make_shared<FFT>(config.fft_size));
+			ffts.push_back(std::make_shared<FFT>(config.fft_size));
 
 			// stereo mainloop
 			mainloop(config, window,
@@ -219,20 +240,29 @@ int main(){
 				// resize buffers
 				lbuffer.resize(config.buf_size);
 				rbuffer.resize(config.buf_size);
-				// update spectrum renderer
-				lspec.configure(config);
-				rspec.configure(config);
+				// update spectrum/oscilloscope renderer
+				for(Spec_ptr& s : spectra){
+					s->configure(config);
+				}
+				for(Osc_ptr& o : oscilloscopes){
+					o->configure(config);
+				}
 			},
 			[&]{
-				// calculate and update the spectrum render buffers
-				lfft.calculate(lbuffer);
-				rfft.calculate(rbuffer);
-				lspec.update_fft(lfft);
-				rspec.update_fft(rfft);
-				//osc.update_buffer(rbuffer);
-				lspec.draw();
-				rspec.draw();
-				//osc.draw();
+				ffts[0]->calculate(lbuffer);
+				ffts[1]->calculate(rbuffer);
+				for(Osc_ptr& o : oscilloscopes){
+					o->update_buffer(lbuffer, rbuffer);
+				}
+
+				for(Spec_ptr& s : spectra){
+					s->update_fft(ffts);
+					s->draw();
+				}
+
+				for(Osc_ptr& o : oscilloscopes){
+					o->draw();
+				}
 			});
 		}
 

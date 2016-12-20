@@ -21,6 +21,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <libconfig.h++>
 
 enum class Source {FIFO, PULSE};
@@ -41,25 +42,64 @@ class Config {
 		long long FS = 44100;
 		int fps = 60;
 		long long fft_size = 2<<12;
-		long long output_size = 100;
-
 		long long buf_size = FS * duration / 1000;
 		long long fft_output_size = fft_size/2+1;
 		float d_freq = (float) FS / (float) fft_size;
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
-		float slope = 0.5f;
-		float offset = 1.0f;
-		
-		float top_color[4] = {211.0, 38.0, 46.0, 1.0};
-		float bot_color[4] = {35.0, 36.0, 27.5, 1.0};
-		float line_color[4] = {70.0, 72.0, 75.0, 1.0};
-		float gradient = 1.0f;
-		float gravity = 8.0f;
 
-		bool rainbow = false;
-		
-		float bar_width = 0.75f;
-		bool draw_dB_lines = true;
+		struct Transformation {
+			float Xmin = -1, Xmax = 1, Ymin = -1, Ymax = 1;
+
+			void parse(const std::string&, libconfig::Config&);
+		};
+
+		struct Color {
+			float rgba[4];
+
+			void parse(const std::string&, libconfig::Config&);
+			void normalize(const Color&);
+			void normalize();
+		};
+
+		struct Oscilloscope {
+			int channel = 0;
+			float scale = 1;
+			Color color = {211, 38, 46, 1};
+			Transformation pos;
+
+			void parse(const std::string&, libconfig::Config&);
+		};
+
+		struct Spectrum {
+			int channel = 0;
+			float min_db = -80, max_db = 0;
+			float slope = 0.5f;
+			float offset = 1.0f;
+			int output_size = 100;
+
+			Color top_color = {211, 38, 46, 1}; 		
+			Color bot_color = {35, 36, 27, 1};
+			Color line_color = {70, 72, 75, 1};
+			Transformation pos;
+			float gradient = 1.0f;
+			float gravity = 8.0f;
+			float bar_width = 0.75f;
+
+			bool rainbow = false;
+			bool dB_lines = true;
+
+			void parse(const std::string&, libconfig::Config&);
+			void clamp_output_size(const size_t fft_output_size){output_size = (size_t)output_size < fft_output_size ? output_size : fft_output_size; };
+			void parse_rainbow(const std::string&, libconfig::Config&);
+		};
+
+
+		Oscilloscope osc_default;
+		Spectrum spec_default;
+
+		std::vector<Oscilloscope> oscilloscopes;
+		std::vector<Spectrum> spectra;
+
 	private:
 		libconfig::Config cfg;
 		std::string file;

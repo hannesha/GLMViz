@@ -20,12 +20,16 @@
 
 #include "Oscilloscope.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <vector>
 
-Oscilloscope::Oscilloscope(Config& config){
+Oscilloscope::Oscilloscope(Config& config, const unsigned o_id): id(o_id){
 	init_crt();
 
-	set_uniforms(config);
+	configure(config);
 
 	//update_x_buffer(config.buf_size);
 }
@@ -78,17 +82,22 @@ void Oscilloscope::init_crt(){
 	GL::VAO::unbind();
 }
 
-void Oscilloscope::set_uniforms(Config& config){
+void Oscilloscope::configure(Config& config){
+	Config::Oscilloscope ocfg = config.oscilloscopes[id];
 	sh_crt();
 
 	GLint i_scale = sh_crt.get_uniform("scale");
-	glUniform1f(i_scale, 1.0/32768.0);
+	glUniform1f(i_scale, ocfg.scale/32768.0);
 
 	GLint i_color = sh_crt.get_uniform("line_color");
-	glUniform4fv(i_color, 1, config.top_color);
+	glUniform4fv(i_color, 1, ocfg.color.rgba);
 
 	GLint i_width = sh_crt.get_uniform("width");
 	glUniform1f(i_width, 0.02);
+
+	set_transformation(ocfg.pos);
+
+	channel = std::min(ocfg.channel, 1);
 }
 
 void Oscilloscope::update_x_buffer(const size_t size){
@@ -102,6 +111,15 @@ void Oscilloscope::update_x_buffer(const size_t size){
 
 	b_crt_x.bind();
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
+}
+
+void Oscilloscope::set_transformation(Config::Transformation& t){
+	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
+
+	sh_crt();
+
+	GLint i_trans = sh_crt.get_uniform("trans");
+	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation)); 
 }
 
 void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
@@ -118,4 +136,12 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 		glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(int16_t), &buffer.v_buffer[0]);
 	}
 
+}
+
+void Oscilloscope::update_buffer(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer){
+	if(channel == 0){
+		update_buffer(lbuffer);
+	}else{
+		update_buffer(rbuffer);
+	}
 }

@@ -66,42 +66,57 @@ void Config::reload(){
 		cfg.lookupValue("FS", FS);
 		cfg.lookupValue("fps", fps);
 		cfg.lookupValue("fft_size", fft_size);
-		cfg.lookupValue("output_size", output_size);
 
 		buf_size = FS * duration / 1000;
 		fft_output_size = fft_size/2+1;
 		d_freq = (float) FS / (float) fft_size;
 
-		// limit output_size
-		output_size = std::min(fft_output_size, output_size);
 
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
-		cfg.lookupValue("min_db", min_db);
-		cfg.lookupValue("max_db", max_db);
+		osc_default.parse("Osc", cfg);
+		for(unsigned i = 0; i < 4; i++){
+			if(cfg.exists("Osc" + std::to_string(i+1))){
+				// init new Oscilloscope with default parameters
+				Oscilloscope tmp = osc_default;
+				// parse Oscilloscope and add it to the list
+				tmp.parse("Osc" + std::to_string(i+1), cfg);
 
-		if(max_db > min_db){
-			float max_n = max_db * 0.05;
-			float min_n = min_db * 0.05;
-			slope = -2.0f / (min_n - max_n);
-			offset = 1.0f - slope * max_n;
+				// reuse old values if possible
+				if(oscilloscopes.size() > i){
+					oscilloscopes[i] = tmp;
+				}else{
+					oscilloscopes.push_back(tmp);
+				}
+			}else{
+				break;
+			}
 		}
 
-		read_rgba("line_color", line_color);
+		spec_default.parse("Spectrum", cfg);
+		spec_default.clamp_output_size(fft_output_size);
+		for(unsigned i = 0; i < 4; i++){
+			if(cfg.exists("Spectrum" + std::to_string(i+1))){
+				// init new Spectrum with default parameters
+				Spectrum tmp = spec_default;
+				// parse Spectrum and add it to the list
+				tmp.parse("Spectrum" + std::to_string(i+1), cfg);
+				tmp.clamp_output_size(fft_output_size);
 
-		cfg.lookupValue("rainbow.enabled", rainbow);
-		if(!rainbow){
-			read_rgba("bot_color", bot_color);
-			read_rgba("top_color", top_color);
-		}else{
-			read_rainbow("rainbow");
+				// reuse old values if possible
+				if(spectra.size() > i){
+					spectra[i] = tmp;
+				}else{
+					spectra.push_back(tmp);
+				}
+			}else{
+				break;
+			}
 		}
 
-		cfg.lookupValue("gradient", gradient);
-		cfg.lookupValue("gravity", gravity);
-		cfg.lookupValue("bar_width", bar_width);
-		cfg.lookupValue("draw_dB_lines", draw_dB_lines);
+		//std::cout << oscilloscopes.size() << std::endl;
+		//std::cout << spectra.size() << std::endl;
 
         }catch(const libconfig::FileIOException &fioex){
                 std::cerr << "I/O error while reading file." << std::endl;
@@ -115,54 +130,117 @@ void Config::reload(){
         }	
 }
 
-void Config::read_rgba(const std::string &path, float rgba[]){
-	std::string color;
-	size_t pos = 0;
-	cfg.lookupValue(path, color);
+void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
+	cfg.lookupValue(path + ".channel", channel);
+	cfg.lookupValue(path + ".scale", scale);
 
+	color.parse(path + ".color", cfg);
+	//color.normalize(c);
+
+	pos.parse(path + ".pos", cfg);
+}
+
+void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg){
+	cfg.lookupValue(path + ".channel", channel);
+	cfg.lookupValue(path + ".output_size", output_size);
+
+	cfg.lookupValue(path + ".min_db", min_db);
+	cfg.lookupValue(path + ".max_db", max_db);
+
+	if(max_db > min_db){
+		float max_n = max_db * 0.05;
+		float min_n = min_db * 0.05;
+		slope = -2.0 / (min_n - max_n);
+		offset = 1.0 - slope * max_n;
+	}
+
+	top_color.parse(path + ".top_color", cfg);
+	bot_color.parse(path + ".bot_color", cfg);
+	line_color.parse(path + ".line_color", cfg);
+
+	pos.parse(path + ".pos", cfg);
+
+	cfg.lookupValue(path + ".gradient", gradient);
+	cfg.lookupValue(path + ".gravity", gravity);
+	cfg.lookupValue(path + ".bar_width", bar_width);
+
+	cfg.lookupValue(path + ".rainbow.enabled", rainbow);
+	if(rainbow){
+		parse_rainbow(path + ".rainbow", cfg);
+	}
+
+	cfg.lookupValue(path + ".dB_lines", dB_lines);
+
+}
+
+void Config::Spectrum::parse_rainbow(const std::string& path, libconfig::Config& cfg){
+	Color freq_d = {1, 1, 1, 1};
+	Color phase_d = {0, 0, 0, 1};
+
+	char w_rgb[] = "rgb";
+	
+	for(int i = 0; i < 3; i++){
+		cfg.lookupValue(path + ".phase." + w_rgb[i], phase_d.rgba[i]);
+	}
+
+	bot_color = phase_d;
+	
+	for(int i = 0; i < 3; i++){
+		cfg.lookupValue(path + ".freq." + w_rgb[i], freq_d.rgba[i]);
+		top_color.rgba[i] = phase_d.rgba[i] + freq_d.rgba[i];
+	}
+	top_color.rgba[3] = 1;
+}
+
+void Config::Color::parse(const std::string& path, libconfig::Config& cfg){
+	std::string color;
+	cfg.lookupValue(path, color);
 	try{	
 		// remove # character
+		size_t pos = 0;
 		if(color.at(0) == '#') pos = 1;
-
 		int value = std::stoi(color, &pos, 16);
 		// calculate rbg bytes
 		rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
 		rgba[1] = static_cast<float>((value / 0x100) % 0x100);	
 		rgba[2] = static_cast<float>(value % 0x100);
+		rgba[3] = 1;
+		normalize();
 	}catch(std::invalid_argument& e){
 		std::cerr << "Unable to parse color of setting: " << path << std::endl;
 	}catch(std::out_of_range& e){
 		// ignore empty strings
 	}
-
-	for(int i = 0; i < 3; i++){
-		rgba[i] = rgba[i]/255;
-	}
-
-	to_srgb(rgba);
 }
 
-void Config::to_srgb(float rgba[]){
+void Config::Color::normalize(const Color& c){
 	// convert screen color(CRT gamma) to sRGB
 	const float inv_gamma = 1.0/2.2;
-	for(int i = 0; i < 3; i++){
-		rgba[i] = std::pow(rgba[i], inv_gamma);
+
+	for(int i = 0; i < 3; i ++){
+		rgba[i] = std::pow(c.rgba[i] / 255, inv_gamma);
 	}
+	/*r = std::pow(c.r / 255, inv_gamma); 
+	g = std::pow(c.g / 255, inv_gamma);
+	b = std::pow(c.b / 255, inv_gamma);
+	a = c.a;*/
 }
 
-void Config::read_rainbow(const std::string& path){
-	// read phase and frequency for each color
-	char w_rgb[] = "rgb";
-	for(int i = 0; i < 3; i++){
-		cfg.lookupValue(path + ".phase." + w_rgb[i], rb_phase[i]);
+void Config::Color::normalize(){
+	// convert screen color(CRT gamma) to sRGB
+	const float inv_gamma = 1.0/2.2;
+	for(int i = 0; i < 3; i ++){
+		rgba[i] = std::pow(rgba[i] / 255, inv_gamma);
 	}
-	for(int i = 0; i < 3; i++){
-		cfg.lookupValue(path + ".freq." + w_rgb[i], rb_freq[i]);
-	}
+	//r = std::pow(r / 255, inv_gamma); 
+	//g = std::pow(g / 255, inv_gamma);
+	//b = std::pow(b / 255, inv_gamma);
+	//a = a;
+}
 
-	// calculate top and bottom color for the rainbow shader
-	for(int i = 0; i < 3; i++){
-		bot_color[i] = rb_phase[i];
-		top_color[i] = rb_phase[i] + rb_freq[i];
-	}
+void Config::Transformation::parse(const std::string& path, libconfig::Config& cfg){
+	cfg.lookupValue(path + ".xmin", Xmin);
+	cfg.lookupValue(path + ".xmax", Xmax);
+	cfg.lookupValue(path + ".ymin", Ymin);
+	cfg.lookupValue(path + ".ymax", Ymax);
 }

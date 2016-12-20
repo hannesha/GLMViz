@@ -23,17 +23,18 @@
 #include "FFT.hpp"
 #include "Config.hpp"
 #include "Program.hpp"
+#include <memory>
 
 class Spectrum {
 	public:
-		Spectrum(Config&);
+		Spectrum(Config&, const unsigned);
 		~Spectrum(){};
 
 		void draw();
 		void update_fft(FFT&);
+		void update_fft(std::vector<std::shared_ptr<FFT>>&);
 		void configure(Config&);
-		void resize(const size_t);
-		void set_transformation(const double, const double);
+		//void set_transformation(const float, const float);
 	private:
 		Program sh_bars, sh_bars_pre, sh_lines;
 		GL::VAO v_bars[2], v_bars_pre[2], v_lines;
@@ -41,6 +42,7 @@ class Spectrum {
 		unsigned tf_index = 0;
 		size_t output_size;
 		bool draw_lines;
+		unsigned id, channel;
 
 		const float dB_lines[36] = {
 			-1.0,  0.0, 1.0,  0.0, //   0dB
@@ -60,4 +62,6 @@ class Spectrum {
 		void fill_tf_buffers(const size_t);
 		void update_x_buffer(const size_t);
 		void resize_fft(const size_t);
+		void resize(const size_t);
+		void set_transformation(const Config::Transformation&);
 };

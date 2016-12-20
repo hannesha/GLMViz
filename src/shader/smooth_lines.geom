@@ -8,6 +8,7 @@ out vec4 color;
 
 uniform float width;
 uniform vec4 line_color;
+uniform mat4 trans;
 
 // edge limits
 const vec2 limit_min = vec2(-0.6,-1.0);
@@ -32,16 +33,16 @@ void main () {
 	vec2 m2 = clamp(vec2(-t2.y, t2.x), limit_min, limit_max) * width;
 
 	// draw line vertices
-	gl_Position = vec4(p1 + m1, 0.0, 1.0);
+	gl_Position = trans * vec4(p1 + m1, 0.0, 1.0);
 	EmitVertex();
 
-	gl_Position = vec4(p2 + m2, 0.0, 1.0);
+	gl_Position = trans * vec4(p2 + m2, 0.0, 1.0);
 	EmitVertex();
 
-	gl_Position = vec4(p1 - m1, 0.0, 1.0);
+	gl_Position = trans * vec4(p1 - m1, 0.0, 1.0);
 	EmitVertex();
 
-	gl_Position = vec4(p2 - m2, 0.0, 1.0);
+	gl_Position = trans * vec4(p2 - m2, 0.0, 1.0);
 	EmitVertex();
 
 	EndPrimitive();

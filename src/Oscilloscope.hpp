@@ -26,18 +26,22 @@
 
 class Oscilloscope {
 	public:
-		Oscilloscope(Config&);
+		Oscilloscope(Config&, const unsigned);
 		~Oscilloscope(){};
 
 		void draw();
-		void update_x_buffer(const size_t);
 		void update_buffer(Buffer<int16_t>&);
-		void set_uniforms(Config&);
+		void update_buffer(Buffer<int16_t>&, Buffer<int16_t>&);
+		void configure(Config&);
+
 	private:
 		Program sh_crt;
 		GL::VAO v_crt;
 		GL::Buffer b_crt_x, b_crt_y;
 		size_t size;
+		unsigned id, channel;
 
 		void init_crt();
+		void update_x_buffer(const size_t);
+		void set_transformation(Config::Transformation&);
 };
