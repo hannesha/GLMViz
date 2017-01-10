@@ -39,7 +39,3 @@ class Program {
 	private:
 		GLuint program_id;
 };
-
-void init_bar_shader(Program&, const bool);
-void init_line_shader(Program&);
-void init_bar_gravity_shader(Program&);

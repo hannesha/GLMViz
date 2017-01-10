@@ -36,13 +36,13 @@ class Spectrum {
 		void configure(Config&);
 		//void set_transformation(const float, const float);
 	private:
-		Program sh_bars, sh_bars_pre, sh_lines;
+		Program sh_bars[2], sh_bars_pre, sh_lines;
 		GL::VAO v_bars[2], v_bars_pre[2], v_lines;
 		GL::Buffer b_x, b_fft, b_fb[2], b_lines;
 		unsigned tf_index = 0;
 		size_t output_size;
 		bool draw_lines;
-		unsigned id, channel;
+		unsigned id, bar_shader_id, channel;
 
 		const float dB_lines[36] = {
 			-1.0,  0.0, 1.0,  0.0, //   0dB
@@ -56,9 +56,13 @@ class Spectrum {
 			-1.0, -4.0, 1.0, -4.0  // -80dB
 		};
 
+		void init_bar_shader();
 		void init_bars();
+		void init_bar_pre_shader();
 		void init_bars_pre();
+		void init_line_shader();
 		void init_lines();
+
 		void fill_tf_buffers(const size_t);
 		void update_x_buffer(const size_t);
 		void resize_fft(const size_t);

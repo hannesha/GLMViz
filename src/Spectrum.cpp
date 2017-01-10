@@ -27,9 +27,9 @@
 #include <vector>
 
 Spectrum::Spectrum(Config& config, const unsigned s_id): id(s_id){
-	init_bar_shader(sh_bars, config.spectra[id].rainbow);
-	init_line_shader(sh_lines);
-	init_bar_gravity_shader(sh_bars_pre);
+	init_bar_shader();
+	init_line_shader();
+	init_bar_pre_shader();
 
 	configure(config);
 
@@ -68,7 +68,7 @@ void Spectrum::draw(){
 
 
 	/* render bars */
-	sh_bars.use();
+	sh_bars[bar_shader_id].use();
 	v_bars[tf_index].bind();
 	glDrawArrays(GL_POINTS, 0, output_size);
 
@@ -116,19 +116,20 @@ void Spectrum::resize_fft(const size_t size){
 
 void Spectrum::configure(Config& cfg){
 	Config::Spectrum scfg = cfg.spectra[id];
-	sh_bars.use();
+	bar_shader_id = scfg.rainbow;
+	sh_bars[bar_shader_id].use();
 	// Post compute specific uniforms
-	GLint i_width = sh_bars.get_uniform("width");
+	GLint i_width = sh_bars[bar_shader_id].get_uniform("width");
 	glUniform1f(i_width, scfg.bar_width/(float)scfg.output_size);
 
 	// set bar color gradients
-	GLint i_top_color = sh_bars.get_uniform("top_color");
+	GLint i_top_color = sh_bars[bar_shader_id].get_uniform("top_color");
 	glUniform4fv(i_top_color, 1, scfg.top_color.rgba);
 
-	GLint i_bot_color = sh_bars.get_uniform("bot_color");
+	GLint i_bot_color = sh_bars[bar_shader_id].get_uniform("bot_color");
 	glUniform4fv(i_bot_color, 1, scfg.bot_color.rgba);
 
-	GLint i_gradient = sh_bars.get_uniform("gradient");
+	GLint i_gradient = sh_bars[bar_shader_id].get_uniform("gradient");
 	glUniform1f(i_gradient, scfg.gradient);
 
 
@@ -178,13 +179,42 @@ void Spectrum::set_transformation(const Config::Transformation& t){
 	// apply simple ortho transformation
 	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
 
-	sh_bars.use();
-	GLint i_trans = sh_bars.get_uniform("trans");
+	sh_bars[bar_shader_id].use();
+	GLint i_trans = sh_bars[bar_shader_id].get_uniform("trans");
 	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
 
 	sh_lines.use();
 	i_trans = sh_lines.get_uniform("trans");
 	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
+}
+
+void Spectrum::init_bar_shader(){
+	const char* vertex_shader = 
+	#include "shader/bar.vert"
+	;
+	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
+
+	// fragment shader
+	const char* rainbow_shader =
+	#include "shader/rainbow.frag"
+	;
+	GL::Shader fs_rb(rainbow_shader, GL_FRAGMENT_SHADER);
+
+	const char* fragment_shader =
+	#include "shader/simple.frag"
+	;
+	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
+	
+	// geometry shader
+	// draw bars
+	const char* geometry_shader = 
+	#include "shader/bar.geom"
+	;
+	GL::Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
+
+	// link shaders
+	sh_bars[0].link({fs, vs, gs});
+	sh_bars[1].link({fs_rb, vs, gs});
 }
 
 void Spectrum::init_bars(){
@@ -193,19 +223,29 @@ void Spectrum::init_bars(){
 
 		b_x.bind();
 		// set x position data in bar VAO
-		GLint arg_x_data = sh_bars.get_attrib("x");
+		GLint arg_x_data = sh_bars[0].get_attrib("x");
 		glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 		glEnableVertexAttribArray(arg_x_data);
 
 		// enable the preprocessed y attribute
 		b_fb[i].bind();
-		GLint arg_y = sh_bars.get_attrib("y");
+		GLint arg_y = sh_bars[0].get_attrib("y");
 		glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
 		glEnableVertexAttribArray(arg_y);
 
 		GL::Buffer::unbind();
 		GL::VAO::unbind();
 	}
+}
+
+void Spectrum::init_bar_pre_shader(){
+	const char* vertex_shader = 
+	#include "shader/bar_pre.vert"
+	;
+	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
+
+	const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
+	sh_bars_pre.link_TF(3, varyings, {vs});
 }
 
 void Spectrum::init_bars_pre(){
@@ -233,6 +273,21 @@ void Spectrum::init_bars_pre(){
 		GL::Buffer::unbind();
 		GL::VAO::unbind();
 	}
+}
+
+void Spectrum::init_line_shader(){
+	// fragment shader
+	const char* fragment_shader = 
+	#include "shader/simple.frag"
+	;
+	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
+	
+	const char* vs_lines_code = 
+	#include "shader/lines.vert"
+	;
+	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
+	
+	sh_lines.link({fs, vs_lines});
 }
 
 void Spectrum::init_lines(){
