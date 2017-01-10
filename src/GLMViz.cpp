@@ -70,6 +70,13 @@ void sighandler(int signal){
 	config_reload = true;
 }
 
+// config reload key handler
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+	if(key == GLFW_KEY_R && action == GLFW_PRESS){
+		config_reload = true;
+	}
+}
+
 // handle window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
@@ -166,6 +173,8 @@ int main(){
 		//glEnable(GL_BLEND);
 		// handle resizing
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+		glfwSetKeyCallback(window, key_callback);
 
 		std::vector<Spec_ptr> spectra;
 		std::vector<Osc_ptr> oscilloscopes;

@@ -25,4 +25,6 @@ Per-user configurations have to be copied manually using:
 ## Usage
     glmviz
 
-Exit with <kbd>CTRL-C</kbd> or by closing the window
+Exit with <kbd>CTRL-C</kbd> or by closing the window.
+
+The config can be reloaded by pressing <kbd>R</kbd> or by sending `SIGUSR1` to the program.
