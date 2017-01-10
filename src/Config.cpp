@@ -174,9 +174,6 @@ void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg){
 }
 
 void Config::Spectrum::parse_rainbow(const std::string& path, libconfig::Config& cfg){
-	Color freq_d = {1, 1, 1, 1};
-	Color phase_d = {0, 0, 0, 1};
-
 	char w_rgb[] = "rgb";
 	
 	for(int i = 0; i < 3; i++){

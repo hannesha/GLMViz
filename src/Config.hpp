@@ -86,6 +86,8 @@ class Config {
 			float bar_width = 0.75f;
 
 			bool rainbow = false;
+			Color freq_d = {1, 1, 1, 1};
+			Color phase_d = {0, 0, 0, 1};
 			bool dB_lines = true;
 
 			void parse(const std::string&, libconfig::Config&);
@@ -103,13 +105,4 @@ class Config {
 	private:
 		libconfig::Config cfg;
 		std::string file;
-		void read_rgba(const std::string& path, float rgba[]);
-		void read_rainbow(const std::string& path);
-		void to_srgb(float rgba[]);
-
-		float max_db = 0.0f;
-		float min_db = -80.0f;
-
-		float rb_phase[3] = {0.0, 0.0, 0.0};
-		float rb_freq[3]  = {1.0, 1.0, 1.0};
 };
