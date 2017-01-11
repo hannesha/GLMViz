@@ -12,5 +12,11 @@ addons:
 		- gcc-6
 		- g++-6
 		- cmake
+		- libglfw-dev
+		- libglm-dev
+		- libfftw3-dev
+		- libpulse-dev
+		- libconfig++-dev
+		- libxdg-basedir-dev
 
 script: mkdir -p build && cd build && cmake .. && make
