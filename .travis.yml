@@ -2,10 +2,7 @@ dist: trusty
 sudo: true
 language: cpp
 compiler:
-  - gcc
-env:
-  - CXX=g++-6
-  - CC=gcc-6
+  - g++-6
 addons:
   apt:
     sources:
