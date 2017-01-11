@@ -2,21 +2,21 @@ dist: trusty
 sudo: false
 language: cpp
 compiler:
-	- gcc
+  - gcc
 addons:
-	apt:
-		sources:
-			- ubuntu-toolchain-r-test
-			- george-edison55-cmake-3.x
-		packages:
-		- gcc-6
-		- g++-6
-		- cmake
-		- libglfw-dev
-		- libglm-dev
-		- libfftw3-dev
-		- libpulse-dev
-		- libconfig++-dev
-		- libxdg-basedir-dev
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - george-edison55-cmake-3.x
+    packages:
+    - gcc-6
+    - g++-6
+    - cmake
+    - libglfw-dev
+    - libglm-dev
+    - libfftw3-dev
+    - libpulse-dev
+    - libconfig++-dev
+    - libxdg-basedir-dev
 
 script: mkdir -p build && cd build && cmake .. && make
