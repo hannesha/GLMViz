@@ -3,6 +3,9 @@ sudo: false
 language: cpp
 compiler:
   - gcc
+env:
+  - CXX=g++-6
+  - CC=gcc-6
 addons:
   apt:
     sources:
@@ -19,5 +22,5 @@ addons:
     - libpulse-dev
     - libconfig++-dev
     - libxdg-basedir-dev
-
+install: sudo wget -P /usr/include/GL/ http://www.opengl.org/registry/api/GL/glcorearb.h
 script: mkdir -p build && cd build && cmake .. && make
