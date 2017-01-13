@@ -84,7 +84,13 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 std::string generate_title(Config& config){
 	std::stringstream title;
-	title << "Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
+	title << "GLMViz:";
+	if (config.spectra.size() > 0){
+		title << " Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
+	}
+	if (config.oscilloscopes.size() > 0){
+		title << " Oscilloscope (dur=" << config.duration << "ms)";
+	}
 	return title.str();
 }
 
