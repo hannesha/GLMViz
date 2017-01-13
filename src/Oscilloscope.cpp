@@ -93,7 +93,7 @@ void Oscilloscope::configure(Config& config){
 	glUniform4fv(i_color, 1, ocfg.color.rgba);
 
 	GLint i_width = sh_crt.get_uniform("width");
-	glUniform1f(i_width, 0.02);
+	glUniform1f(i_width, ocfg.width);
 
 	set_transformation(ocfg.pos);
 

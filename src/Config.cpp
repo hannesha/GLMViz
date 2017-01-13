@@ -133,9 +133,9 @@ void Config::reload(){
 void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
 	cfg.lookupValue(path + ".channel", channel);
 	cfg.lookupValue(path + ".scale", scale);
+	cfg.lookupValue(path + ".width", width);
 
 	color.parse(path + ".color", cfg);
-	//color.normalize(c);
 
 	pos.parse(path + ".pos", cfg);
 }

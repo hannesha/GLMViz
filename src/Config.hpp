@@ -64,6 +64,7 @@ class Config {
 		struct Oscilloscope {
 			int channel = 0;
 			float scale = 1;
+			float width = 0.01;
 			Color color = {211, 38, 46, 1};
 			Transformation pos;
 
