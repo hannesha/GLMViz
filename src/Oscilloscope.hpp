@@ -35,7 +35,7 @@ class Oscilloscope {
 		void configure(Config&);
 
 	private:
-		Program sh_crt;
+		GL::Program sh_crt;
 		GL::VAO v_crt;
 		GL::Buffer b_crt_x, b_crt_y;
 		size_t size;

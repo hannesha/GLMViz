@@ -24,6 +24,7 @@
 #include "Config.hpp"
 #include "Program.hpp"
 #include <memory>
+#include <array>
 
 class Spectrum {
 	public:
@@ -34,11 +35,16 @@ class Spectrum {
 		void update_fft(FFT&);
 		void update_fft(std::vector<std::shared_ptr<FFT>>&);
 		void configure(Config&);
-		//void set_transformation(const float, const float);
+
 	private:
-		Program sh_bars[2], sh_bars_pre, sh_lines;
-		GL::VAO v_bars[2], v_bars_pre[2], v_lines;
-		GL::Buffer b_x, b_fft, b_fb[2], b_lines;
+		GL::Program sh_bars_pre, sh_lines;
+		std::array<GL::Program, 2> sh_bars;
+
+		GL::VAO v_lines;
+		std::array<GL::VAO, 2> v_bars, v_bars_pre;
+
+		GL::Buffer b_x, b_fft, b_lines;
+		std::array<GL::Buffer, 2> b_fb;
 		unsigned tf_index = 0;
 		size_t output_size;
 		bool draw_lines;
