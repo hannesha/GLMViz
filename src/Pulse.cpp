@@ -41,8 +41,14 @@ Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, 
                 (uint32_t)-1, 
                 (uint32_t)-1     //fragsize
         };
+
+	std::string default_device = device;
+	if(default_device == ""){
+		default_device = get_default_sink();
+	}
+
 	int error;
-	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
+	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, default_device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
 	
 	if(stream == nullptr){
 		std::stringstream msg;

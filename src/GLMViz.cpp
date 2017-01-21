@@ -140,14 +140,14 @@ int main(){
 		Input::Ptr input;
 
 		// audio source configuration
-		switch (config.source){
+		switch (config.input.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, SAMPLES, config.stereo);
+			input = make_unique<Pulse>(config.input.device, config.input.f_sample, SAMPLES, config.input.stereo);
 			break;
 #endif
 		default:
-			input = make_unique<Fifo>(config.fifo_file, SAMPLES);
+			input = make_unique<Fifo>(config.input.file, SAMPLES);
 		}
 
 		// attach SIGUSR1 signal handler
@@ -193,7 +193,7 @@ int main(){
 			oscilloscopes.push_back(make_unique<Oscilloscope>(config, i));
 		}
 
-		if(!config.stereo){
+		if(!config.input.stereo){
 			// create audio buffer
 			Buffer<int16_t> buffer(config.buf_size);
 

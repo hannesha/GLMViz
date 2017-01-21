@@ -35,16 +35,23 @@ class Config {
 		int w_height = 1024;
 		int w_width = 768;
 
-		Source source = Source::PULSE;
-		std::string fifo_file = "/tmp/mpd.fifo";
-		bool stereo = false;
+		struct Input {
+			Source source = Source::PULSE;
+			std::string file = "/tmp/mpd.fifo";
+			std::string device = "";
+			bool stereo = false;
+			long long f_sample = 44100;
+
+			void parse(const std::string&, libconfig::Config&);
+		};
+		Input input;
+
 		int duration = 50;
-		long long FS = 44100;
 		int fps = 60;
 		long long fft_size = 2<<12;
-		long long buf_size = FS * duration / 1000;
+		long long buf_size = input.f_sample * duration / 1000;
 		long long fft_output_size = fft_size/2+1;
-		float d_freq = (float) FS / (float) fft_size;
+		float d_freq = (float) input.f_sample / (float) fft_size;
 		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
 		struct Transformation {
@@ -95,7 +102,6 @@ class Config {
 			void clamp_output_size(const size_t fft_output_size){output_size = (size_t)output_size < fft_output_size ? output_size : fft_output_size; };
 			void parse_rainbow(const std::string&, libconfig::Config&);
 		};
-
 
 		Oscilloscope osc_default;
 		Spectrum spec_default;

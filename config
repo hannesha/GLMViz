@@ -1,14 +1,17 @@
 /* copy this file into your ~/.config/GLMViz/ folder */
 
 Window = { AA = 4; }; //window options
-fps = 60;
-source = "PULSE";
-fifo_file = "/tmp/mpd.fifo";
-//stereo = true;
+Input = {
+	source = "PULSE"
+	file = "/tmp/mpd.fifo" //path to fifo file
+	device = "" //pulse device
+	f_sample = 44100L; // 44.1kHz sampling rate
+	//stereo = true
+}
 
+fps = 60;
 duration = 50; //buffer lenght in ms
 
-FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
 
 //Spectrum default values

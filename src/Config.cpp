@@ -49,27 +49,15 @@ void Config::reload(){
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
-		std::string str_source;
-		cfg.lookupValue("source", str_source);
-		// convert string to lowercase and evaluate source
-		std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
-		if(str_source == "pulse"){
-			source = Source::PULSE;
-		}else{
-			source = Source::FIFO;
-		}
-
-		cfg.lookupValue("fifo_file", fifo_file);
-		cfg.lookupValue("stereo", stereo);
+		input.parse("Input", cfg);
 
 		cfg.lookupValue("duration", duration);
-		cfg.lookupValue("FS", FS);
 		cfg.lookupValue("fps", fps);
 		cfg.lookupValue("fft_size", fft_size);
 
-		buf_size = FS * duration / 1000;
+		buf_size = input.f_sample * duration / 1000;
 		fft_output_size = fft_size/2+1;
-		d_freq = (float) FS / (float) fft_size;
+		d_freq = (float) input.f_sample / (float) fft_size;
 
 
 		// normalization value for the fft output
@@ -128,6 +116,23 @@ void Config::reload(){
 
                 std::cout << "Using default settings." << std::endl;
         }	
+}
+
+void Config::Input::parse(const std::string& path, libconfig::Config& cfg){
+	std::string str_source;
+	cfg.lookupValue(path + ".source", str_source);
+	// convert string to lowercase and evaluate source
+	std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
+	if(str_source == "pulse"){
+		source = Source::PULSE;
+	}else{
+		source = Source::FIFO;
+	}
+
+	cfg.lookupValue(path + ".file", file);
+	cfg.lookupValue(path + ".device", device);
+	cfg.lookupValue(path + ".stereo", stereo);
+	cfg.lookupValue(path + ".f_sample", f_sample);
 }
 
 void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
