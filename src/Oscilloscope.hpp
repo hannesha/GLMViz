@@ -42,6 +42,6 @@ class Oscilloscope {
 		unsigned id, channel;
 
 		void init_crt();
-		void update_x_buffer(const size_t);
+		void resize_x_buffer(const size_t);
 		void set_transformation(Config::Transformation&);
 };

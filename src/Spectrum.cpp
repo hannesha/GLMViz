@@ -79,7 +79,7 @@ void Spectrum::draw(){
 	GL::VAO::unbind();
 }
 
-void Spectrum::fill_tf_buffers(const size_t size){
+void Spectrum::resize_tf_buffers(const size_t size){
 	b_fb[0].bind();
 	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 
@@ -87,7 +87,7 @@ void Spectrum::fill_tf_buffers(const size_t size){
 	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 }
 
-void Spectrum::update_x_buffer(const size_t size){
+void Spectrum::resize_x_buffer(const size_t size){
 	std::vector<float> x_data(size);
 	float f_size = (float)size;
 
@@ -109,7 +109,7 @@ void Spectrum::update_fft(std::vector<std::shared_ptr<FFT>>& ffts){
 	update_fft(*ffts[channel]);
 }
 
-void Spectrum::resize_fft(const size_t size){
+void Spectrum::resize_fft_buffer(const size_t size){
 	b_fft.bind();
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
@@ -169,9 +169,9 @@ void Spectrum::configure(Config& cfg){
 void Spectrum::resize(const size_t size){
 	if(size != output_size){
 		output_size = size;
-		fill_tf_buffers(size);
-		update_x_buffer(size);
-		resize_fft(size);
+		resize_tf_buffers(size);
+		resize_x_buffer(size);
+		resize_fft_buffer(size);
 	}
 }
 

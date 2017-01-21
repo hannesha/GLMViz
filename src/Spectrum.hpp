@@ -69,9 +69,9 @@ class Spectrum {
 		void init_line_shader();
 		void init_lines();
 
-		void fill_tf_buffers(const size_t);
-		void update_x_buffer(const size_t);
-		void resize_fft(const size_t);
+		void resize_tf_buffers(const size_t);
+		void resize_x_buffer(const size_t);
+		void resize_fft_buffer(const size_t);
 		void resize(const size_t);
 		void set_transformation(const Config::Transformation&);
 };
