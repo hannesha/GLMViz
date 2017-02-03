@@ -132,10 +132,15 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 // this number has to be even in stereo mode
 #define SAMPLES 220
 
-int main(){
+int main(int argc, char *argv[]){
 	try{
+		// construct config file path from first argument
+		std::string config_file = "";
+		if(argc > 1){
+			config_file = argv[1];
+		}
 		// read config
-		Config config;
+		Config config(config_file);
 
 		Input::Ptr input;
 

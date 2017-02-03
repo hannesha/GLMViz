@@ -28,7 +28,7 @@ enum class Source {FIFO, PULSE};
 
 class Config {
 	public:
-		Config();
+		Config(const std::string&);
 		void reload();
 
 		int w_aa = 4;

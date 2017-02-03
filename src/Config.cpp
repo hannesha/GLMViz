@@ -27,14 +27,16 @@
 #include <stdexcept>
 #include <cmath>
 
-Config::Config(){
+Config::Config(const std::string& config_file){
+	file = config_file;
+
 	xdgHandle xdghandle;
 
-	if(xdgInitHandle(&xdghandle)){
+	if(file == "" && xdgInitHandle(&xdghandle)){
                 file = xdgConfigFind("GLMViz/config", &xdghandle);
 
                 xdgWipeHandle(&xdghandle);
-        }
+	}
 
 	if(file == "") file = "/etc/GLMViz/config";
 
