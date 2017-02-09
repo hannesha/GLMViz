@@ -19,9 +19,12 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 set(CMAKE_BUILD_TYPE Release)
+set (CMAKE_INSTALL_PREFIX /usr/local/bin)
 
 # add source subdirectory
 add_subdirectory (src)
 
 # install config
 install(FILES config DESTINATION "/etc/GLMViz/")
+
+include(cpackconf)
