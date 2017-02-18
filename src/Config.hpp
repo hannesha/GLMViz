@@ -24,6 +24,9 @@
 #include <vector>
 #include <libconfig.h++>
 
+#define MAX_OSCILLOSCOPES 4
+#define MAX_SPECTRA 4
+
 enum class Source {FIFO, PULSE};
 
 class Config {

@@ -94,6 +94,24 @@ std::string generate_title(Config& config){
 	return title.str();
 }
 
+// create or delete renderers to match the corresponding configs
+template <typename R_vector, typename C_vector>
+void update_render_configs(R_vector& renderer, C_vector& configs, Config& config){
+	for(unsigned i = 0; i < configs.size(); i++){
+		try{
+			//reconfigure renderer
+			renderer.at(i) -> configure(config);
+		}catch(std::out_of_range& e){
+			//make new renderer
+			renderer.push_back(make_unique<typename R_vector::value_type::element_type>(config, i));
+		}
+	}
+	//delete remaining renderers
+	if(renderer.size() > configs.size()){
+		renderer.erase(renderer.begin() + configs.size(), renderer.end());
+	}
+}
+
 // mainloop template
 template <typename Fupdate, typename Fdraw>
 void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
@@ -190,13 +208,9 @@ int main(int argc, char *argv[]){
 		std::vector<Spec_ptr> spectra;
 		std::vector<Osc_ptr> oscilloscopes;
 
-		for(unsigned i = 0; i < config.spectra.size(); i++){
-			spectra.push_back(make_unique<Spectrum>(config, i));
-		}
-
-		for(unsigned i = 0; i < config.oscilloscopes.size(); i++){
-			oscilloscopes.push_back(make_unique<Oscilloscope>(config, i));
-		}
+		// create new renderers
+		update_render_configs(spectra, config.spectra, config);
+		update_render_configs(oscilloscopes, config.oscilloscopes, config);
 
 		if(!config.input.stereo){
 			// create audio buffer
@@ -216,13 +230,8 @@ int main(int argc, char *argv[]){
 				// resize buffers and reconfigure renderer
 				buffer.resize(config.buf_size);
 
-				for(Spec_ptr& s : spectra){
-					s->configure(config);
-				}
-
-				for(Osc_ptr& o : oscilloscopes){
-					o->configure(config);
-				}
+				update_render_configs(spectra, config.spectra, config);
+				update_render_configs(oscilloscopes, config.oscilloscopes, config);
 			},
 			[&]{
 				// update all locking renderer first
@@ -260,13 +269,10 @@ int main(int argc, char *argv[]){
 				// resize buffers
 				lbuffer.resize(config.buf_size);
 				rbuffer.resize(config.buf_size);
+
 				// update spectrum/oscilloscope renderer
-				for(Spec_ptr& s : spectra){
-					s->configure(config);
-				}
-				for(Osc_ptr& o : oscilloscopes){
-					o->configure(config);
-				}
+				update_render_configs(spectra, config.spectra, config);
+				update_render_configs(oscilloscopes, config.oscilloscopes, config);
 			},
 			[&]{
 				ffts[0]->calculate(lbuffer);
