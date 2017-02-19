@@ -16,6 +16,7 @@ addons:
     - g++-6
     - cmake
     - libglfw3-dev
+    - mesa-common-dev
     - libglm-dev
     - libfftw3-dev
     - libpulse-dev
