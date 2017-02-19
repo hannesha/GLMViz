@@ -22,4 +22,4 @@ addons:
     - libpulse-dev
     - libconfig++-dev
     - libxdg-basedir-dev
-script: cmake . && make
+script: export CXX=g++-6 && cmake . && make
