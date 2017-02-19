@@ -20,41 +20,36 @@
 
 #include "Program.hpp"
 
-Program::Program(){
-	program_id = glCreateProgram();
-}
+namespace GL {
 
-Program::~Program(){
-	glDeleteProgram(program_id);
-}
-
-void Program::link(std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
-	// attach compiled shaders
-	for (GL::Shader& sh : shaders){
-		glAttachShader(program_id, sh.id);
+	Program::Program(){
+		id = glCreateProgram();
 	}
 
-	glLinkProgram(program_id);
-
-	// detach shaders for later cleanup
-	for (GL::Shader& sh : shaders){
-		glDetachShader(program_id, sh.id);
+	Program::~Program(){
+		glDeleteProgram(id);
 	}
-}
 
-void Program::link_TF(const size_t n, const char** fb_varyings, std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
-	// link with transform feedback varyings
-	// set TF varyings
-	glTransformFeedbackVaryings(program_id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);
-	//std::cout << glGetError() << std::endl;
+	void Program::link(std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
+		// attach compiled shaders
+		for (GL::Shader& sh : shaders){
+			glAttachShader(id, sh.id);
+		}
 
-	link(shaders);
-}
+		glLinkProgram(id);
 
-GLint Program::get_uniform(const char* name) const {
-	return glGetUniformLocation(program_id, name);
-}
+		// detach shaders for later cleanup
+		for (GL::Shader& sh : shaders){
+			glDetachShader(id, sh.id);
+		}
+	}
 
-GLint Program::get_attrib(const char* name) const {
-	return glGetAttribLocation(program_id, name);
+	void Program::link_TF(const size_t n, const char** fb_varyings, std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
+		// link with transform feedback varyings
+		// set TF varyings
+		glTransformFeedbackVaryings(id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);
+		//std::cout << glGetError() << std::endl;
+
+		link(shaders);
+	}
 }

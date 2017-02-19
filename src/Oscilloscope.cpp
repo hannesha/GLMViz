@@ -30,8 +30,6 @@ Oscilloscope::Oscilloscope(Config& config, const unsigned o_id): id(o_id){
 	init_crt();
 
 	configure(config);
-
-	//update_x_buffer(config.buf_size);
 }
 
 void Oscilloscope::draw(){
@@ -93,14 +91,14 @@ void Oscilloscope::configure(Config& config){
 	glUniform4fv(i_color, 1, ocfg.color.rgba);
 
 	GLint i_width = sh_crt.get_uniform("width");
-	glUniform1f(i_width, 0.02);
+	glUniform1f(i_width, ocfg.width);
 
 	set_transformation(ocfg.pos);
 
 	channel = std::min(ocfg.channel, 1);
 }
 
-void Oscilloscope::update_x_buffer(const size_t size){
+void Oscilloscope::resize_x_buffer(const size_t size){
 	std::vector<float> x_data(size);
 	float f_size = (float)size;
 
@@ -127,7 +125,7 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 	// resize x coordinate buffer if necessary
 	if(size != buffer.size){
 		size = buffer.size;
-		update_x_buffer(size);
+		resize_x_buffer(size);
 
 		b_crt_y.bind();
 		glBufferData(GL_ARRAY_BUFFER, size * sizeof(int16_t), &buffer.v_buffer[0], GL_DYNAMIC_DRAW);

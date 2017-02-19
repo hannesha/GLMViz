@@ -27,14 +27,16 @@
 #include <stdexcept>
 #include <cmath>
 
-Config::Config(){
+Config::Config(const std::string& config_file){
+	file = config_file;
+
 	xdgHandle xdghandle;
 
-	if(xdgInitHandle(&xdghandle)){
+	if(file == "" && xdgInitHandle(&xdghandle)){
                 file = xdgConfigFind("GLMViz/config", &xdghandle);
 
                 xdgWipeHandle(&xdghandle);
-        }
+	}
 
 	if(file == "") file = "/etc/GLMViz/config";
 
@@ -43,40 +45,28 @@ Config::Config(){
 
 void Config::reload(){
 	try{
-                cfg.readFile(file.c_str());
+		cfg.readFile(file.c_str());
 
 		cfg.lookupValue("Window.AA", w_aa);
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
-		std::string str_source;
-		cfg.lookupValue("source", str_source);
-		// convert string to lowercase and evaluate source
-		std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
-		if(str_source == "pulse"){
-			source = Source::PULSE;
-		}else{
-			source = Source::FIFO;
-		}
-
-		cfg.lookupValue("fifo_file", fifo_file);
-		cfg.lookupValue("stereo", stereo);
+		input.parse("Input", cfg);
 
 		cfg.lookupValue("duration", duration);
-		cfg.lookupValue("FS", FS);
 		cfg.lookupValue("fps", fps);
 		cfg.lookupValue("fft_size", fft_size);
 
-		buf_size = FS * duration / 1000;
+		buf_size = input.f_sample * duration / 1000;
 		fft_output_size = fft_size/2+1;
-		d_freq = (float) FS / (float) fft_size;
+		d_freq = (float) input.f_sample / (float) fft_size;
 
 
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
 		osc_default.parse("Osc", cfg);
-		for(unsigned i = 0; i < 4; i++){
+		for(unsigned i = 0; i < MAX_OSCILLOSCOPES; i++){
 			if(cfg.exists("Osc" + std::to_string(i+1))){
 				// init new Oscilloscope with default parameters
 				Oscilloscope tmp = osc_default;
@@ -84,19 +74,23 @@ void Config::reload(){
 				tmp.parse("Osc" + std::to_string(i+1), cfg);
 
 				// reuse old values if possible
-				if(oscilloscopes.size() > i){
-					oscilloscopes[i] = tmp;
-				}else{
+				try{
+					oscilloscopes.at(i) = tmp;
+				}catch(std::out_of_range& e){
 					oscilloscopes.push_back(tmp);
 				}
 			}else{
+				// delete remaining oscilloscopes
+				if(oscilloscopes.size() > i){
+					oscilloscopes.erase(oscilloscopes.begin() + i, oscilloscopes.end());
+				}
 				break;
 			}
 		}
 
 		spec_default.parse("Spectrum", cfg);
 		spec_default.clamp_output_size(fft_output_size);
-		for(unsigned i = 0; i < 4; i++){
+		for(unsigned i = 0; i < MAX_SPECTRA; i++){
 			if(cfg.exists("Spectrum" + std::to_string(i+1))){
 				// init new Spectrum with default parameters
 				Spectrum tmp = spec_default;
@@ -105,12 +99,16 @@ void Config::reload(){
 				tmp.clamp_output_size(fft_output_size);
 
 				// reuse old values if possible
-				if(spectra.size() > i){
-					spectra[i] = tmp;
-				}else{
+				try{
+					spectra.at(i) = tmp;
+				}catch(std::out_of_range& e){
 					spectra.push_back(tmp);
 				}
 			}else{
+				// delete remaining spectra
+				if(spectra.size() > i){
+					spectra.erase(spectra.begin() + i, spectra.end());
+				}
 				break;
 			}
 		}
@@ -118,24 +116,41 @@ void Config::reload(){
 		//std::cout << oscilloscopes.size() << std::endl;
 		//std::cout << spectra.size() << std::endl;
 
-        }catch(const libconfig::FileIOException &fioex){
-                std::cerr << "I/O error while reading file." << std::endl;
+	}catch(const libconfig::FileIOException &fioex){
+		std::cerr << "I/O error while reading file." << std::endl;
 
-                std::cout << "Using default settings." << std::endl;
-        }catch(const libconfig::ParseException &pex){
-                std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-                << " - " << pex.getError() << std::endl;
+		std::cout << "Using default settings." << std::endl;
+	}catch(const libconfig::ParseException &pex){
+		std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+		<< " - " << pex.getError() << std::endl;
 
-                std::cout << "Using default settings." << std::endl;
-        }	
+		std::cout << "Using default settings." << std::endl;
+	}
+}
+
+void Config::Input::parse(const std::string& path, libconfig::Config& cfg){
+	std::string str_source;
+	cfg.lookupValue(path + ".source", str_source);
+	// convert string to lowercase and evaluate source
+	std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
+	if(str_source == "pulse"){
+		source = Source::PULSE;
+	}else{
+		source = Source::FIFO;
+	}
+
+	cfg.lookupValue(path + ".file", file);
+	cfg.lookupValue(path + ".device", device);
+	cfg.lookupValue(path + ".stereo", stereo);
+	cfg.lookupValue(path + ".f_sample", f_sample);
 }
 
 void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
 	cfg.lookupValue(path + ".channel", channel);
 	cfg.lookupValue(path + ".scale", scale);
+	cfg.lookupValue(path + ".width", width);
 
 	color.parse(path + ".color", cfg);
-	//color.normalize(c);
 
 	pos.parse(path + ".pos", cfg);
 }

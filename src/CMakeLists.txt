@@ -30,4 +30,4 @@ add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.c
 target_link_libraries(glmviz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} ${PULSE_LIBS})
 
 # install GLMViz
-install(TARGETS glmviz DESTINATION "/usr/local/bin/")
+install(TARGETS glmviz DESTINATION ${CMAKE_INSTALL_PREFIX})

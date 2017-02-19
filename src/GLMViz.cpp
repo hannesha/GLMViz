@@ -84,8 +84,32 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 std::string generate_title(Config& config){
 	std::stringstream title;
-	title << "Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
+	title << "GLMViz:";
+	if (config.spectra.size() > 0){
+		title << " Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
+	}
+	if (config.oscilloscopes.size() > 0){
+		title << " Oscilloscope (dur=" << config.duration << "ms)";
+	}
 	return title.str();
+}
+
+// create or delete renderers to match the corresponding configs
+template <typename R_vector, typename C_vector>
+void update_render_configs(R_vector& renderer, C_vector& configs, Config& config){
+	for(unsigned i = 0; i < configs.size(); i++){
+		try{
+			//reconfigure renderer
+			renderer.at(i) -> configure(config);
+		}catch(std::out_of_range& e){
+			//make new renderer
+			renderer.push_back(make_unique<typename R_vector::value_type::element_type>(config, i));
+		}
+	}
+	//delete remaining renderers
+	if(renderer.size() > configs.size()){
+		renderer.erase(renderer.begin() + configs.size(), renderer.end());
+	}
 }
 
 // mainloop template
@@ -126,22 +150,27 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 // this number has to be even in stereo mode
 #define SAMPLES 220
 
-int main(){
+int main(int argc, char *argv[]){
 	try{
+		// construct config file path from first argument
+		std::string config_file = "";
+		if(argc > 1){
+			config_file = argv[1];
+		}
 		// read config
-		Config config;
+		Config config(config_file);
 
 		Input::Ptr input;
 
 		// audio source configuration
-		switch (config.source){
+		switch (config.input.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(Pulse::get_default_sink(), config.FS, SAMPLES, config.stereo);
+			input = make_unique<Pulse>(config.input.device, config.input.f_sample, SAMPLES, config.input.stereo);
 			break;
 #endif
 		default:
-			input = make_unique<Fifo>(config.fifo_file, SAMPLES);
+			input = make_unique<Fifo>(config.input.file, SAMPLES);
 		}
 
 		// attach SIGUSR1 signal handler
@@ -179,15 +208,11 @@ int main(){
 		std::vector<Spec_ptr> spectra;
 		std::vector<Osc_ptr> oscilloscopes;
 
-		for(unsigned i = 0; i < config.spectra.size(); i++){
-			spectra.push_back(make_unique<Spectrum>(config, i));
-		}
+		// create new renderers
+		update_render_configs(spectra, config.spectra, config);
+		update_render_configs(oscilloscopes, config.oscilloscopes, config);
 
-		for(unsigned i = 0; i < config.oscilloscopes.size(); i++){
-			oscilloscopes.push_back(make_unique<Oscilloscope>(config, i));
-		}
-
-		if(!config.stereo){
+		if(!config.input.stereo){
 			// create audio buffer
 			Buffer<int16_t> buffer(config.buf_size);
 
@@ -205,13 +230,8 @@ int main(){
 				// resize buffers and reconfigure renderer
 				buffer.resize(config.buf_size);
 
-				for(Spec_ptr& s : spectra){
-					s->configure(config);
-				}
-
-				for(Osc_ptr& o : oscilloscopes){
-					o->configure(config);
-				}
+				update_render_configs(spectra, config.spectra, config);
+				update_render_configs(oscilloscopes, config.oscilloscopes, config);
 			},
 			[&]{
 				// update all locking renderer first
@@ -249,13 +269,10 @@ int main(){
 				// resize buffers
 				lbuffer.resize(config.buf_size);
 				rbuffer.resize(config.buf_size);
+
 				// update spectrum/oscilloscope renderer
-				for(Spec_ptr& s : spectra){
-					s->configure(config);
-				}
-				for(Osc_ptr& o : oscilloscopes){
-					o->configure(config);
-				}
+				update_render_configs(spectra, config.spectra, config);
+				update_render_configs(oscilloscopes, config.oscilloscopes, config);
 			},
 			[&]{
 				ffts[0]->calculate(lbuffer);

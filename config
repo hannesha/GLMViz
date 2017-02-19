@@ -1,14 +1,17 @@
 /* copy this file into your ~/.config/GLMViz/ folder */
 
 Window = { AA = 4; }; //window options
-fps = 60;
-source = "PULSE";
-fifo_file = "/tmp/mpd.fifo";
-//stereo = true;
+Input = {
+	source = "PULSE"
+	file = "/tmp/mpd.fifo" //path to fifo file
+	device = "" //pulse device
+	f_sample = 44100L; // 44.1kHz sampling rate
+	//stereo = true
+}
 
+fps = 60;
 duration = 50; //buffer lenght in ms
 
-FS = 44100L; // 44.1kHz sampling rate
 fft_size = 8192L; // 2^13
 
 //Spectrum default values
@@ -44,12 +47,23 @@ Spectrum = {
 			r = 1.0
 			g = 1.0
 			b = 1.0
-		}
+		};
 	}
 }
 
 //standard Spectrum
-Spectrum1 = {}
+Spectrum1 = {
+	// emulate old crt monitor
+	rainbow = {
+		enabled = false
+		freq = {
+			r = 50.0;
+			g = 50.0;
+			b = 50.0;
+		}
+	}
+	//dB_lines = false
+}
 
 //Spectrum rendered in the upper half of the window
 /*Spectrum2 = {
@@ -60,7 +74,8 @@ Spectrum1 = {}
 //Oscilloscope default values
 Osc = {
 	//default line color
-	color = "D3262E"
+	color = "FFFFFF"
+	width = 0.01;
 }
 
 //standard Oscilloscope

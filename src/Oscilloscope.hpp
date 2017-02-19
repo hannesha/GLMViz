@@ -35,13 +35,13 @@ class Oscilloscope {
 		void configure(Config&);
 
 	private:
-		Program sh_crt;
+		GL::Program sh_crt;
 		GL::VAO v_crt;
 		GL::Buffer b_crt_x, b_crt_y;
 		size_t size;
 		unsigned id, channel;
 
 		void init_crt();
-		void update_x_buffer(const size_t);
+		void resize_x_buffer(const size_t);
 		void set_transformation(Config::Transformation&);
 };
