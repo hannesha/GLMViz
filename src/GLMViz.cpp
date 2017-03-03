@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -193,7 +192,7 @@ int main(int argc, char *argv[]){
 			throw glfw_error("Failed to create GLFW Window!");
 		}
 
-		glfwMakeContextCurrent(window); 
+		glfwMakeContextCurrent(window);
 
 		// set clear color to black
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

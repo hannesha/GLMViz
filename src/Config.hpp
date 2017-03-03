@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -88,7 +87,7 @@ class Config {
 			float offset = 1.0f;
 			int output_size = 100;
 
-			Color top_color = {211, 38, 46, 1}; 		
+			Color top_color = {211, 38, 46, 1};
 			Color bot_color = {35, 36, 27, 1};
 			Color line_color = {70, 72, 75, 1};
 			Transformation pos;

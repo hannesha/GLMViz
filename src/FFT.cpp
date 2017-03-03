@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -38,11 +37,11 @@ template<typename T>
 void FFT::calculate(Buffer<T>& buffer){
 	// find smallest value for window function
 	size_t window_size = std::min(size, buffer.size);
-		
+
 	if (window.size() != window_size){
 		calculate_window(window_size);
 	}
-	
+
 	auto lock = buffer.lock();
 	if(buffer.new_data){
 		buffer.new_data = false;
@@ -52,14 +51,14 @@ void FFT::calculate(Buffer<T>& buffer){
 			// apply hann window with corrected factors (a * 2)
 			input[i] = static_cast<float>(buffer.v_buffer[i]) * window[i];
 		}
-		
+
 		lock.unlock();
-		
+
 		// pad remainig values
 		for(; i < size; i++){
 			input[i] = 0;
 		}
-		
+
 		// execute fft
 		fftwf_execute(plan);
 	}

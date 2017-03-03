@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -36,13 +35,13 @@ class FFT {
 		~FFT();
 
 		template<typename T> void calculate(Buffer<T>&);
-		
+
 		fftwf_complex* output;
 	private:
 		float* input;
 		fftwf_plan plan;
 		size_t size;
-		
+
 		void calculate_window(const size_t);
 		std::vector<float> window;
 };

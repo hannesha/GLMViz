@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -40,7 +39,7 @@ template<typename T>
 void Buffer<T>::write(T buf[], const size_t n){
 	auto lock = this->lock();
 	new_data = true;
-	
+
 	// limit data to write
 	size_t length = std::min(n, size);
 	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + length);

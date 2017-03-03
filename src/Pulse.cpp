@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -35,11 +34,11 @@ Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, 
 	};
 
 	pa_buffer_attr buffer_attr = {
-                (uint32_t)-1, //maxlength
-                (uint32_t)-1, 
-                (uint32_t)-1, 
-                (uint32_t)-1, 
-                (uint32_t)-1     //fragsize
+				(uint32_t)-1,	//maxlength
+				(uint32_t)-1,
+				(uint32_t)-1,
+				(uint32_t)-1,
+				(uint32_t)-1	//fragsize
         };
 
 	std::string default_device = device;
@@ -49,7 +48,7 @@ Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, 
 
 	int error;
 	stream = pa_simple_new(nullptr, "GLMViz", PA_STREAM_RECORD, default_device.c_str(), "GLMViz monitor", &sample_spec, nullptr, &buffer_attr, &error);
-	
+
 	if(stream == nullptr){
 		std::stringstream msg;
 		msg << "PulseAudio initialization failed with error: " << pa_strerror(error) << " !";
@@ -78,7 +77,7 @@ void Pulse::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) cons
 	rbuffer.write_offset(buf, samples, 2, 1);
 }
 
-std::string Pulse::get_default_sink(){	
+std::string Pulse::get_default_sink(){
 	std::string device;
 	pa_mainloop_api *mainloop_api;
 	pa_context *context;
@@ -89,13 +88,13 @@ std::string Pulse::get_default_sink(){
 
 	mainloop_api = pa_mainloop_get_api(mainloop);
 	context = pa_context_new(mainloop_api, "Viz device list");
-	
+
 
 	pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL);
-	
+
 	// init userdata struct
 	struct Pulse::usr_data data {&device, mainloop};
-	
+
 	// Set callback and hand through the device string and mainloop
 	pa_context_set_state_callback(context, Pulse::state_cb, &data);
 
@@ -109,7 +108,7 @@ std::string Pulse::get_default_sink(){
 }
 
 void Pulse::state_cb(pa_context* context, void* userdata){
-	//make sure loop is ready	
+	//make sure loop is ready
 	switch (pa_context_get_state(context)){
 		case PA_CONTEXT_READY:
 		// read server info

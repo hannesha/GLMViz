@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -40,7 +39,7 @@ void Oscilloscope::draw(){
 }
 
 void Oscilloscope::init_crt(){
-	const char* vert_code = 
+	const char* vert_code =
 	"#version 150\n"
 	"in float y;"
 	"in float x;"
@@ -117,7 +116,7 @@ void Oscilloscope::set_transformation(Config::Transformation& t){
 	sh_crt();
 
 	GLint i_trans = sh_crt.get_uniform("trans");
-	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation)); 
+	glUniformMatrix4fv(i_trans, 1, GL_FALSE, glm::value_ptr(transformation));
 }
 
 void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){

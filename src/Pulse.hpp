@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -34,7 +33,7 @@ class Pulse : public Input{
 	public:
 		Pulse(const std::string&, const size_t, const size_t, const bool);
 		~Pulse();
-		
+
 		bool is_open() const;
 		void read(Buffer<int16_t>&) const;
 		void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const;

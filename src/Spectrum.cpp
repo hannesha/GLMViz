@@ -1,7 +1,6 @@
 /*
- *	GLMViz is a OpenGL based Visualizer for mpd.
  *	Copyright (C) 2016  Hannes Haberl
- *	
+ *
  *	This file is part of GLMViz.
  *
  *	GLMViz is free software: you can redistribute it and/or modify
@@ -155,7 +154,7 @@ void Spectrum::configure(Config& cfg){
 
 	i_slope = sh_lines.get_uniform("slope");
 	glUniform1f(i_slope, scfg.slope);
-	
+
 	GLint i_line_color = sh_lines.get_uniform("line_color");
 	glUniform4fv(i_line_color, 1, scfg.line_color.rgba);
 
@@ -189,7 +188,7 @@ void Spectrum::set_transformation(const Config::Transformation& t){
 }
 
 void Spectrum::init_bar_shader(){
-	const char* vertex_shader = 
+	const char* vertex_shader =
 	#include "shader/bar.vert"
 	;
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
@@ -204,10 +203,10 @@ void Spectrum::init_bar_shader(){
 	#include "shader/simple.frag"
 	;
 	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
-	
+
 	// geometry shader
 	// draw bars
-	const char* geometry_shader = 
+	const char* geometry_shader =
 	#include "shader/bar.geom"
 	;
 	GL::Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
@@ -239,7 +238,7 @@ void Spectrum::init_bars(){
 }
 
 void Spectrum::init_bar_pre_shader(){
-	const char* vertex_shader = 
+	const char* vertex_shader =
 	#include "shader/bar_pre.vert"
 	;
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
@@ -277,16 +276,16 @@ void Spectrum::init_bars_pre(){
 
 void Spectrum::init_line_shader(){
 	// fragment shader
-	const char* fragment_shader = 
+	const char* fragment_shader =
 	#include "shader/simple.frag"
 	;
 	GL::Shader fs(fragment_shader, GL_FRAGMENT_SHADER);
-	
-	const char* vs_lines_code = 
+
+	const char* vs_lines_code =
 	#include "shader/lines.vert"
 	;
 	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
-	
+
 	sh_lines.link({fs, vs_lines});
 }
 
