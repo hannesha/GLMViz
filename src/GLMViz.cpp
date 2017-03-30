@@ -50,10 +50,23 @@ class GLFW{
 // input thread wrapper
 class Input_thread{
 	public:
-		template <typename Funct> Input_thread(Funct f):
+		// mono constructor
+		template <typename Buf> Input_thread(Input& i, Buf& buffer):
 			running(true),
-			th_input([&]{while(running){ f(); };})
-			{ };
+			th_input([&]{
+				while(running){
+					i.read(buffer);
+				};
+			}){};
+
+		// stereo constructor
+		template <typename Buf> Input_thread(Input& i, Buf& lbuffer, Buf& rbuffer):
+			running(true),
+			th_input([&]{
+				while(running){
+					i.read_stereo(lbuffer, rbuffer);
+				};
+			}){};
 
 		~Input_thread(){ running = false; th_input.join(); };
 
@@ -102,7 +115,7 @@ void update_render_configs(R_vector& renderer, C_vector& configs, Config& config
 			renderer.at(i) -> configure(config);
 		}catch(std::out_of_range& e){
 			//make new renderer
-			renderer.push_back(make_unique<typename R_vector::value_type::element_type>(config, i));
+			renderer.push_back(::make_unique<typename R_vector::value_type::element_type>(config, i));
 		}
 	}
 	//delete remaining renderers
@@ -165,11 +178,11 @@ int main(int argc, char *argv[]){
 		switch (config.input.source){
 #ifdef WITH_PULSE
 		case Source::PULSE:
-			input = make_unique<Pulse>(config.input.device, config.input.f_sample, SAMPLES, config.input.stereo);
+			input = ::make_unique<Pulse>(config.input.device, config.input.f_sample, SAMPLES, config.input.stereo);
 			break;
 #endif
 		default:
-			input = make_unique<Fifo>(config.input.file, SAMPLES);
+			input = ::make_unique<Fifo>(config.input.file, SAMPLES);
 		}
 
 		// attach SIGUSR1 signal handler
@@ -216,9 +229,7 @@ int main(int argc, char *argv[]){
 			Buffer<int16_t> buffer(config.buf_size);
 
 			// start input thread
-			Input_thread inth([&]{
-				input->read(buffer);
-			});
+			Input_thread inth(*input, buffer);
 
 			// create fft
 			FFT fft(config.fft_size);
@@ -253,9 +264,7 @@ int main(int argc, char *argv[]){
 			Buffer<int16_t> rbuffer(config.buf_size);
 
 			// start stereo input thread
-			Input_thread inth([&]{
-				input->read_stereo(lbuffer, rbuffer);
-			});
+			Input_thread inth(*input, lbuffer, rbuffer);
 
 			// create shared FFT pointer vector
 			std::vector<std::shared_ptr<FFT>> ffts;
