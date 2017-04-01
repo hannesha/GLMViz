@@ -23,6 +23,8 @@
 #include <stdexcept>
 #include <sstream>
 
+#define FRAG_SIZE nsamples*16
+
 Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, const bool stereo){
 	samples = nsamples;
 	unsigned char ch = stereo ? 2 : 1;
@@ -38,7 +40,7 @@ Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, 
 				(uint32_t)-1,
 				(uint32_t)-1,
 				(uint32_t)-1,
-				(uint32_t)-1	//fragsize
+				static_cast<uint32_t>(FRAG_SIZE)	//fragsize
         };
 
 	std::string default_device = device;
