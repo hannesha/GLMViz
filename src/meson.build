@@ -4,6 +4,17 @@ dep_fftw = dependency('fftw3f')
 dep_glfw = dependency('glfw3')
 dep_cfgpp = dependency('libconfig++')
 dep_basedir = dependency('libxdg-basedir')
+dep_glm = dependency('glm', required: false)
+
+if not dep_glm.found()
+	message('Can\'t find glm pkg-config file, checking glm headers.')
+	glm_header = meson.get_compiler('cpp').has_header('glm/glm.hpp')
+	if glm_header
+		message('glm found, consider updating your glm library.')
+	else
+		error('glm not found!')
+	endif
+endif
 
 opt_pulse = dependency('libpulse', required: false)
 opt_pulse_simple = dependency('libpulse-simple', required: false)
@@ -18,4 +29,4 @@ endif
 
 src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp']
 
-exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_basedir, dep_pulse])
+exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_basedir, dep_pulse], install: true)
