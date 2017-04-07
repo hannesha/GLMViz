@@ -28,6 +28,8 @@
 class Spectrum {
 	public:
 		Spectrum(Config&, const unsigned);
+		// disable copy construction
+		Spectrum(const Spectrum&) = delete;
 		~Spectrum(){};
 
 		void draw();

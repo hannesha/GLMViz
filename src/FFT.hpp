@@ -32,6 +32,8 @@
 class FFT {
 	public:
 		FFT(const size_t);
+		// disable copy construction
+		FFT(const FFT&) = delete;
 		~FFT();
 
 		template<typename T> void calculate(Buffer<T>&);

@@ -26,6 +26,8 @@
 class Oscilloscope {
 	public:
 		Oscilloscope(Config&, const unsigned);
+		// disable copy construction
+		Oscilloscope(const Oscilloscope&) = delete;
 		~Oscilloscope(){};
 
 		void draw();

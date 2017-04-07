@@ -31,6 +31,8 @@ enum class Source {FIFO, PULSE};
 class Config {
 	public:
 		Config(const std::string&);
+		// disable copy construction
+		Config(const Config&) = delete;
 		void reload();
 
 		int w_aa = 4;
