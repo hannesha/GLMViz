@@ -211,11 +211,11 @@ void Config::Spectrum::parse_rainbow(const std::string& path, libconfig::Config&
 void Config::Color::parse(const std::string& path, libconfig::Config& cfg){
 	std::string color;
 	cfg.lookupValue(path, color);
+	if(color == ""){
+		return;
+	}
 	try{	
-		// remove # character
-		size_t pos = 0;
-		if(color.at(0) == '#') pos = 1;
-		int value = std::stoi(color, &pos, 16);
+		int value = std::stoi(color, nullptr, 16);
 		// calculate rbg bytes
 		rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
 		rgba[1] = static_cast<float>((value / 0x100) % 0x100);	
