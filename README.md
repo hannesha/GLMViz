@@ -10,7 +10,7 @@ GLMViz is NOT a lightweight program as it's build using GLFW and other OpenGL ab
 * PulseAudio[Optional]: `libpulse`
 * Configuration libraries: `libconfig++`, `libxdg-basedir`
 
-Additionally CMake 3.0.2 and a C++0x/C++11 compatible compiler is needed to successfully build the project.
+Additionally CMake 3.0.2 / [Meson](http://www.mesonbuild.com) and a C++11 compatible compiler are needed to successfully build the project.
 
 ## Installing
 The install script automatically creates a build folder, handles configuration, etc...
@@ -23,7 +23,7 @@ Per-user configurations have to be copied manually using:
     cp /etc/GLMViz/config ~/.config/GLMViz/config
 
 ## Usage
-    glmviz
+    glmviz [path-to-config]
 
 Exit with <kbd>CTRL-C</kbd> or by closing the window.
 
