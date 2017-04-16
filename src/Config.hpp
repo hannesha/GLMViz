@@ -85,25 +85,25 @@ class Config {
 		struct Spectrum {
 			int channel = 0;
 			float min_db = -80, max_db = 0;
-			float slope = 0.5f;
-			float offset = 1.0f;
+			float scale = 10;
+			float slope = 0.5;
+			float offset = 1.0;
 			int output_size = 100;
 
 			Color top_color = {211, 38, 46, 1};
 			Color bot_color = {35, 36, 27, 1};
 			Color line_color = {70, 72, 75, 1};
 			Transformation pos;
-			float gradient = 1.0f;
-			float gravity = 8.0f;
-			float bar_width = 0.75f;
+			float gradient = 1.0;
+			float gravity = 8.0 / (60*60);
+			float bar_width = 0.75;
 
 			bool rainbow = false;
 			Color freq_d = {1, 1, 1, 1};
 			Color phase_d = {0, 0, 0, 1};
 			bool dB_lines = true;
 
-			void parse(const std::string&, libconfig::Config&);
-			void clamp_output_size(const size_t fft_output_size){output_size = (size_t)output_size < fft_output_size ? output_size : fft_output_size; };
+			void parse(const std::string&, libconfig::Config&, size_t, float, int);
 			void parse_rainbow(const std::string&, libconfig::Config&);
 		};
 

@@ -25,7 +25,7 @@
 
 #include <vector>
 
-Oscilloscope::Oscilloscope(Config& config, const unsigned o_id): id(o_id){
+Oscilloscope::Oscilloscope(const Config::Oscilloscope& config, const unsigned o_id): id(o_id){
 	init_crt();
 
 	configure(config);
@@ -79,8 +79,8 @@ void Oscilloscope::init_crt(){
 	GL::VAO::unbind();
 }
 
-void Oscilloscope::configure(Config& config){
-	Config::Oscilloscope ocfg = config.oscilloscopes[id];
+void Oscilloscope::configure(const Config::Oscilloscope& ocfg){
+	//const Config::Oscilloscope ocfg = config.oscilloscopes[id];
 	sh_crt();
 
 	GLint i_scale = sh_crt.get_uniform("scale");
@@ -94,7 +94,7 @@ void Oscilloscope::configure(Config& config){
 
 	set_transformation(ocfg.pos);
 
-	channel = std::min(ocfg.channel, 1);
+	channel = ocfg.channel;
 }
 
 void Oscilloscope::resize_x_buffer(const size_t size){
@@ -110,7 +110,7 @@ void Oscilloscope::resize_x_buffer(const size_t size){
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
 }
 
-void Oscilloscope::set_transformation(Config::Transformation& t){
+void Oscilloscope::set_transformation(const Config::Transformation& t){
 	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
 
 	sh_crt();

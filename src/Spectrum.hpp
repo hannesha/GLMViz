@@ -27,7 +27,7 @@
 
 class Spectrum {
 	public:
-		Spectrum(Config&, const unsigned);
+		Spectrum(const Config::Spectrum&, const unsigned);
 		// disable copy construction
 		Spectrum(const Spectrum&) = delete;
 		~Spectrum(){};
@@ -35,7 +35,7 @@ class Spectrum {
 		void draw();
 		void update_fft(FFT&);
 		void update_fft(std::vector<std::shared_ptr<FFT>>&);
-		void configure(Config&);
+		void configure(const Config::Spectrum&);
 
 	private:
 		GL::Program sh_bars_pre, sh_lines;

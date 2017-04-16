@@ -25,7 +25,7 @@
 
 class Oscilloscope {
 	public:
-		Oscilloscope(Config&, const unsigned);
+		Oscilloscope(const Config::Oscilloscope&, const unsigned);
 		// disable copy construction
 		Oscilloscope(const Oscilloscope&) = delete;
 		~Oscilloscope(){};
@@ -33,7 +33,7 @@ class Oscilloscope {
 		void draw();
 		void update_buffer(Buffer<int16_t>&);
 		void update_buffer(Buffer<int16_t>&, Buffer<int16_t>&);
-		void configure(Config&);
+		void configure(const Config::Oscilloscope&);
 
 	private:
 		GL::Program sh_crt;
@@ -44,5 +44,5 @@ class Oscilloscope {
 
 		void init_crt();
 		void resize_x_buffer(const size_t);
-		void set_transformation(Config::Transformation&);
+		void set_transformation(const Config::Transformation&);
 };

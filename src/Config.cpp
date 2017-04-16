@@ -87,15 +87,13 @@ void Config::reload(){
 			}
 		}
 
-		spec_default.parse("Spectrum", cfg);
-		spec_default.clamp_output_size(fft_output_size);
+		spec_default.parse("Spectrum", cfg, fft_output_size, fft_scale, fps);
 		for(unsigned i = 0; i < MAX_SPECTRA; i++){
 			if(cfg.exists("Spectrum" + std::to_string(i+1))){
 				// init new Spectrum with default parameters
 				Spectrum tmp = spec_default;
 				// parse Spectrum and add it to the list
-				tmp.parse("Spectrum" + std::to_string(i+1), cfg);
-				tmp.clamp_output_size(fft_output_size);
+				tmp.parse("Spectrum" + std::to_string(i+1), cfg, fft_output_size, fft_scale, fps);
 
 				// reuse old values if possible
 				try{
@@ -146,6 +144,7 @@ void Config::Input::parse(const std::string& path, libconfig::Config& cfg){
 
 void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
 	cfg.lookupValue(path + ".channel", channel);
+	channel = std::min(channel, 1);
 	cfg.lookupValue(path + ".scale", scale);
 	cfg.lookupValue(path + ".width", width);
 
@@ -154,9 +153,12 @@ void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg
 	pos.parse(path + ".pos", cfg);
 }
 
-void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg){
+void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg, size_t fft_size, float fft_scale, int fps){
 	cfg.lookupValue(path + ".channel", channel);
+	channel = std::min(channel, 1);
 	cfg.lookupValue(path + ".output_size", output_size);
+	output_size = std::min(output_size, (int)fft_size);
+	scale = fft_scale;
 
 	cfg.lookupValue(path + ".min_db", min_db);
 	cfg.lookupValue(path + ".max_db", max_db);
@@ -175,7 +177,10 @@ void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg){
 	pos.parse(path + ".pos", cfg);
 
 	cfg.lookupValue(path + ".gradient", gradient);
-	cfg.lookupValue(path + ".gravity", gravity);
+	bool got_gravity = cfg.lookupValue(path + ".gravity", gravity);
+	if(got_gravity){
+		gravity = gravity / (float)(fps * fps);
+	}
 	cfg.lookupValue(path + ".bar_width", bar_width);
 
 	cfg.lookupValue(path + ".rainbow.enabled", rainbow);

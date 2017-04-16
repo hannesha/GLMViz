@@ -25,7 +25,7 @@
 
 #include <vector>
 
-Spectrum::Spectrum(Config& config, const unsigned s_id): id(s_id){
+Spectrum::Spectrum(const Config::Spectrum& config, const unsigned s_id): id(s_id){
 	init_bar_shader();
 	init_line_shader();
 	init_bar_pre_shader();
@@ -113,8 +113,8 @@ void Spectrum::resize_fft_buffer(const size_t size){
 	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
 
-void Spectrum::configure(Config& cfg){
-	Config::Spectrum scfg = cfg.spectra[id];
+void Spectrum::configure(const Config::Spectrum& scfg){
+	//const Config::Spectrum& scfg = cfg.spectra[id];
 	bar_shader_id = scfg.rainbow;
 	sh_bars[bar_shader_id].use();
 	// Post compute specific uniforms
@@ -135,7 +135,7 @@ void Spectrum::configure(Config& cfg){
 	sh_bars_pre.use();
 	// set precompute shader uniforms
 	GLint i_fft_scale = sh_bars_pre.get_uniform("fft_scale");
-	glUniform1f(i_fft_scale, cfg.fft_scale);
+	glUniform1f(i_fft_scale, scfg.scale);
 
 	GLint i_slope = sh_bars_pre.get_uniform("slope");
 	glUniform1f(i_slope, scfg.slope * 0.5);
@@ -144,7 +144,7 @@ void Spectrum::configure(Config& cfg){
 	glUniform1f(i_offset, scfg.offset * 0.5);
 
 	GLint i_gravity = sh_bars_pre.get_uniform("gravity");
-	glUniform1f(i_gravity, scfg.gravity / (float)(cfg.fps * cfg.fps));
+	glUniform1f(i_gravity, scfg.gravity);
 
 
 	sh_lines.use();
@@ -162,7 +162,7 @@ void Spectrum::configure(Config& cfg){
 	set_transformation(scfg.pos);
 	draw_lines = scfg.dB_lines;
 	// limit number of channels
-	channel = std::min(scfg.channel, 1);
+	channel = scfg.channel;
 }
 
 void Spectrum::resize(const size_t size){

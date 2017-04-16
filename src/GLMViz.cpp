@@ -108,14 +108,14 @@ std::string generate_title(Config& config){
 
 // create or delete renderers to match the corresponding configs
 template <typename R_vector, typename C_vector>
-void update_render_configs(R_vector& renderer, C_vector& configs, Config& config){
+void update_render_configs(R_vector& renderer, C_vector& configs){
 	for(unsigned i = 0; i < configs.size(); i++){
 		try{
 			//reconfigure renderer
-			renderer.at(i) -> configure(config);
+			renderer.at(i) -> configure(configs[i]);
 		}catch(std::out_of_range& e){
 			//make new renderer
-			renderer.push_back(::make_unique<typename R_vector::value_type::element_type>(config, i));
+			renderer.push_back(::make_unique<typename R_vector::value_type::element_type>(configs[i], i));
 		}
 	}
 	//delete remaining renderers
@@ -221,8 +221,8 @@ int main(int argc, char *argv[]){
 		std::vector<Osc_ptr> oscilloscopes;
 
 		// create new renderers
-		update_render_configs(spectra, config.spectra, config);
-		update_render_configs(oscilloscopes, config.oscilloscopes, config);
+		update_render_configs(spectra, config.spectra);
+		update_render_configs(oscilloscopes, config.oscilloscopes);
 
 		if(!config.input.stereo){
 			// create audio buffer
@@ -240,8 +240,8 @@ int main(int argc, char *argv[]){
 				// resize buffers and reconfigure renderer
 				buffer.resize(config.buf_size);
 
-				update_render_configs(spectra, config.spectra, config);
-				update_render_configs(oscilloscopes, config.oscilloscopes, config);
+				update_render_configs(spectra, config.spectra);
+				update_render_configs(oscilloscopes, config.oscilloscopes);
 			},
 			[&]{
 				// update all locking renderer first
@@ -279,8 +279,8 @@ int main(int argc, char *argv[]){
 				rbuffer.resize(config.buf_size);
 
 				// update spectrum/oscilloscope renderer
-				update_render_configs(spectra, config.spectra, config);
-				update_render_configs(oscilloscopes, config.oscilloscopes, config);
+				update_render_configs(spectra, config.spectra);
+				update_render_configs(oscilloscopes, config.oscilloscopes);
 			},
 			[&]{
 				ffts[0]->calculate(lbuffer);
