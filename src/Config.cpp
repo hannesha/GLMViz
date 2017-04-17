@@ -214,7 +214,10 @@ void Config::Color::parse(const std::string& path, libconfig::Config& cfg){
 	if(color == ""){
 		return;
 	}
-	try{	
+	try{
+		if(color[0] == '#'){
+			color = color.substr(1);
+		}
 		int value = std::stoi(color, nullptr, 16);
 		// calculate rbg bytes
 		rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
