@@ -34,7 +34,9 @@ class Buffer {
 
 		std::unique_lock<std::mutex> lock();
 		void write(T buf[], const size_t);
+		void write(const std::vector<T>& buf);
 		void write_offset(T buf[], const size_t, const size_t, const size_t);
+		void write_offset(const std::vector<T>& buf, const size_t, const size_t);
 		void resize(const size_t);
 	private:
 		std::mutex m;

@@ -47,12 +47,38 @@ void Buffer<T>::write(T buf[], const size_t n){
 }
 
 template<typename T>
+void Buffer<T>::write(const std::vector<T>& buf){
+	auto lock = this->lock();
+	new_data = true;
+
+	// limit data to write
+	size_t length = std::min(buf.size(), size);
+	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + length);
+	v_buffer.insert(v_buffer.end(), buf.begin(), buf.begin() + length);
+}
+
+template<typename T>
 void Buffer<T>::write_offset(T buf[], const size_t n, const size_t gap, const size_t offset){
 	auto lock = this->lock();
 	new_data = true;
 
 	// limit data to write
 	size_t length = std::min(n, size);
+	size_t written = 0;
+	for(size_t i = offset; i<length; i += gap){
+		v_buffer.push_back(buf[i]);
+		written++;
+	}
+	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + written);
+}
+
+template<typename T>
+void Buffer<T>::write_offset(const std::vector<T>& buf, const size_t gap, const size_t offset){
+	auto lock = this->lock();
+	new_data = true;
+
+	// limit data to write
+	size_t length = std::min(buf.size(), size);
 	size_t written = 0;
 	for(size_t i = offset; i<length; i += gap){
 		v_buffer.push_back(buf[i]);

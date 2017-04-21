@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdexcept>
 
-Fifo::Fifo(const std::string& file_name, const size_t nsamples){
+Fifo::Fifo(const std::string& file_name, const size_t nsamples):buf(nsamples){
 	samples = nsamples;
 	file.open(file_name, std::ifstream::in | std::ifstream::binary);
 
@@ -34,16 +34,14 @@ bool Fifo::is_open() const {
 }
 
 void Fifo::read(Buffer<int16_t>& buffer) const{
-	int16_t buf[samples];
-	file.read(reinterpret_cast<char *>(buf), sizeof(buf));
+	file.read(reinterpret_cast<char *>(buf.data()), samples * sizeof(int16_t));
 
-	buffer.write(buf, samples);
+	buffer.write(buf);
 }
 
 void Fifo::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
-	int16_t buf[samples];
-	file.read(reinterpret_cast<char *>(buf), sizeof(buf));
+	file.read(reinterpret_cast<char *>(buf.data()), samples * sizeof(int16_t));
 
-	lbuffer.write_offset(buf, samples, 2, 0);
-	rbuffer.write_offset(buf, samples, 2, 1);
+	lbuffer.write_offset(buf, 2, 0);
+	rbuffer.write_offset(buf, 2, 1);
 }

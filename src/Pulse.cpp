@@ -25,7 +25,7 @@
 
 #define FRAG_SIZE nsamples*16
 
-Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, const bool stereo){
+Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, const bool stereo):buf(nsamples){
 	samples = nsamples;
 	unsigned char ch = stereo ? 2 : 1;
 
@@ -67,16 +67,14 @@ bool Pulse::is_open() const{
 }
 
 void Pulse::read(Buffer<int16_t>& buffer) const{
-	int16_t buf[samples];
-	pa_simple_read(stream, buf, sizeof(buf), NULL);
-	buffer.write(buf, samples);
+	pa_simple_read(stream, buf.data(), samples * sizeof(int16_t), NULL);
+	buffer.write(buf);
 }
 
 void Pulse::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
-	int16_t buf[samples];
-	pa_simple_read(stream, buf, sizeof(buf), NULL);
-	lbuffer.write_offset(buf, samples, 2, 0);
-	rbuffer.write_offset(buf, samples, 2, 1);
+	pa_simple_read(stream, buf.data(), samples * sizeof(int16_t), NULL);
+	lbuffer.write_offset(buf, 2, 0);
+	rbuffer.write_offset(buf, 2, 1);
 }
 
 std::string Pulse::get_default_sink(){
