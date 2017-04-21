@@ -103,9 +103,12 @@ std::string Pulse::get_default_sink(){
 	int err;
 	//starting a mainloop to get default sink
 	if (pa_mainloop_run(mainloop, &err) < 0){
-		//printf("Could not open pulseaudio mainloop to find default device name: %d", err);
+		std::stringstream msg;
+		msg << "Could not open pulseaudio mainloop to find default device name: " << err << "\n";
+		throw std::runtime_error(msg.str());
 	}
 
+	pa_mainloop_free(mainloop);
 	return device;
 }
 
