@@ -46,7 +46,7 @@ class Config {
 			bool stereo = false;
 			long long f_sample = 44100;
 
-			void parse(const std::string&, libconfig::Config&);
+			void parse(libconfig::Setting&);
 		};
 		Input input;
 
@@ -61,13 +61,13 @@ class Config {
 		struct Transformation {
 			float Xmin = -1, Xmax = 1, Ymin = -1, Ymax = 1;
 
-			void parse(const std::string&, libconfig::Config&);
+			void parse(const std::string&, libconfig::Setting&);
 		};
 
 		struct Color {
 			float rgba[4];
 
-			void parse(const std::string&, libconfig::Config&);
+			void parse(const std::string&, libconfig::Setting&);
 			void normalize(const Color&);
 			void normalize();
 		};
@@ -79,7 +79,7 @@ class Config {
 			Color color = {211, 38, 46, 1};
 			Transformation pos;
 
-			void parse(const std::string&, libconfig::Config&);
+			void parse(libconfig::Setting&);
 		};
 
 		struct Spectrum {
@@ -103,8 +103,8 @@ class Config {
 			Color phase_d = {0, 0, 0, 1};
 			bool dB_lines = true;
 
-			void parse(const std::string&, libconfig::Config&, size_t, float, int);
-			void parse_rainbow(const std::string&, libconfig::Config&);
+			void parse(libconfig::Setting&, const size_t, const float, const int);
+			void parse_rainbow(libconfig::Setting&);
 		};
 
 		Oscilloscope osc_default;

@@ -50,7 +50,9 @@ void Config::reload(){
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
-		input.parse("Input", cfg);
+		try{
+			input.parse(cfg.lookup("Input"));
+		}catch(const libconfig::SettingNotFoundException& e){}
 
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("fps", fps);
@@ -64,21 +66,28 @@ void Config::reload(){
 		// normalization value for the fft output
 		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
-		osc_default.parse("Osc", cfg);
+		try{
+			osc_default.parse(cfg.lookup("Osc"));
+		}
+		catch(const libconfig::SettingNotFoundException& e){}
+
 		for(unsigned i = 0; i < MAX_OSCILLOSCOPES; i++){
-			if(cfg.exists("Osc" + std::to_string(i+1))){
+			std::string path = "Osc" + std::to_string(i+1);
+			try{
 				// init new Oscilloscope with default parameters
 				Oscilloscope tmp = osc_default;
 				// parse Oscilloscope and add it to the list
-				tmp.parse("Osc" + std::to_string(i+1), cfg);
+				tmp.parse(cfg.lookup(path));
 
-				// reuse old values if possible
 				try{
+					// reuse old values if possible
 					oscilloscopes.at(i) = tmp;
-				}catch(std::out_of_range& e){
+				}
+				catch(std::out_of_range& e){
 					oscilloscopes.push_back(tmp);
 				}
-			}else{
+			}
+			catch(const libconfig::SettingNotFoundException& e){
 				// delete remaining oscilloscopes
 				if(oscilloscopes.size() > i){
 					oscilloscopes.erase(oscilloscopes.begin() + i, oscilloscopes.end());
@@ -87,21 +96,28 @@ void Config::reload(){
 			}
 		}
 
-		spec_default.parse("Spectrum", cfg, fft_output_size, fft_scale, fps);
+		try{
+			spec_default.parse(cfg.lookup("Spectrum"), fft_output_size, fft_scale, fps);
+		}
+		catch(const libconfig::SettingNotFoundException& e){}
+
 		for(unsigned i = 0; i < MAX_SPECTRA; i++){
-			if(cfg.exists("Spectrum" + std::to_string(i+1))){
+			std::string path = "Spectrum" + std::to_string(i+1);
+			try{
 				// init new Spectrum with default parameters
 				Spectrum tmp = spec_default;
 				// parse Spectrum and add it to the list
-				tmp.parse("Spectrum" + std::to_string(i+1), cfg, fft_output_size, fft_scale, fps);
+				tmp.parse(cfg.lookup(path), fft_output_size, fft_scale, fps);
 
 				// reuse old values if possible
 				try{
 					spectra.at(i) = tmp;
-				}catch(std::out_of_range& e){
+				}
+				catch(std::out_of_range& e){
 					spectra.push_back(tmp);
 				}
-			}else{
+			}
+			catch(const libconfig::SettingNotFoundException& e){
 				// delete remaining spectra
 				if(spectra.size() > i){
 					spectra.erase(spectra.begin() + i, spectra.end());
@@ -125,9 +141,9 @@ void Config::reload(){
 	}
 }
 
-void Config::Input::parse(const std::string& path, libconfig::Config& cfg){
+void Config::Input::parse(libconfig::Setting& cfg){
 	std::string str_source;
-	cfg.lookupValue(path + ".source", str_source);
+	cfg.lookupValue("source", str_source);
 	// convert string to lowercase and evaluate source
 	std::transform(str_source.begin(), str_source.end(), str_source.begin(), ::tolower);
 	if(str_source == "pulse"){
@@ -136,32 +152,31 @@ void Config::Input::parse(const std::string& path, libconfig::Config& cfg){
 		source = Source::FIFO;
 	}
 
-	cfg.lookupValue(path + ".file", file);
-	cfg.lookupValue(path + ".device", device);
-	cfg.lookupValue(path + ".stereo", stereo);
-	cfg.lookupValue(path + ".f_sample", f_sample);
+	cfg.lookupValue("file", file);
+	cfg.lookupValue("device", device);
+	cfg.lookupValue("stereo", stereo);
+	cfg.lookupValue("f_sample", f_sample);
 }
 
-void Config::Oscilloscope::parse(const std::string& path, libconfig::Config& cfg){
-	cfg.lookupValue(path + ".channel", channel);
+void Config::Oscilloscope::parse(libconfig::Setting& cfg){
+	cfg.lookupValue("channel", channel);
 	channel = std::min(channel, 1);
-	cfg.lookupValue(path + ".scale", scale);
-	cfg.lookupValue(path + ".width", width);
+	cfg.lookupValue("scale", scale);
+	cfg.lookupValue("width", width);
 
-	color.parse(path + ".color", cfg);
-
-	pos.parse(path + ".pos", cfg);
+	color.parse("color", cfg);
+	pos.parse("pos", cfg);
 }
 
-void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg, size_t fft_size, float fft_scale, int fps){
-	cfg.lookupValue(path + ".channel", channel);
+void Config::Spectrum::parse(libconfig::Setting& cfg, const size_t fft_size, const float fft_scale, const int fps){
+	cfg.lookupValue("channel", channel);
 	channel = std::min(channel, 1);
-	cfg.lookupValue(path + ".output_size", output_size);
+	cfg.lookupValue("output_size", output_size);
 	output_size = std::min(output_size, (int)fft_size);
 	scale = fft_scale;
 
-	cfg.lookupValue(path + ".min_db", min_db);
-	cfg.lookupValue(path + ".max_db", max_db);
+	cfg.lookupValue("min_db", min_db);
+	cfg.lookupValue("max_db", max_db);
 
 	if(max_db > min_db){
 		float max_n = max_db * 0.05;
@@ -170,45 +185,55 @@ void Config::Spectrum::parse(const std::string& path, libconfig::Config& cfg, si
 		offset = 1.0 - slope * max_n;
 	}
 
-	top_color.parse(path + ".top_color", cfg);
-	bot_color.parse(path + ".bot_color", cfg);
-	line_color.parse(path + ".line_color", cfg);
+	top_color.parse("top_color", cfg);
+	bot_color.parse("bot_color", cfg);
+	line_color.parse("line_color", cfg);
+	pos.parse("pos", cfg);
 
-	pos.parse(path + ".pos", cfg);
 
-	cfg.lookupValue(path + ".gradient", gradient);
-	bool got_gravity = cfg.lookupValue(path + ".gravity", gravity);
-	if(got_gravity){
+	cfg.lookupValue("gradient", gradient);
+	cfg.lookupValue("bar_width", bar_width);
+	bool have_gravity = cfg.lookupValue("gravity", gravity);
+	if(have_gravity){
 		gravity = gravity / (float)(fps * fps);
 	}
-	cfg.lookupValue(path + ".bar_width", bar_width);
 
-	cfg.lookupValue(path + ".rainbow.enabled", rainbow);
-	if(rainbow){
-		parse_rainbow(path + ".rainbow", cfg);
+	try{
+		libconfig::Setting& rb_setting = cfg.lookup("rainbow");
+		rb_setting.lookupValue("enabled", rainbow);
+		if(rainbow){
+			parse_rainbow(rb_setting);
+		}
 	}
+	catch(const libconfig::SettingNotFoundException& e){}
 
-	cfg.lookupValue(path + ".dB_lines", dB_lines);
-
+	cfg.lookupValue("dB_lines", dB_lines);
 }
 
-void Config::Spectrum::parse_rainbow(const std::string& path, libconfig::Config& cfg){
-	char w_rgb[] = "rgb";
-	
-	for(int i = 0; i < 3; i++){
-		cfg.lookupValue(path + ".phase." + w_rgb[i], phase_d.rgba[i]);
+void Config::Spectrum::parse_rainbow(libconfig::Setting& cfg){
+	try{
+		libconfig::Setting& rb_phase = cfg.lookup("phase");
+		rb_phase.lookupValue("r", phase_d.rgba[0]);
+		rb_phase.lookupValue("g", phase_d.rgba[1]);
+		rb_phase.lookupValue("b", phase_d.rgba[2]);
 	}
-
+	catch(const libconfig::SettingNotFoundException& e){}
 	bot_color = phase_d;
 	
-	for(int i = 0; i < 3; i++){
-		cfg.lookupValue(path + ".freq." + w_rgb[i], freq_d.rgba[i]);
-		top_color.rgba[i] = phase_d.rgba[i] + freq_d.rgba[i];
+	try{
+		libconfig::Setting& rb_freq = cfg.lookup("freq");
+		rb_freq.lookupValue("r", freq_d.rgba[0]);
+		rb_freq.lookupValue("g", freq_d.rgba[1]);
+		rb_freq.lookupValue("b", freq_d.rgba[2]);
+		for(int i = 0; i < 3; i++){
+			top_color.rgba[i] = phase_d.rgba[i] + freq_d.rgba[i];
+		}
 	}
+	catch(const libconfig::SettingNotFoundException& e){}
 	top_color.rgba[3] = 1;
 }
 
-void Config::Color::parse(const std::string& path, libconfig::Config& cfg){
+void Config::Color::parse(const std::string& path, libconfig::Setting& cfg){
 	std::string color;
 	cfg.lookupValue(path, color);
 	if(color == ""){
@@ -226,7 +251,7 @@ void Config::Color::parse(const std::string& path, libconfig::Config& cfg){
 		rgba[3] = 1;
 		normalize();
 	}catch(std::invalid_argument& e){
-		std::cerr << "Unable to parse color of setting: " << path << std::endl;
+		std::cerr << "Unable to parse color of setting: " << cfg.getPath() << path << std::endl;
 	}catch(std::out_of_range& e){
 		// ignore empty strings
 	}
@@ -257,9 +282,14 @@ void Config::Color::normalize(){
 	//a = a;
 }
 
-void Config::Transformation::parse(const std::string& path, libconfig::Config& cfg){
-	cfg.lookupValue(path + ".xmin", Xmin);
-	cfg.lookupValue(path + ".xmax", Xmax);
-	cfg.lookupValue(path + ".ymin", Ymin);
-	cfg.lookupValue(path + ".ymax", Ymax);
+void Config::Transformation::parse(const std::string& path, libconfig::Setting& cfg){
+	try{
+		libconfig::Setting& sett = cfg.lookup(path);
+
+		sett.lookupValue("xmin", Xmin);
+		sett.lookupValue("xmax", Xmax);
+		sett.lookupValue("ymin", Ymin);
+		sett.lookupValue("ymax", Ymax);
+	}
+	catch(const libconfig::SettingNotFoundException& e){}
 }
