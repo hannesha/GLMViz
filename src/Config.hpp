@@ -85,14 +85,14 @@ class Config {
 		struct Spectrum {
 			int channel = 0;
 			float min_db = -80, max_db = 0;
-			float scale = 10;
+			float scale = 2.76678e-08;
 			float slope = 0.5;
 			float offset = 1.0;
 			int output_size = 100;
 
-			Color top_color = {211, 38, 46, 1};
-			Color bot_color = {35, 36, 27, 1};
-			Color line_color = {70, 72, 75, 1};
+			Color top_color = {0.91, 0.42, 0.45, 1};
+			Color bot_color = {0.91, 0.42, 0.45, 1};
+			Color line_color = {0.57, 0.57, 0.57, 1};
 			Transformation pos;
 			float gradient = 1.0;
 			float gravity = 8.0 / (60*60);

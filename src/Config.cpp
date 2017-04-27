@@ -139,6 +139,11 @@ void Config::reload(){
 
 		std::cout << "Using default settings." << std::endl;
 	}
+
+	// render default spectrum when using a blank/faulty config
+	if(spectra.size() == 0 && oscilloscopes.size() == 0){
+		spectra.push_back(spec_default);
+	}
 }
 
 void Config::Input::parse(libconfig::Setting& cfg){
@@ -264,10 +269,6 @@ void Config::Color::normalize(const Color& c){
 	for(int i = 0; i < 3; i ++){
 		rgba[i] = std::pow(c.rgba[i] / 255, inv_gamma);
 	}
-	/*r = std::pow(c.r / 255, inv_gamma); 
-	g = std::pow(c.g / 255, inv_gamma);
-	b = std::pow(c.b / 255, inv_gamma);
-	a = c.a;*/
 }
 
 void Config::Color::normalize(){
@@ -276,10 +277,6 @@ void Config::Color::normalize(){
 	for(int i = 0; i < 3; i ++){
 		rgba[i] = std::pow(rgba[i] / 255, inv_gamma);
 	}
-	//r = std::pow(r / 255, inv_gamma); 
-	//g = std::pow(g / 255, inv_gamma);
-	//b = std::pow(b / 255, inv_gamma);
-	//a = a;
 }
 
 void Config::Transformation::parse(const std::string& path, libconfig::Setting& cfg){
