@@ -56,15 +56,15 @@ void Config::reload(){
 
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("fps", fps);
-		cfg.lookupValue("fft_size", fft_size);
+		cfg.lookupValue("fft_size", fft.size);
 
 		buf_size = input.f_sample * duration / 1000;
-		fft_output_size = fft_size/2+1;
-		d_freq = (float) input.f_sample / (float) fft_size;
+		fft.output_size = fft.size/2+1;
+		fft.d_freq = (float) input.f_sample / (float) fft.size;
 
 
 		// normalization value for the fft output
-		fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
+		fft.scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
 		try{
 			osc_default.parse(cfg.lookup("Osc"));
@@ -97,7 +97,7 @@ void Config::reload(){
 		}
 
 		try{
-			spec_default.parse(cfg.lookup("Spectrum"), fft_output_size, fft_scale, fps);
+			spec_default.parse(cfg.lookup("Spectrum"), fft, fps);
 		}
 		catch(const libconfig::SettingNotFoundException& e){}
 
@@ -107,7 +107,7 @@ void Config::reload(){
 				// init new Spectrum with default parameters
 				Spectrum tmp = spec_default;
 				// parse Spectrum and add it to the list
-				tmp.parse(cfg.lookup(path), fft_output_size, fft_scale, fps);
+				tmp.parse(cfg.lookup(path), fft, fps);
 
 				// reuse old values if possible
 				try{
@@ -173,12 +173,23 @@ void Config::Oscilloscope::parse(libconfig::Setting& cfg){
 	pos.parse("pos", cfg);
 }
 
-void Config::Spectrum::parse(libconfig::Setting& cfg, const size_t fft_size, const float fft_scale, const int fps){
+void Config::Spectrum::parse(libconfig::Setting& cfg, const FFT& fft, const int fps){
 	cfg.lookupValue("channel", channel);
 	channel = std::min(channel, 1);
-	cfg.lookupValue("output_size", output_size);
-	output_size = std::min(output_size, (int)fft_size);
-	scale = fft_scale;
+	//cfg.lookupValue("output_size", output_size);
+	scale = fft.scale;
+
+	// calculate data buffer offset and length
+	int f_start, f_stop;
+	if(cfg.lookupValue("f_start", f_start) && cfg.lookupValue("f_stop", f_stop)){
+		f_start = std::max(f_start, 0);
+		f_stop = std::max(f_stop, 0);
+		if(f_stop > f_start){
+			data_offset = std::floor((float) f_start / fft.d_freq);
+			output_size = std::ceil((float) f_stop / fft.d_freq) - (data_offset - 1);
+			output_size = std::min(output_size, (int)fft.size - data_offset);
+		}
+	}
 
 	cfg.lookupValue("min_db", min_db);
 	cfg.lookupValue("max_db", max_db);

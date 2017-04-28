@@ -98,7 +98,8 @@ std::string generate_title(Config& config){
 	std::stringstream title;
 	title << "GLMViz:";
 	if (config.spectra.size() > 0){
-		title << " Spectrum (fmax=" << config.spec_default.output_size * config.d_freq << "Hz)";
+		title << " Spectrum (f_st=" << config.spec_default.data_offset * config.fft.d_freq << "Hz, \u0394f="
+			<< config.spec_default.output_size * config.fft.d_freq << "Hz)";
 	}
 	if (config.oscilloscopes.size() > 0){
 		title << " Oscilloscope (dur=" << config.duration << "ms)";
@@ -200,7 +201,7 @@ int main(int argc, char *argv[]){
 		std::string title = generate_title(config);
 		// create GLFW window
 		GLFWwindow* window;
-		window = glfwCreateWindow(config.w_height, config.w_width, title.c_str(), NULL, NULL);
+		window = glfwCreateWindow(config.w_width, config.w_height, title.c_str(), NULL, NULL);
 		if( window == NULL ){
 			throw glfw_error("Failed to create GLFW Window!");
 		}
@@ -232,7 +233,7 @@ int main(int argc, char *argv[]){
 			Input_thread inth(*input, buffer);
 
 			// create fft
-			FFT fft(config.fft_size);
+			FFT fft(config.fft.size);
 
 			// mono mainloop
 			mainloop(config, window,
@@ -268,8 +269,8 @@ int main(int argc, char *argv[]){
 
 			// create shared FFT pointer vector
 			std::vector<std::shared_ptr<FFT>> ffts;
-			ffts.push_back(std::make_shared<FFT>(config.fft_size));
-			ffts.push_back(std::make_shared<FFT>(config.fft_size));
+			ffts.push_back(std::make_shared<FFT>(config.fft.size));
+			ffts.push_back(std::make_shared<FFT>(config.fft.size));
 
 			// stereo mainloop
 			mainloop(config, window,

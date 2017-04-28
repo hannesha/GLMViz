@@ -1,48 +1,66 @@
 /* copy this file into your ~/.config/GLMViz/ folder */
 
-Window = { AA = 4; }; //window options
+// Window settings
+Window = {
+	AA = 4
+	height = 600
+	width = 800
+}
+
 Input = {
+	// Source selection, can be "pulse" or "fifo"
 	source = "PULSE"
-	file = "/tmp/mpd.fifo" //path to fifo file
-	device = "" //pulse device
-	f_sample = 44100L; // 44.1kHz sampling rate
+
+	// Path to fifo file
+	file = "/tmp/mpd.fifo"
+
+	// Pulse device name. The default sink monitor is used if given an empty string.
+	device = ""
+
+	f_sample = 44100L // 44.1kHz sampling rate
 	//stereo = true
 }
 
 fps = 60;
-duration = 50; //buffer lenght in ms
+duration = 50; // buffer length in ms
 
 fft_size = 8192L; // 2^13
 
-//Spectrum default values
+// Spectrum default values
 Spectrum = {
-	max_db = -10.0
+	// Specifies the highest and lowest signal level
+	max_db = -5.0
 	min_db = -70.0
-	output_size = 100L; //number of displayed bars
+
+	// Specifies the start and stop frequency of the spectrum
+	f_start = 0
+	f_stop = 500
 
 	top_color = "D3262E"
-	bot_color = "0F0A0A"
+	bot_color = "D3262E"
 	line_color = "46484B"
 	dB_lines = true
 
 	bar_width = 0.75
 	gravity = 8.0
 
-	//gradient = 0 - each bar has the full gradient
-	//gradient = 1 - bar color changes with the height of the bar (0db = top_color)
-	//value inbetween 0 and 1 are possible
+	// gradient = 0 - each bar has the full gradient
+	// gradient = 1 - bar color changes with the height of the bar (0db = top_color)
+	// Values in-between 0 and 1 are possible
 	gradient = 1.0
 
-	// rainbow attributes
+	// Rainbow attributes
 	rainbow = {
 		enabled = false
-		// relative phase shift of each color
+
+		// Relative phase shift of each color
 		phase = {
 			r = 0.0
 			g = 0.0
 			b = 0.0
 		};
-		// color frequency
+
+		// Color frequency
 		freq = {
 			r = 1.0
 			g = 1.0
@@ -51,37 +69,31 @@ Spectrum = {
 	}
 }
 
-//standard Spectrum
-Spectrum1 = {
-	// emulate old crt monitor
-	rainbow = {
-		enabled = false
-		freq = {
-			r = 50.0;
-			g = 50.0;
-			b = 50.0;
-		}
-	}
-	//dB_lines = false
-}
+// Standard Spectrum
+Spectrum1 = {}
 
-//Spectrum rendered in the upper half of the window
+// Spectrum rendered in the upper half of the window
 /*Spectrum2 = {
-	pos = {ymin = -3.0; ymax = 1.0;};
+	pos = {
+		ymin = -3.0
+		ymax = 1.0
+	}
 	dB_lines = false;
 }*/
 
-//Oscilloscope default values
+// Oscilloscope default values
 Osc = {
-	//default line color
+	// Line color
 	color = "FFFFFF"
+
+	// Line width
 	width = 0.01;
 }
 
-//standard Oscilloscope
+// Standard Oscilloscope
 //Osc1 = {}
 
-//Oscilloscope rendered in the upper half of the window
+// Oscilloscope rendered in the upper half of the window
 /*Osc2 = {
 	pos = {
 		ymin = -3.0; ymax = 1.0;	

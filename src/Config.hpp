@@ -36,8 +36,8 @@ class Config {
 		void reload();
 
 		int w_aa = 4;
-		int w_height = 1024;
-		int w_width = 768;
+		int w_height = 768;
+		int w_width = 1024;
 
 		struct Input {
 			Source source = Source::PULSE;
@@ -52,11 +52,19 @@ class Config {
 
 		int duration = 50;
 		int fps = 60;
-		long long fft_size = 2<<12;
+		//long long fft_size = 2<<12;
 		long long buf_size = input.f_sample * duration / 1000;
-		long long fft_output_size = fft_size/2+1;
-		float d_freq = (float) input.f_sample / (float) fft_size;
-		float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
+		//long long fft_output_size = fft_size/2+1;
+		//float d_freq = (float) input.f_sample / (float) fft_size;
+		//float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
+
+		struct FFT {
+			long long size = 1<<13;
+			size_t output_size = size/2+1;
+			float scale = 2.76678e-08;
+			float d_freq = 44100./(float) size;
+		};
+		FFT fft;
 
 		struct Transformation {
 			float Xmin = -1, Xmax = 1, Ymin = -1, Ymax = 1;
@@ -89,6 +97,7 @@ class Config {
 			float slope = 0.5;
 			float offset = 1.0;
 			int output_size = 100;
+			int data_offset = 0;
 
 			Color top_color = {0.91, 0.42, 0.45, 1};
 			Color bot_color = {0.91, 0.42, 0.45, 1};
@@ -103,7 +112,7 @@ class Config {
 			Color phase_d = {0, 0, 0, 1};
 			bool dB_lines = true;
 
-			void parse(libconfig::Setting&, const size_t, const float, const int);
+			void parse(libconfig::Setting&, const FFT&, const int);
 			void parse_rainbow(libconfig::Setting&);
 		};
 

@@ -47,7 +47,7 @@ class Spectrum {
 		GL::Buffer b_x, b_fft, b_lines;
 		std::array<GL::Buffer, 2> b_fb;
 		unsigned tf_index = 0;
-		size_t output_size;
+		size_t output_size, offset;
 		bool draw_lines;
 		unsigned id, bar_shader_id, channel;
 

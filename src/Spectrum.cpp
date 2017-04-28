@@ -101,7 +101,7 @@ void Spectrum::resize_x_buffer(const size_t size){
 
 void Spectrum::update_fft(FFT& fft){
 	b_fft.bind();
-	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output[offset]);
 }
 
 void Spectrum::update_fft(std::vector<std::shared_ptr<FFT>>& ffts){
@@ -159,6 +159,7 @@ void Spectrum::configure(const Config::Spectrum& scfg){
 	glUniform4fv(i_line_color, 1, scfg.line_color.rgba);
 
 	resize(scfg.output_size);
+	offset = scfg.data_offset;
 	set_transformation(scfg.pos);
 	draw_lines = scfg.dB_lines;
 	// limit number of channels
