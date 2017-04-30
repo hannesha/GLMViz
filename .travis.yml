@@ -11,6 +11,8 @@ addons:
       - sourceline: 'ppa:keithw/glfw3'
       - sourceline: 'ppa:xorg-edgers/ppa'
       - sourceline: 'ppa:js-reynaud/libglm'
+      - sourceline: 'ppa:rebuntu16/other-stuff'
+      - sourceline: 'ppa:ixuta/ppa'
     packages:
     - gcc-6
     - g++-6
@@ -22,6 +24,13 @@ addons:
     - libpulse-dev
     - libconfig++-dev
     - libxdg-basedir-dev
+    - libxrandr-dev
+    - libgl1-mesa-dev
+    - libx11-dev
+    - libxcursor-dev
+    - libxi-dev
+    - libxinerama-dev
+    - libxxf86vm-dev
 
 install:
     - export PATH="`pwd`/build:${PATH}"
