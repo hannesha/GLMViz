@@ -1,0 +1,13 @@
+#!/bin/bash
+
+PKG_NAME="glmviz"
+PKG_VERSION="1.0"
+ARCH="amd64"
+PKG_LICENSE="GPLv3"
+MAINTAINER="Hannes Haberl"
+PROVIDES="GLMViz"
+REQUIRES="libglfw3, libfftw3-bin, libconfig++-dev, libxdg-basedir1"
+cd "${MESON_BUILD_ROOT}"
+DESTDIR=./install_root ninja install &&
+checkinstall --install=no --pkgname="$PKG_NAME" --pkgversion="$PKG_VERSION" --pkglicense="$PKG_LICENSE" --maintainer="$MAINTAINER" --provides="$PROVIDES" --requires="$REQUIRES" --nodoc -y cp -r install_root/. / &&
+rm -r install_root

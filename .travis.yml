@@ -22,4 +22,12 @@ addons:
     - libpulse-dev
     - libconfig++-dev
     - libxdg-basedir-dev
-script: export CXX=g++-6 && cmake . && make
+
+install:
+    - export PATH="`pwd`/build:${PATH}"
+    - wget https://github.com/ninja-build/ninja/releases/download/v1.7.2/ninja-linux.zip && unzip -q ninja-linux.zip -d build
+    - pip3 install meson
+
+script:
+    - CXX=g++-6 meson build
+    - ninja -C build
