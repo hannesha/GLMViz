@@ -30,9 +30,6 @@
 // Include basic GL utility headers
 #include "GL_utils.hpp"
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 // Include helper files
 #include "Program.hpp"
