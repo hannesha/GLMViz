@@ -25,6 +25,9 @@
 
 #include "Input.hpp"
 
+#define DELAY_MIN 500
+#define DELAY_MAX 5000
+
 class Fifo : public Input{
 	public:
 		Fifo(const std::string&, const size_t);
@@ -35,5 +38,6 @@ class Fifo : public Input{
 	private:
 		mutable std::ifstream file;
 		mutable std::vector<int16_t> buf;
+		mutable int delay = 100;
 		size_t samples;
 };
