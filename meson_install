@@ -1,0 +1,4 @@
+#!/bin/bash
+meson -Dbuildtype=release mbuild &&
+ninja -C mbuild &&
+sudo ninja -C mbuild install
