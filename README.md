@@ -1,4 +1,4 @@
-# GLMViz
+# GLMViz [![Build Status](https://travis-ci.org/hannesha/GLMViz.svg?branch=master)](https://travis-ci.org/hannesha/GLMViz)
 A OpenGL music visualizer. GLMViz currently supports FiFo buffers and PulseAudio as input.
 
 The main focus of this project is to create a high framerate, dB correct spectrum audio visualizer.
