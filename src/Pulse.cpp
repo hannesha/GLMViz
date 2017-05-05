@@ -106,6 +106,8 @@ std::string Pulse::get_default_sink(){
 		throw std::runtime_error(msg.str());
 	}
 
+	pa_context_disconnect(context);
+	pa_context_unref(context);
 	pa_mainloop_free(mainloop);
 	return device;
 }
