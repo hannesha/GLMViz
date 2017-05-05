@@ -8,7 +8,7 @@ GLMViz is NOT a lightweight program as it's build using GLFW and other OpenGL ab
 * OpenGL libraries: `libglfw`, `libglm`
 * FFT library: `fftw`
 * PulseAudio[Optional]: `libpulse`
-* Configuration libraries: `libconfig++`, `libxdg-basedir`
+* Configuration library: `libconfig++`
 
 Additionally CMake 3.0.2 / [Meson](http://www.mesonbuild.com) and a C++11 compatible compiler are needed to successfully build the project.
 

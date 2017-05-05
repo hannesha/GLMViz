@@ -3,7 +3,6 @@ dep_threads = dependency('threads')
 dep_fftw = dependency('fftw3f')
 dep_glfw = dependency('glfw3')
 dep_cfgpp = dependency('libconfig++')
-dep_basedir = dependency('libxdg-basedir')
 dep_glm = dependency('glm', required: false)
 
 if not dep_glm.found()
@@ -27,6 +26,6 @@ if opt_pulse.found() and opt_pulse_simple.found()
 	add_project_arguments('-DWITH_PULSE', language : 'cpp')
 endif
 
-src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp']
+src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp']
 
-exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_basedir, dep_pulse], install: true)
+exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_pulse], install: true)

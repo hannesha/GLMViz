@@ -23,7 +23,6 @@ addons:
     - libfftw3-dev
     - libpulse-dev
     - libconfig++-dev
-    - libxdg-basedir-dev
     - libxrandr-dev
     - libgl1-mesa-dev
     - libx11-dev

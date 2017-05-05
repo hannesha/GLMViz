@@ -6,7 +6,6 @@ find_package(Threads REQUIRED)
 pkg_search_module(FFTW3 REQUIRED fftw3f libfftw3f)
 pkg_search_module(GLFW REQUIRED glfw3) 
 pkg_search_module(CONFIG++ REQUIRED libconfig++)
-pkg_search_module(BASEDIR REQUIRED libxdg-basedir)
 
 find_package(PulseAudio)
 
@@ -15,7 +14,6 @@ include_directories(${GLFW_INCLUDE_DIRS})
 #include_directories(${GLM_INCLUDE_DIRS})
 include_directories(${FFTW3_INCLUDE_DIRS})
 include_directories(${CONFIG++_INCLUDE_DIRS})
-include_directories(${BASEDIR_INCLUDE_DIRS})
 
 if(PULSEAUDIO_FOUND)
 	Message("PulseAudio found. Building with PulseAudio support.")
@@ -25,9 +23,9 @@ if(PULSEAUDIO_FOUND)
 	set(PULSE_FILES "Pulse.cpp")
 endif(PULSEAUDIO_FOUND)
 
-add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp)
+add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp xdg.cpp)
 
-target_link_libraries(glmviz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${BASEDIR_LIBRARIES} ${PULSE_LIBS})
+target_link_libraries(glmviz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${PULSE_LIBS})
 
 # install GLMViz
 install(TARGETS glmviz DESTINATION ${CMAKE_INSTALL_PREFIX})

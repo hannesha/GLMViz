@@ -19,7 +19,7 @@
 
 #include "Config.hpp"
 
-#include <basedir_fs.h>
+#include "xdg.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <algorithm>
@@ -27,15 +27,15 @@
 #include <cmath>
 
 Config::Config(const std::string& config_file){
-	file = config_file;
-
-	xdgHandle xdghandle;
-
-	if(file == "" && xdgInitHandle(&xdghandle)){
-                file = xdgConfigFind("GLMViz/config", &xdghandle);
-
-                xdgWipeHandle(&xdghandle);
+	if(config_file != ""){
+		if(xdg::verify_path(config_file)){
+			file = config_file;
+		}else{
+			std::cerr << "The specified config file doesn't exist, falling back to default config!" << std::endl;
+		}
 	}
+
+	if(file == "") file = xdg::find_config("/GLMViz/config");
 
 	if(file == "") file = "/etc/GLMViz/config";
 
