@@ -37,7 +37,7 @@ class Fifo : public Input{
 		void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const;
 	private:
 		mutable std::ifstream file;
-		mutable std::vector<int16_t> buf;
+		mutable std::unique_ptr<int16_t[]> buf;
 		mutable int delay = 100;
 		size_t samples;
 };

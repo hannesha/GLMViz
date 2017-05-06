@@ -45,7 +45,7 @@ class Pulse : public Input{
 		};
 	private:
 		size_t samples;
-		mutable std::vector<int16_t> buf;
+		mutable std::unique_ptr<int16_t[]> buf;
 
 		static void info_cb(pa_context*, const pa_server_info*, void*);
 		static void state_cb(pa_context* , void*);

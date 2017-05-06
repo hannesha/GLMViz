@@ -23,7 +23,7 @@
 #include <thread>
 #include <chrono>
 
-Fifo::Fifo(const std::string& file_name, const size_t nsamples):buf(nsamples){
+Fifo::Fifo(const std::string& file_name, const size_t nsamples):buf(new int16_t[nsamples]){
 	samples = nsamples;
 	file.open(file_name, std::ifstream::in | std::ifstream::binary);
 
@@ -40,9 +40,9 @@ inline T clamp(const T n, const T min, const T max){
 }
 
 void Fifo::read(Buffer<int16_t>& buffer) const{
-	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.data()), samples * sizeof(int16_t));
+	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
 
-	buffer.write(buf.data(), s_read/2);
+	buffer.write(buf.get(), s_read/2);
 	int diff = samples - s_read;
 	delay += diff/4;
 	delay = clamp(delay, DELAY_MIN, DELAY_MAX);
@@ -50,10 +50,10 @@ void Fifo::read(Buffer<int16_t>& buffer) const{
 }
 
 void Fifo::read_stereo(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer) const{
-	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.data()), samples * sizeof(int16_t));
+	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
 
-	lbuffer.write_offset(buf.data(), s_read/2, 2, 0);
-	rbuffer.write_offset(buf.data(), s_read/2, 2, 1);
+	lbuffer.write_offset(buf.get(), s_read/2, 2, 0);
+	rbuffer.write_offset(buf.get(), s_read/2, 2, 1);
 
 	int diff = samples - s_read;
 	delay += diff/8;
