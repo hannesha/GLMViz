@@ -3,6 +3,11 @@ A OpenGL music visualizer. GLMViz currently supports FiFo buffers and PulseAudio
 
 The main focus of this project is to create a high framerate, dB correct spectrum audio visualizer.
 
+## Example
+![Minimal Config](examples/minimal.gif)
+
+More examples are in the [Example folder](examples).
+
 ## Build Requirements
 GLMViz is NOT a lightweight program as it's build using GLFW and other OpenGL abstraction libraries.
 * OpenGL libraries: `libglfw`, `libglm`

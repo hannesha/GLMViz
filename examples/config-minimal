@@ -1,0 +1,22 @@
+Input = {
+	source = "PULSE"
+	f_sample = 44100L; // 44.1kHz sampling rate
+}
+
+fft_size = 2048L
+
+Spectrum = {
+	max_db = -5.0
+	min_db = -70.0
+
+	f_start = 0
+	f_stop = 1000 
+
+	top_color = "D3262E"
+	bot_color = "D3262E"
+	dB_lines = false
+
+	bar_width = 0.5
+}
+
+Spectrum1 = {}
