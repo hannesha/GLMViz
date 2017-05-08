@@ -37,5 +37,10 @@ install:
     - pip3 install meson
 
 script:
-    - CXX=g++-6 meson build
+    - export CXX=g++-6
+    - mkdir cbuild && cd cbuild
+    - cmake ..
+    - make -j2
+    - cd ..
+    - meson build
     - ninja -C build
