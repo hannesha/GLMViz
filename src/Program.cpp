@@ -18,6 +18,9 @@
  */
 
 #include "Program.hpp"
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace GL {
 
@@ -36,6 +39,20 @@ namespace GL {
 		}
 
 		glLinkProgram(id);
+
+		// check link status and throw if the shaders can't be linked
+		GLint link_status;
+		glGetProgramiv(id, GL_LINK_STATUS, &link_status);
+		if(link_status == GL_FALSE){
+			GLint length;
+			glGetProgramiv(id, GL_INFO_LOG_LENGTH, &length);
+
+			std::vector<GLchar> log(length);
+			glGetProgramInfoLog(id, length, &length, log.data());
+
+			std::string err(log.begin(), log.end());
+			throw std::invalid_argument(err);
+		}
 
 		// detach shaders for later cleanup
 		for (GL::Shader& sh : shaders){

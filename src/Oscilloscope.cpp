@@ -25,6 +25,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
+#include <iostream>
 
 Oscilloscope::Oscilloscope(const Config::Oscilloscope& config, const unsigned o_id): id(o_id){
 	init_crt();
@@ -63,7 +64,12 @@ void Oscilloscope::init_crt(){
 
 	GL::Shader frag(frag_code, GL_FRAGMENT_SHADER);
 
-	sh_crt.link({vert, geom, frag});
+	try{
+		sh_crt.link({vert, geom, frag});
+	}
+	catch(std::invalid_argument& e){
+		std::cerr << "Can't link oscilloscope shader!" << std::endl << e.what() << std::endl;
+	}
 
 	v_crt.bind();
 

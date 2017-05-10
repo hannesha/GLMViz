@@ -25,6 +25,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
+#include <iostream>
 
 Spectrum::Spectrum(const Config::Spectrum& config, const unsigned s_id): id(s_id){
 	init_bar_shader();
@@ -214,8 +215,13 @@ void Spectrum::init_bar_shader(){
 	GL::Shader gs(geometry_shader, GL_GEOMETRY_SHADER);
 
 	// link shaders
-	sh_bars[0].link({fs, vs, gs});
-	sh_bars[1].link({fs_rb, vs, gs});
+	try{
+		sh_bars[0].link({fs, vs, gs});
+		sh_bars[1].link({fs_rb, vs, gs});
+	}
+	catch(std::invalid_argument& e){
+		std::cerr << "Can't link bar shaders!" << std::endl << e.what() << std::endl;
+	}
 }
 
 void Spectrum::init_bars(){
@@ -245,8 +251,13 @@ void Spectrum::init_bar_pre_shader(){
 	;
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
 
-	const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
-	sh_bars_pre.link_TF(3, varyings, {vs});
+	try{
+		const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
+		sh_bars_pre.link_TF(3, varyings, {vs});
+	}
+	catch(std::invalid_argument& e){
+		std::cerr << "Can't link bar_pre shader!" << std::endl << e.what() << std::endl;
+	}
 }
 
 void Spectrum::init_bars_pre(){
@@ -288,7 +299,12 @@ void Spectrum::init_line_shader(){
 	;
 	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 
-	sh_lines.link({fs, vs_lines});
+	try{
+		sh_lines.link({fs, vs_lines});
+	}
+	catch(std::invalid_argument& e){
+		std::cerr << "Can't link dB line shader!" << std::endl << e.what() << std::endl;
+	}
 }
 
 void Spectrum::init_lines(){
