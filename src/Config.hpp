@@ -116,6 +116,8 @@ class Config {
 			void parse_rainbow(libconfig::Setting&);
 		};
 
+		Color bg_color = {0, 0, 0, 0};
+
 		Oscilloscope osc_default;
 		Spectrum spec_default;
 

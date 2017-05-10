@@ -62,6 +62,7 @@ void Config::reload(){
 		fft.output_size = fft.size/2+1;
 		fft.d_freq = (float) input.f_sample / (float) fft.size;
 
+		bg_color.parse("bg_color", cfg.getRoot());
 
 		// normalization value for the fft output
 		fft.scale = 1.0f/((float)(buf_size/2+1)*32768.0f);

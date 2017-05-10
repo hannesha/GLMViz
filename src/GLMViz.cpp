@@ -94,6 +94,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 }
 
+// set glClear color
+void set_bg_color(const Config::Color& color){
+	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], 0.f);
+}
+
 std::string generate_title(Config& config){
 	std::stringstream title;
 	title << "GLMViz:";
@@ -208,8 +213,8 @@ int main(int argc, char *argv[]){
 
 		glfwMakeContextCurrent(window);
 
-		// set clear color to black
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		// set background color
+		set_bg_color(config.bg_color);
 
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		//glEnable(GL_BLEND);
@@ -243,6 +248,8 @@ int main(int argc, char *argv[]){
 
 				update_render_configs(spectra, config.spectra);
 				update_render_configs(oscilloscopes, config.oscilloscopes);
+
+				set_bg_color(config.bg_color);
 			},
 			[&]{
 				// update all locking renderer first
@@ -282,6 +289,8 @@ int main(int argc, char *argv[]){
 				// update spectrum/oscilloscope renderer
 				update_render_configs(spectra, config.spectra);
 				update_render_configs(oscilloscopes, config.oscilloscopes);
+
+				set_bg_color(config.bg_color);
 			},
 			[&]{
 				ffts[0]->calculate(lbuffer);
