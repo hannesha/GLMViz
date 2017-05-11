@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <sstream>
 
-#define FRAG_SIZE nsamples*16
+#define FRAG_SIZE nsamples*10
 
 Pulse::Pulse(const std::string& device, const size_t FS, const size_t nsamples, const bool stereo):buf(new int16_t[nsamples]){
 	samples = nsamples;
