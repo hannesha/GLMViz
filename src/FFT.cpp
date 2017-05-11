@@ -64,6 +64,25 @@ void FFT::calculate(Buffer<T>& buffer){
 	}
 }
 
+// return the index of the bin with the highest magnitude
+size_t FFT::max_bin(const size_t start, const size_t stop){
+	size_t startl = std::min(size, start);
+	size_t stopl = std::min(size, stop);
+	if(startl > stopl) return stopl;
+
+	size_t ret = startl;
+	float max = 0;
+	for(size_t i = startl; i < stopl; i++){
+		float mag = std::hypot(output[i][0], output[i][1]);
+		if(mag > max){
+			max = mag;
+			ret = i;
+		}
+	}
+
+	return ret;
+}
+
 void FFT::calculate_window(const size_t w_size){
 	window.resize(w_size);
 	float N_1 = 1.0 / (float)(w_size-1);

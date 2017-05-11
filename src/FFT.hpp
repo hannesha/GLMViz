@@ -37,6 +37,7 @@ class FFT {
 		~FFT();
 
 		template<typename T> void calculate(Buffer<T>&);
+		size_t max_bin(const size_t, const size_t);
 
 		fftwf_complex* output;
 	private:
