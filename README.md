@@ -33,3 +33,7 @@ Per-user configurations have to be copied manually using:
 Exit with <kbd>CTRL-C</kbd> or by closing the window.
 
 The config can be reloaded by pressing <kbd>R</kbd> or by sending `SIGUSR1` to the program.
+
+## Thanks
+Big thanks to [dpayne](https://github.com/dpayne/) and [Karl Stavestrand](https://github.com/karlstav) for the pulseaudio setup code.
+Also thanks to [xdaimon](https://github.com/xdaimon) and [kritzikratzi](https://github.com/kritzikratzi) for the smooth line shader idea.

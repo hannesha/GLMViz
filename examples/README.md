@@ -14,5 +14,7 @@ File: `config-minimal`
 * no dB lines
 
 ## Oscilloscope Configuration
+![Oscilloscope](oscilloscope.gif)
 
 File: `config-osc`
+* smooth lines

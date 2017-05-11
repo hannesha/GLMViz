@@ -10,7 +10,8 @@ Osc = {
 	//default line color
 	color = "FFFFFF"
 	width = 0.01;
-	scale = 2.0;
+	scale = 1.3;
+	sigma = 3.; // sigma of line smoothing function
 }
 
 Osc1 = {}
