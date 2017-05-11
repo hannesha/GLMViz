@@ -169,6 +169,8 @@ void Config::Oscilloscope::parse(libconfig::Setting& cfg){
 	channel = std::min(channel, 1);
 	cfg.lookupValue("scale", scale);
 	cfg.lookupValue("width", width);
+	cfg.lookupValue("sigma", sigma);
+
 
 	color.parse("color", cfg);
 	pos.parse("pos", cfg);
@@ -275,19 +277,14 @@ void Config::Color::parse(const std::string& path, libconfig::Setting& cfg){
 }
 
 void Config::Color::normalize(const Color& c){
-	// convert screen color(CRT gamma) to sRGB
-	const float inv_gamma = 1.0/2.2;
-
-	for(int i = 0; i < 3; i ++){
-		rgba[i] = std::pow(c.rgba[i] / 255, inv_gamma);
-	}
+	std::copy(c.rgba, c.rgba + 4, rgba);
+	normalize();
 }
 
 void Config::Color::normalize(){
 	// convert screen color(CRT gamma) to sRGB
-	const float inv_gamma = 1.0/2.2;
 	for(int i = 0; i < 3; i ++){
-		rgba[i] = std::pow(rgba[i] / 255, inv_gamma);
+		rgba[i] = rgba[i] / 255;
 	}
 }
 

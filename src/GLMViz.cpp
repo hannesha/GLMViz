@@ -216,8 +216,8 @@ int main(int argc, char *argv[]){
 		// set background color
 		set_bg_color(config.bg_color);
 
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_BLEND);
 		// handle resizing
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 

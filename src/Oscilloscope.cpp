@@ -37,7 +37,7 @@ void Oscilloscope::draw(){
 	sh_crt.use();
 	v_crt.bind();
 
-	glDrawArrays(GL_LINE_STRIP_ADJACENCY, 0, size);
+	glDrawArrays(GL_LINE_STRIP, 0, size);
 }
 
 void Oscilloscope::init_crt(){
@@ -59,7 +59,7 @@ void Oscilloscope::init_crt(){
 	GL::Shader geom(geom_code, GL_GEOMETRY_SHADER);
 
 	const char* frag_code =
-	#include "shader/simple.frag"
+	#include "shader/smooth_crt.frag"
 	;
 
 	GL::Shader frag(frag_code, GL_FRAGMENT_SHADER);
@@ -98,6 +98,9 @@ void Oscilloscope::configure(const Config::Oscilloscope& ocfg){
 
 	GLint i_width = sh_crt.get_uniform("width");
 	glUniform1f(i_width, ocfg.width);
+
+	GLint i_sigma = sh_crt.get_uniform("sigma");
+	glUniform1f(i_sigma, ocfg.sigma);
 
 	set_transformation(ocfg.pos);
 

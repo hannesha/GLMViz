@@ -7,7 +7,8 @@ out vec4 f_color;
 
 const vec3 gamma = vec3(2.2);
 void main () {
-	f_color.rgb = pow(color.rgb, gamma);
-	f_color.a = color.a;
+	//f_color.rgb = pow(color.rgb, gamma);
+	//f_color.a = color.a;
+	f_color = color;
 }
 )"
