@@ -33,6 +33,22 @@ FFT::~FFT(){
 	fftwf_destroy_plan(plan);
 }
 
+void FFT::resize(const size_t nsize){
+	if(size != nsize){
+		size = nsize;
+		// destroy old plan and free memory
+		fftwf_destroy_plan(plan);
+		fftwf_free(input);
+		fftwf_free(output);
+
+		// create new plan and allocate memory
+		input = reinterpret_cast<float*>(fftwf_malloc(sizeof(float) * size));
+		size_t output_size = size/2+1;
+		output = reinterpret_cast<fftwf_complex*>(fftwf_malloc(sizeof(fftwf_complex) * output_size));
+		plan = fftwf_plan_dft_r2c_1d(size, input, output, FFTW_ESTIMATE);
+	}
+}
+
 template<typename T>
 void FFT::calculate(Buffer<T>& buffer){
 	// find smallest value for window function

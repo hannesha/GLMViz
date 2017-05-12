@@ -246,6 +246,9 @@ int main(int argc, char *argv[]){
 				// resize buffers and reconfigure renderer
 				buffer.resize(config.buf_size);
 
+				// resize fft
+				fft.resize(config.fft.size);
+
 				update_render_configs(spectra, config.spectra);
 				update_render_configs(oscilloscopes, config.oscilloscopes);
 
@@ -285,6 +288,9 @@ int main(int argc, char *argv[]){
 				// resize buffers
 				lbuffer.resize(config.buf_size);
 				rbuffer.resize(config.buf_size);
+
+				ffts[0]->resize(config.fft.size);
+				ffts[1]->resize(config.fft.size);
 
 				// update spectrum/oscilloscope renderer
 				update_render_configs(spectra, config.spectra);

@@ -37,6 +37,8 @@ class FFT {
 		~FFT();
 
 		template<typename T> void calculate(Buffer<T>&);
+		void resize(const size_t);
+
 		size_t max_bin(const size_t, const size_t);
 		std::vector<float> magnitudes(const float);
 
