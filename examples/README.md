@@ -18,3 +18,8 @@ File: `config-minimal`
 
 File: `config-osc`
 * smooth lines
+
+## Oscilloscope + Minimal Spectrum
+![Hybrid](hybrid.png)
+
+File: `config-hybrid`
