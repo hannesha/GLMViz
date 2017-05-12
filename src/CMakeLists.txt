@@ -36,5 +36,9 @@ add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.c
 
 target_link_libraries(glmviz ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${PULSE_LIBS})
 
+# fft test program
+add_executable(fft_example FFT_example.cpp FFT.cpp Buffer.cpp)
+target_link_libraries(fft_example ${FFTW3_LIBRARIES})
+
 # install GLMViz
 install(TARGETS glmviz DESTINATION ${CMAKE_INSTALL_PREFIX})

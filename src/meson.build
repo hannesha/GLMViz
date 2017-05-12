@@ -29,3 +29,5 @@ endif
 src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp']
 
 exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_pulse], install: true)
+
+fft_ex = executable('fft_example', ['FFT_example.cpp', 'FFT.cpp', 'Buffer.cpp'], dependencies: [dep_fftw])

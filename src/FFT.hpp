@@ -38,6 +38,7 @@ class FFT {
 
 		template<typename T> void calculate(Buffer<T>&);
 		size_t max_bin(const size_t, const size_t);
+		std::vector<float> magnitudes(const float);
 
 		fftwf_complex* output;
 	private:

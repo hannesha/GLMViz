@@ -83,6 +83,20 @@ size_t FFT::max_bin(const size_t start, const size_t stop){
 	return ret;
 }
 
+// calculate the magnitude(in dB) of the fft output
+// max_amplitude specified the maximum value of the fft input (32768 for a 16 bit audio signal)
+std::vector<float> FFT::magnitudes(const float max_amplitude){
+	std::vector<float> mag(size/2 +1);
+
+	float scale = 1./ ((float)(window.size()/2 +1) * max_amplitude);
+
+	for(unsigned i = 0; i < size/2+1; i++){
+		mag[i] = 20. * std::log10(std::hypot(output[i][0], output[i][1]) * scale);
+	}
+
+	return mag;
+}
+
 void FFT::calculate_window(const size_t w_size){
 	window.resize(w_size);
 	float N_1 = 1.0 / (float)(w_size-1);
