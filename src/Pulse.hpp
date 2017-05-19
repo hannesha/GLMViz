@@ -36,7 +36,7 @@ class Pulse : public Input{
 
 		bool is_open() const;
 		void read(Buffer<int16_t>&) const;
-		void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const;
+		void read(std::vector<Buffer<int16_t>>&) const;
 
 		static std::string get_default_sink();
 		struct usr_data{

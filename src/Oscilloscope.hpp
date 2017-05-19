@@ -34,7 +34,7 @@ class Oscilloscope {
 
 		void draw();
 		void update_buffer(Buffer<int16_t>&);
-		void update_buffer(Buffer<int16_t>&, Buffer<int16_t>&);
+		void update_buffer(std::vector<Buffer<int16_t>>&);
 		void configure(const Config::Oscilloscope&);
 
 	private:

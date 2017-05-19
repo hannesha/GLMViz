@@ -60,11 +60,11 @@ class Input_thread{
 			}){};
 
 		// stereo constructor
-		template <typename Buf> Input_thread(Input& i, Buf& lbuffer, Buf& rbuffer):
+		template <typename Buf> Input_thread(Input& i, std::vector<Buf>& buffers):
 			running(true),
 			th_input([&]{
 				while(running){
-					i.read_stereo(lbuffer, rbuffer);
+					i.read(buffers);
 				};
 			}){};
 
@@ -271,11 +271,16 @@ int main(int argc, char *argv[]){
 			});
 		}else{
 			// create left and right audio buffer
-			Buffer<int16_t> lbuffer(config.buf_size);
-			Buffer<int16_t> rbuffer(config.buf_size);
+			std::vector<Buffer<int16_t>> buffers;
+
+			//Buffer<int16_t> lbuffer(config.buf_size);
+			//Buffer<int16_t> rbuffer(config.buf_size);
+			buffers.emplace_back(config.buf_size);
+			buffers.emplace_back(config.buf_size);
+
 
 			// start stereo input thread
-			Input_thread inth(*input, lbuffer, rbuffer);
+			Input_thread inth(*input, buffers);
 
 			// create FFT vector
 			std::vector<FFT> ffts;
@@ -286,11 +291,13 @@ int main(int argc, char *argv[]){
 			mainloop(config, window,
 			[&]{
 				// resize buffers
-				lbuffer.resize(config.buf_size);
-				rbuffer.resize(config.buf_size);
+				for(auto& buf : buffers){
+					buf.resize(config.buf_size);
+				}
 
-				ffts[0].resize(config.fft.size);
-				ffts[1].resize(config.fft.size);
+				for(auto& fft : ffts){
+					fft.resize(config.fft.size);
+				}
 
 				// update spectrum/oscilloscope renderer
 				update_render_configs(spectra, config.spectra);
@@ -299,10 +306,10 @@ int main(int argc, char *argv[]){
 				set_bg_color(config.bg_color);
 			},
 			[&]{
-				ffts[0].calculate(lbuffer);
-				ffts[1].calculate(rbuffer);
+				ffts[0].calculate(buffers[0]);
+				ffts[1].calculate(buffers[1]);
 				for(Oscilloscope& o : oscilloscopes){
-					o.update_buffer(lbuffer, rbuffer);
+					o.update_buffer(buffers);
 				}
 
 				for(Spectrum& s : spectra){

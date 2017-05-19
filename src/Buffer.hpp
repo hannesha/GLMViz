@@ -27,6 +27,9 @@ template<typename T>
 class Buffer {
 	public:
 		Buffer(const size_t);
+		Buffer(const Buffer& b) = delete;
+		Buffer(Buffer&& b): v_buffer(std::move(b.v_buffer)), size(std::move(b.size)){};
+		//Buffer& operator=(Buffer&& b){ v_buffer = std::move(b.v_buffer); size = std::move(b.size);  return *this; };
 
 		std::vector<T> v_buffer;
 		bool new_data;

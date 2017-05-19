@@ -28,5 +28,5 @@ class Input {
 		virtual ~Input() {};
 		virtual bool is_open() const = 0;
 		virtual void read(Buffer<int16_t>&) const = 0;
-		virtual void read_stereo(Buffer<int16_t>&, Buffer<int16_t>&) const = 0;
+		virtual void read(std::vector<Buffer<int16_t>>&) const = 0;
 };

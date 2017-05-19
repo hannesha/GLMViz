@@ -144,10 +144,6 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 	}
 }
 
-void Oscilloscope::update_buffer(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer){
-	if(channel == 0){
-		update_buffer(lbuffer);
-	}else{
-		update_buffer(rbuffer);
-	}
+void Oscilloscope::update_buffer(std::vector<Buffer<int16_t>>& buffers){
+	update_buffer(buffers[channel]);
 }
