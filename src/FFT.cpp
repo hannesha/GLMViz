@@ -27,10 +27,24 @@ FFT::FFT(const size_t fft_size){
 	plan = fftwf_plan_dft_r2c_1d(size, input, output, FFTW_ESTIMATE);
 }
 
+FFT::FFT(FFT&& f){
+	input = f.input;
+	output = f.output;
+	plan = f.plan;
+	window = std::move(f.window);
+	size = f.size;
+
+	// invalidate pointers
+	f.input = nullptr;
+	f.output = nullptr;
+	f.plan = nullptr;
+	f.size = 0;
+}
+
 FFT::~FFT(){
-	fftwf_free(output);
-	fftwf_free(input);
-	fftwf_destroy_plan(plan);
+	if (output != nullptr) fftwf_free(output);
+	if (input != nullptr) fftwf_free(input);
+	if (plan != nullptr) fftwf_destroy_plan(plan);
 }
 
 void FFT::resize(const size_t nsize){

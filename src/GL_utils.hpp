@@ -30,6 +30,8 @@ namespace GL {
 			inline ~Buffer() { glDeleteBuffers(1, &id); };
 			// disable copying
 			Buffer(const Buffer&) = delete;
+			Buffer(Buffer&& b):id(b.id){ b.id = 0; };
+			Buffer& operator=(Buffer&&) = default;
 
 			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
 			static inline void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); };
@@ -45,6 +47,8 @@ namespace GL {
 			inline ~VAO() { glDeleteVertexArrays(1, &id); };
 			// disable copying
 			VAO(const VAO&) = delete;
+			VAO(VAO&& v):id(v.id){ v.id = 0; };
+			VAO& operator=(VAO&&) = default;
 
 			inline void bind() { glBindVertexArray(id); };
 			static inline void unbind() { glBindVertexArray(0); };
@@ -63,6 +67,8 @@ namespace GL {
 			inline ~Shader(){ glDeleteShader(id); };
 			// disable copying
 			Shader(const Shader&) = delete;
+			Shader(Shader&& s):id(s.id){ s.id = 0; };
+			Shader& operator=(Shader&&) = default;
 
 			GLuint id;
 	};

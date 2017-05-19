@@ -28,11 +28,15 @@ namespace GL {
 		public:
 			Program();
 			~Program();
+			Program(const Program&) = delete;
+			Program(Program&& p): id(p.id){ p.id = 0; };
+			Program& operator=(Program&&) = default;
 
 			void link(std::initializer_list<const std::reference_wrapper<GL::Shader>>);
 			void link_TF(const size_t, const char**, std::initializer_list<const std::reference_wrapper<GL::Shader>>);
 
 			inline void use(){ glUseProgram(id); };
+			inline GLuint get_id(){ return id; };
 			inline void operator()(){ use(); };
 			inline GLint get_uniform(const char* name) const { return glGetUniformLocation(id, name); };
 			inline GLint get_attrib(const char* name) const { return glGetAttribLocation(id, name); };

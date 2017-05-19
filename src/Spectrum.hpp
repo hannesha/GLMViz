@@ -30,11 +30,13 @@ class Spectrum {
 		Spectrum(const Config::Spectrum&, const unsigned);
 		// disable copy construction
 		Spectrum(const Spectrum&) = delete;
+		Spectrum(Spectrum&&) = default;
+		Spectrum& operator=(Spectrum&&) = default;
 		~Spectrum(){};
 
 		void draw();
 		void update_fft(FFT&);
-		void update_fft(std::vector<std::shared_ptr<FFT>>&);
+		void update_fft(std::vector<FFT>&);
 		void configure(const Config::Spectrum&);
 
 	private:
@@ -51,17 +53,6 @@ class Spectrum {
 		bool draw_lines;
 		unsigned id, bar_shader_id, channel;
 
-		const float dB_lines[36] = {
-			-1.0,  0.0, 1.0,  0.0, //   0dB
-			-1.0, -0.5, 1.0, -0.5, // -10dB
-			-1.0, -1.0, 1.0, -1.0, // -20dB
-			-1.0, -1.5, 1.0, -1.5, // -30dB
-			-1.0, -2.0, 1.0, -2.0, // -40dB
-			-1.0, -2.5, 1.0, -2.5, // -50dB
-			-1.0, -3.0, 1.0, -3.0, // -60dB
-			-1.0, -3.5, 1.0, -3.5, // -70dB
-			-1.0, -4.0, 1.0, -4.0  // -80dB
-		};
 
 		void init_bar_shader();
 		void init_bars();

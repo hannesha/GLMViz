@@ -118,10 +118,10 @@ void update_render_configs(R_vector& renderer, C_vector& configs){
 	for(unsigned i = 0; i < configs.size(); i++){
 		try{
 			//reconfigure renderer
-			renderer.at(i) -> configure(configs[i]);
+			renderer.at(i).configure(configs[i]);
 		}catch(std::out_of_range& e){
 			//make new renderer
-			renderer.push_back(::make_unique<typename R_vector::value_type::element_type>(configs[i], i));
+			renderer.emplace_back(configs[i], i);
 		}
 	}
 	//delete remaining renderers
@@ -223,8 +223,8 @@ int main(int argc, char *argv[]){
 
 		glfwSetKeyCallback(window, key_callback);
 
-		std::vector<Spec_ptr> spectra;
-		std::vector<Osc_ptr> oscilloscopes;
+		std::vector<Spectrum> spectra;
+		std::vector<Oscilloscope> oscilloscopes;
 
 		// create new renderers
 		update_render_configs(spectra, config.spectra);
@@ -257,16 +257,16 @@ int main(int argc, char *argv[]){
 			[&]{
 				// update all locking renderer first
 				fft.calculate(buffer);
-				for(Osc_ptr& o : oscilloscopes){
-					o->update_buffer(buffer);
+				for(Oscilloscope& o : oscilloscopes){
+					o.update_buffer(buffer);
 				}
 				// draw spectra and oscilloscopes
-				for(Spec_ptr& s : spectra){
-					s->update_fft(fft);
-					s->draw();
+				for(Spectrum& s : spectra){
+					s.update_fft(fft);
+					s.draw();
 				}
-				for(Osc_ptr& o : oscilloscopes){
-					o->draw();
+				for(Oscilloscope& o : oscilloscopes){
+					o.draw();
 				}
 			});
 		}else{
@@ -277,10 +277,10 @@ int main(int argc, char *argv[]){
 			// start stereo input thread
 			Input_thread inth(*input, lbuffer, rbuffer);
 
-			// create shared FFT pointer vector
-			std::vector<std::shared_ptr<FFT>> ffts;
-			ffts.push_back(std::make_shared<FFT>(config.fft.size));
-			ffts.push_back(std::make_shared<FFT>(config.fft.size));
+			// create FFT vector
+			std::vector<FFT> ffts;
+			ffts.emplace_back(config.fft.size);
+			ffts.emplace_back(config.fft.size);
 
 			// stereo mainloop
 			mainloop(config, window,
@@ -289,8 +289,8 @@ int main(int argc, char *argv[]){
 				lbuffer.resize(config.buf_size);
 				rbuffer.resize(config.buf_size);
 
-				ffts[0]->resize(config.fft.size);
-				ffts[1]->resize(config.fft.size);
+				ffts[0].resize(config.fft.size);
+				ffts[1].resize(config.fft.size);
 
 				// update spectrum/oscilloscope renderer
 				update_render_configs(spectra, config.spectra);
@@ -299,19 +299,19 @@ int main(int argc, char *argv[]){
 				set_bg_color(config.bg_color);
 			},
 			[&]{
-				ffts[0]->calculate(lbuffer);
-				ffts[1]->calculate(rbuffer);
-				for(Osc_ptr& o : oscilloscopes){
-					o->update_buffer(lbuffer, rbuffer);
+				ffts[0].calculate(lbuffer);
+				ffts[1].calculate(rbuffer);
+				for(Oscilloscope& o : oscilloscopes){
+					o.update_buffer(lbuffer, rbuffer);
 				}
 
-				for(Spec_ptr& s : spectra){
-					s->update_fft(ffts);
-					s->draw();
+				for(Spectrum& s : spectra){
+					s.update_fft(ffts);
+					s.draw();
 				}
 
-				for(Osc_ptr& o : oscilloscopes){
-					o->draw();
+				for(Oscilloscope& o : oscilloscopes){
+					o.draw();
 				}
 			});
 		}

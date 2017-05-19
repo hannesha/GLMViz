@@ -28,6 +28,8 @@ class Oscilloscope {
 		Oscilloscope(const Config::Oscilloscope&, const unsigned);
 		// disable copy construction
 		Oscilloscope(const Oscilloscope&) = delete;
+		Oscilloscope(Oscilloscope&&) = default;
+		Oscilloscope& operator=(Oscilloscope&&) = default;
 		~Oscilloscope(){};
 
 		void draw();

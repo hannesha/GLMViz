@@ -27,7 +27,7 @@
 #include <vector>
 #include <iostream>
 
-Spectrum::Spectrum(const Config::Spectrum& config, const unsigned s_id): id(s_id){
+Spectrum::Spectrum(const Config::Spectrum& config, const unsigned s_id): output_size(0), id(s_id){
 	init_bar_shader();
 	init_line_shader();
 	init_bar_pre_shader();
@@ -44,9 +44,8 @@ void Spectrum::draw(){
 	if(draw_lines){
 		sh_lines.use();
 		v_lines.bind();
-		glDrawArrays(GL_LINES, 0, sizeof(dB_lines) / sizeof(float));
+		glDrawArrays(GL_LINES, 0, 18);
 	}
-
 
 	/* gravity processing shader */
 	sh_bars_pre.use();
@@ -106,8 +105,8 @@ void Spectrum::update_fft(FFT& fft){
 	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output[offset]);
 }
 
-void Spectrum::update_fft(std::vector<std::shared_ptr<FFT>>& ffts){
-	update_fft(*ffts[channel]);
+void Spectrum::update_fft(std::vector<FFT>& ffts){
+	update_fft(ffts[channel]);
 }
 
 void Spectrum::resize_fft_buffer(const size_t size){
@@ -309,6 +308,18 @@ void Spectrum::init_line_shader(){
 
 void Spectrum::init_lines(){
 	v_lines.bind();
+
+	const float dB_lines[36] = {
+		-1.0,  0.0, 1.0,  0.0, //   0dB
+		-1.0, -0.5, 1.0, -0.5, // -10dB
+		-1.0, -1.0, 1.0, -1.0, // -20dB
+		-1.0, -1.5, 1.0, -1.5, // -30dB
+		-1.0, -2.0, 1.0, -2.0, // -40dB
+		-1.0, -2.5, 1.0, -2.5, // -50dB
+		-1.0, -3.0, 1.0, -3.0, // -60dB
+		-1.0, -3.5, 1.0, -3.5, // -70dB
+		-1.0, -4.0, 1.0, -4.0  // -80dB
+	};
 
 	b_lines.bind();
 	glBufferData(GL_ARRAY_BUFFER, sizeof(dB_lines), dB_lines, GL_STATIC_DRAW);

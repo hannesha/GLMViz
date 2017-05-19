@@ -27,7 +27,7 @@
 #include <vector>
 #include <iostream>
 
-Oscilloscope::Oscilloscope(const Config::Oscilloscope& config, const unsigned o_id): id(o_id){
+Oscilloscope::Oscilloscope(const Config::Oscilloscope& config, const unsigned o_id): size(0), id(o_id){
 	init_crt();
 
 	configure(config);
@@ -142,7 +142,6 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 		b_crt_y.bind();
 		glBufferSubData(GL_ARRAY_BUFFER, 0, size * sizeof(int16_t), &buffer.v_buffer[0]);
 	}
-
 }
 
 void Oscilloscope::update_buffer(Buffer<int16_t>& lbuffer, Buffer<int16_t>& rbuffer){
