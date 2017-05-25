@@ -1,7 +1,5 @@
 R"(
 #version 150
-// Complex freq amplitude
-in vec2 a;
 // old values from TF
 in float gravity_old;
 in float time_old;
@@ -16,6 +14,10 @@ uniform float slope;
 uniform float offset;
 uniform float gravity;
 
+// fft texture buffer
+uniform samplerBuffer tbo_fft;
+uniform vec3 log_params; //{ a, b, log_switch}
+
 const float lg = 1 / log(10);
 
 // greater than comparison function
@@ -24,19 +26,36 @@ float gt(float x, float y){
 }
 
 void main(){
+	// fetch fft output
+	float a;
+	if(log_params.z > 0.0){
+		// log fetch
+		float i = log_params.x * exp(log_params.y * gl_VertexID);
+		int i_f = int(floor(i));
+		// fetch both indices
+		float a_1 = length(texelFetch(tbo_fft, i_f).xy) * fft_scale;
+		float a_2 = length(texelFetch(tbo_fft, i_f + 1).xy) * fft_scale;
+		// interpolate fft values
+		a = mix(a_1, a_2, i - float(i_f));
+	}else{
+		// linear fetch
+		a = length(texelFetch(tbo_fft, gl_VertexID).xy) * fft_scale;
+	}
+
 	// normalize fft output
-	float a_norm = length(a) * fft_scale;
-	// convert fft output into dB and calculate gravity
-	float y = slope * log(a_norm) * lg + offset;
+	//float a_norm = a * fft_scale;
 
-	// fix feedback buffer resize hang
+	// convert fft output into dB
+	float y = slope * log(a) * lg + offset;
+
+	// clamp values
 	float y_old = clamp(gravity_old, -0.5, 0.7);
-	float yg = y_old - gravity * time_old * time_old;
-
-	// fix shader gravity during track skip
 	y = clamp(y, -0.5, 0.7);
 
-	// elimitate branching using mix
+	// calculate gravity
+	float yg = y_old - gravity * time_old * time_old;
+
+	// set output variables
 	float gt_y = gt(y, yg);
 	v_gravity = mix(y_old, y, gt_y);
 	v_time = mix(time_old + 1.0, 0.0, gt_y);

@@ -194,6 +194,10 @@ void Config::Spectrum::parse(libconfig::Setting& cfg, const FFT& fft, const int 
 		}
 	}
 
+	// log frequency settings
+	cfg.lookupValue("log_start", log_start);
+	cfg.lookupValue("log_enabled", log_enabled);
+
 	cfg.lookupValue("min_db", min_db);
 	cfg.lookupValue("max_db", max_db);
 
