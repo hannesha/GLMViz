@@ -213,6 +213,8 @@ int main(int argc, char *argv[]){
 
 		glfwMakeContextCurrent(window);
 
+		glfwSwapInterval(-1);
+
 		// set background color
 		set_bg_color(config.bg_color);
 
