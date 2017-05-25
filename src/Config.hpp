@@ -99,6 +99,8 @@ class Config {
 			float offset = 1.0;
 			int output_size = 100;
 			int data_offset = 0;
+			float log_start = 5;
+			float log_enabled = 0;
 
 			Color top_color = {0.91, 0.42, 0.45, 1};
 			Color bot_color = {0.91, 0.42, 0.45, 1};

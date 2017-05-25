@@ -3,8 +3,6 @@
 // Window settings
 Window = {
 	AA = 4
-	height = 600
-	width = 800
 }
 
 Input = {
@@ -24,7 +22,8 @@ Input = {
 fps = 60;
 duration = 50; // buffer length in ms
 
-fft_size = 8192L; // 2^13
+//fft_size = 8192L; // 2^13
+fft_size = 4096L; // 2^12
 
 // Spectrum default values
 Spectrum = {
@@ -34,14 +33,21 @@ Spectrum = {
 
 	// Specifies the start and stop frequency of the spectrum
 	f_start = 0
-	f_stop = 500
+	f_stop = 1500
+
+	// Logarithmic frequency scaling
+	//log_enabled = 1.
+	// Log start index
+	log_start = 5.
 
 	top_color = "D3262E"
+	//top_color = "FFFFFF"
 	bot_color = "D3262E"
+	//bot_color = "000000"
 	line_color = "46484B"
 	dB_lines = true
 
-	bar_width = 0.75
+	bar_width = 0.6
 	gravity = 8.0
 
 	// gradient = 0 - each bar has the full gradient

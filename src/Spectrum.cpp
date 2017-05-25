@@ -53,6 +53,9 @@ void Spectrum::draw(){
 	// bind first feedback buffer as TF buffer
 	b_fb[tf_index].tfbind();
 
+	glActiveTexture(GL_TEXTURE0);
+	t_fft.bind(GL_TEXTURE_BUFFER);
+
 	// begin transform feedback
 	glBeginTransformFeedback(GL_POINTS);
 	glEnable(GL_RASTERIZER_DISCARD);
@@ -62,6 +65,7 @@ void Spectrum::draw(){
 	// disable TF
 	glDisable(GL_RASTERIZER_DISCARD);
 	glEndTransformFeedback();
+	GL::Texture::unbind(GL_TEXTURE_BUFFER);
 
 	//undbind feedback buffer
 	glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, 0);
@@ -101,8 +105,9 @@ void Spectrum::resize_x_buffer(const size_t size){
 }
 
 void Spectrum::update_fft(FFT& fft){
-	b_fft.bind();
-	glBufferSubData(GL_ARRAY_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output[offset]);
+	b_fft.bind(GL_TEXTURE_BUFFER);
+	glBufferSubData(GL_TEXTURE_BUFFER, 0, output_size * sizeof(fftwf_complex), fft.output[offset]);
+	GL::Buffer::unbind(GL_TEXTURE_BUFFER);
 }
 
 void Spectrum::update_fft(std::vector<FFT>& ffts){
@@ -110,8 +115,8 @@ void Spectrum::update_fft(std::vector<FFT>& ffts){
 }
 
 void Spectrum::resize_fft_buffer(const size_t size){
-	b_fft.bind();
-	glBufferData(GL_ARRAY_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
+	b_fft.bind(GL_TEXTURE_BUFFER);
+	glBufferData(GL_TEXTURE_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
 
 void Spectrum::configure(const Config::Spectrum& scfg){
@@ -147,6 +152,20 @@ void Spectrum::configure(const Config::Spectrum& scfg){
 	GLint i_gravity = sh_bars_pre.get_uniform("gravity");
 	glUniform1f(i_gravity, scfg.gravity);
 
+	// set texture location
+	glUniform1i(sh_bars_pre.get_uniform("fft_tbo"), 0);
+
+	float o_size = float(scfg.output_size);
+	float b = std::log(o_size / scfg.log_start) / o_size;
+	float log_params[] = {
+		o_size / std::exp(b * o_size),
+		b,
+		scfg.log_enabled
+	};
+
+
+	GLint i_log_params = sh_bars_pre.get_uniform("log_params");
+	glUniform3fv(i_log_params, 1,log_params);
 
 	sh_lines.use();
 	// set dB line specific arguments
@@ -158,6 +177,7 @@ void Spectrum::configure(const Config::Spectrum& scfg){
 
 	GLint i_line_color = sh_lines.get_uniform("line_color");
 	glUniform4fv(i_line_color, 1, scfg.line_color.rgba);
+
 
 	resize(scfg.output_size);
 	offset = scfg.data_offset;
@@ -264,11 +284,11 @@ void Spectrum::init_bars_pre(){
 		/* Pre compute shader */
 		v_bars_pre[i].bind();
 
-		b_fft.bind();
+		//b_fft.bind();
 		// set fft_data buffer as vec2 input for the shader
-		GLint arg_fft_output = sh_bars_pre.get_attrib("a");
-		glVertexAttribPointer(arg_fft_output, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-		glEnableVertexAttribArray(arg_fft_output);
+		//GLint arg_fft_output = sh_bars_pre.get_attrib("a");
+		//glVertexAttribPointer(arg_fft_output, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+		//glEnableVertexAttribArray(arg_fft_output);
 
 		// enable precompute shader attributes
 		b_fb[!i].bind();
@@ -284,6 +304,10 @@ void Spectrum::init_bars_pre(){
 		GL::Buffer::unbind();
 		GL::VAO::unbind();
 	}
+
+	t_fft.bind(GL_TEXTURE_BUFFER);
+	glTexBuffer(GL_TEXTURE_BUFFER, GL_RG32F, b_fft.id);
+	GL::Texture::unbind(GL_TEXTURE_BUFFER);
 }
 
 void Spectrum::init_line_shader(){

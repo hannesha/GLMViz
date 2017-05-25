@@ -47,6 +47,7 @@ class Spectrum {
 		std::array<GL::VAO, 2> v_bars, v_bars_pre;
 
 		GL::Buffer b_x, b_fft, b_lines;
+		GL::Texture t_fft;
 		std::array<GL::Buffer, 2> b_fb;
 		unsigned tf_index = 0;
 		size_t output_size, offset;

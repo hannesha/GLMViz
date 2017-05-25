@@ -22,6 +22,12 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
 
+//#define DEBUG
+#ifdef DEBUG
+#include <vector>
+#include <string>
+#include <iostream>
+#endif
 namespace GL {
 	// VBO RAII wrapper
 	class Buffer{
@@ -34,9 +40,13 @@ namespace GL {
 			Buffer& operator=(Buffer&&) = default;
 
 			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
-			static inline void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); };
+			inline void bind(GLenum target) { glBindBuffer(target, id); };
 			inline void operator()(){ bind(); };
+			inline void operator()(GLenum target){ bind(target); };
 			inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
+
+			static inline void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); };
+			static inline void unbind(GLenum target) { glBindBuffer(target, 0); };
 			GLuint id;
 	};
 
@@ -63,6 +73,21 @@ namespace GL {
 				id = glCreateShader(type);
 				glShaderSource(id, 1, &code, nullptr);
 				glCompileShader(id);
+
+#ifdef DEBUG
+				GLint status;
+				glGetShaderiv(id, GL_COMPILE_STATUS, &status);
+				if(status == GL_FALSE){
+					GLint length;
+					glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+
+					std::vector<GLchar> log(length);
+					glGetShaderInfoLog(id, length, &length, log.data());
+
+					std::string err(log.begin(), log.end());
+					std::cout << err << std::endl;
+				}
+#endif
 			};
 			inline ~Shader(){ glDeleteShader(id); };
 			// disable copying
@@ -70,6 +95,23 @@ namespace GL {
 			Shader(Shader&& s):id(s.id){ s.id = 0; };
 			Shader& operator=(Shader&&) = default;
 
+			GLuint id;
+	};
+
+	// Texture RAII wrapper
+	class Texture{
+		public:
+			inline Texture() { glGenTextures(1, &id); };
+			inline ~Texture() { glDeleteTextures(1, &id); };
+			// disable copying
+			Texture(const Texture&) = delete;
+			// move constructor
+			Texture(Texture&& t):id(t.id){ t.id = 0; };
+			Texture& operator=(Texture&&) = default;
+
+			inline void bind(GLenum target) { glBindTexture(target, id); };
+			static inline void unbind(GLenum target) { glBindTexture(target, 0); };
+			inline void operator()(GLenum target){ bind(target); };
 			GLuint id;
 	};
 }
