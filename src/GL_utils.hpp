@@ -114,4 +114,24 @@ namespace GL {
 			inline void operator()(GLenum target){ bind(target); };
 			GLuint id;
 	};
+
+	// Framebuffer RAII wrapper
+	class FBO{
+		public:
+			inline FBO() { glGenFramebuffers(1, &id); };
+			inline ~FBO() { glDeleteFramebuffers(1, &id); };
+			// disable copying
+			FBO(const FBO&) = delete;
+			// move constructor
+			FBO(FBO&& t):id(t.id){ t.id = 0; };
+			FBO& operator=(FBO&&) = default;
+
+			inline void bind(GLenum target) { glBindFramebuffer(target, id); };
+			inline void bind() { bind(GL_FRAMEBUFFER); };
+			static inline void unbind(GLenum target) { glBindFramebuffer(target, 0); };
+			static inline void unbind() { unbind(GL_FRAMEBUFFER); };
+			inline void operator()(GLenum target){ bind(target); };
+			inline void operator()(){ bind(); };
+			GLuint id;
+	};
 }

@@ -268,13 +268,24 @@ void Config::Color::parse(const std::string& path, libconfig::Setting& cfg){
 		if(color[0] == '#'){
 			color = color.substr(1);
 		}
-		int value = std::stoi(color, nullptr, 16);
-		// calculate rbg bytes
-		rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
-		rgba[1] = static_cast<float>((value / 0x100) % 0x100);	
-		rgba[2] = static_cast<float>(value % 0x100);
-		rgba[3] = 1;
-		normalize();
+		long value = std::stol(color, nullptr, 16);
+		if(color.length() == 8){
+		// color with alpha value
+			// normalize alpha
+			rgba[3] = static_cast<float>((value / 0x1000000) % 0x100) / 255.;
+			rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
+			rgba[1] = static_cast<float>((value / 0x100) % 0x100);
+			rgba[2] = static_cast<float>(value % 0x100);
+			normalize();
+		}else{
+		// opaque color
+			// calculate rbg bytes
+			rgba[0] = static_cast<float>((value / 0x10000) % 0x100);
+			rgba[1] = static_cast<float>((value / 0x100) % 0x100);
+			rgba[2] = static_cast<float>(value % 0x100);
+			rgba[3] = 1;
+			normalize();
+		}
 	}catch(std::invalid_argument& e){
 		std::cerr << "Unable to parse color of setting: " << cfg.getPath() << path << std::endl;
 	}catch(std::out_of_range& e){

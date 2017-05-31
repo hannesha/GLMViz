@@ -26,6 +26,7 @@ addons:
     - libxrandr-dev
     - libgl1-mesa-dev
     - libx11-dev
+    - libxrender-dev
     - libxcursor-dev
     - libxi-dev
     - libxinerama-dev

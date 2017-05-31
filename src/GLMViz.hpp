@@ -29,7 +29,8 @@
 
 // Include basic GL utility headers
 #include "GL_utils.hpp"
-#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3.h>
+#include "GLXwindow.hpp"
 
 // Include helper files
 #include "Program.hpp"
