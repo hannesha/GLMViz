@@ -30,9 +30,8 @@ void GLXwindow::selectFBConfig(GLXFBConfig& fbconfig, Display* display, int visu
 	for(int i = 0; i<fbcount; i++){
 		Xptr<XVisualInfo> vi(glXGetVisualFromFBConfig(display, fbconfigs[i]), (FN_del<XVisualInfo>)XFree);
 		if(vi.is_valid()){
-			XRenderPictFormat* pic = XRenderFindVisualFormat(display, vi->visual);
-
-			if(pic->direct.alphaMask > 0){
+			// check if visual has a 32bit framebuffer
+			if(vi->depth > 24){
 				goodfb = i;
 			}
 		}

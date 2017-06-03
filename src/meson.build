@@ -4,7 +4,6 @@ dep_fftw = dependency('fftw3f')
 dep_cfgpp = dependency('libconfig++')
 dep_glm = dependency('glm', required: false)
 dep_X = dependency('x11')
-dep_Xr = dependency('xrender')
 
 if not dep_glm.found()
 	message('Can\'t find glm pkg-config file, checking glm headers.')
@@ -29,6 +28,6 @@ endif
 
 src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp', 'GLXwindow.cpp']
 
-exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_cfgpp, dep_pulse, dep_X, dep_Xr], install: true)
+exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_cfgpp, dep_pulse, dep_X], install: true)
 
 fft_ex = executable('fft_example', ['FFT_example.cpp', 'FFT.cpp', 'Buffer.cpp'], dependencies: [dep_fftw])
