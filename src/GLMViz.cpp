@@ -228,6 +228,15 @@ int main(int argc, char *argv[]){
 			window.set_title(title);
 		}
 
+		// use adaptive vsync
+		bool mesa_swap_control = GLXwindow::hasExt(window.glx_exts, "GLX_MESA_swap_control");
+		if(mesa_swap_control){
+			using glXSwapIntervalMESAProc = int (*)(int interval);
+			glXSwapIntervalMESAProc glXSwapIntervalMESA = nullptr;
+			glXSwapIntervalMESA = (glXSwapIntervalMESAProc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+			glXSwapIntervalMESA(-1);
+		}
+
 		set_bg_color(config.bg_color);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

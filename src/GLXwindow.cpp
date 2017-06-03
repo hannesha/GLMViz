@@ -63,7 +63,7 @@ GLXwindow::GLXwindow(const int width, const int height){
 		throw std::runtime_error("Outdated GLX version!");
 	}
 
-	std::string glx_exts = glXQueryExtensionsString(display, DefaultScreen(display));
+	glx_exts = glXQueryExtensionsString(display, DefaultScreen(display));
 	bool arb_create_context = hasExt(glx_exts, "GLX_ARB_create_context");
 	if(!arb_create_context){
 		XCloseDisplay(display);

@@ -24,7 +24,6 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/extensions/Xrender.h>
 #include <GL/glx.h>
 
 class GLXwindow {
@@ -33,9 +32,11 @@ class GLXwindow {
 		~GLXwindow();
 
 		// extension string helper
-		bool hasExt(const std::string& exts, const std::string& ext){
+		static bool hasExt(const std::string& exts, const std::string& ext){
 			return exts.find(ext) != std::string::npos;
 		};
+
+		std::string glx_exts;
 
 		inline void swapBuffers(){ glXSwapBuffers(display, win); };
 		void set_title(const std::string&);
