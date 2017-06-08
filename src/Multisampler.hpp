@@ -24,10 +24,14 @@
 namespace GL{
 	class Multisampler{
 		public:
-			Multisampler(const int samples, const int w, const int h){
+			Multisampler(const int nsamples, const int w, const int h): samples(nsamples){
 				resize(samples, w, h);
 				fbms.bind();
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, tex_fb.id, 0);
+				if(samples > 0){
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, tex_fb.id, 0);
+				}else{
+					glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_fb.id, 0);
+				}
 				FBO::unbind();
 				};
 			
@@ -42,13 +46,20 @@ namespace GL{
 				};
 			inline void blit(const int w, const int h){ blit(w, h, w, h); };
 
-			void resize(const int samples, const int w, const int h){
-				tex_fb.bind(GL_TEXTURE_2D_MULTISAMPLE);
-				glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, samples, GL_RGBA, w, h, GL_TRUE);
-				Texture::unbind(GL_TEXTURE_2D_MULTISAMPLE);
+			void resize(const int nsamples, const int w, const int h){
+				if(samples > 0){
+					tex_fb.bind(GL_TEXTURE_2D_MULTISAMPLE);
+					glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, nsamples, GL_RGBA, w, h, GL_TRUE);
+					Texture::unbind(GL_TEXTURE_2D_MULTISAMPLE);
+				}else{
+					tex_fb.bind(GL_TEXTURE_2D);
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_BYTE, nullptr);
+					Texture::unbind(GL_TEXTURE_2D);
+				}
 				};
 
 			FBO fbms;
 			Texture tex_fb;
+			int samples;
 	};
 }
