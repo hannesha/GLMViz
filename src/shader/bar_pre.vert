@@ -18,7 +18,7 @@ uniform float gravity;
 uniform samplerBuffer tbo_fft;
 uniform vec3 log_params; //{ a, b, log_switch}
 
-const float lg = 1 / log(10);
+const float lg = 1 / log(10.);
 
 // greater than comparison function
 float gt(float x, float y){
