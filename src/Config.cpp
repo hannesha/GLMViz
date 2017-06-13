@@ -65,7 +65,9 @@ void Config::reload(){
 		bg_color.parse("bg_color", cfg.getRoot());
 
 		// normalization value for the fft output
-		fft.scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
+		// calculate effective fft input data size
+		float isize = std::min(buf_size, fft.size)/2+1;
+		fft.scale = 1.0f/(isize*32768.0f);
 
 		try{
 			osc_default.parse(cfg.lookup("Osc"));
