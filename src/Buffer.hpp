@@ -41,6 +41,8 @@ class Buffer {
 		void write_offset(T buf[], const size_t, const size_t, const size_t);
 		void write_offset(const std::vector<T>& buf, const size_t, const size_t);
 		void resize(const size_t);
+		float rms();
+
 	private:
 		std::mutex m;
 };

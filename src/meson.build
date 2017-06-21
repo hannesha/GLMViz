@@ -26,6 +26,8 @@ if opt_pulse.found() and opt_pulse_simple.found()
 	add_project_arguments('-DWITH_PULSE', language : 'cpp')
 endif
 
+add_project_arguments('-fopenmp-simd', language: 'cpp')
+
 src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp']
 
 exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_pulse], install: true)

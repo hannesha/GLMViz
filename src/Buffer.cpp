@@ -97,4 +97,35 @@ void Buffer<T>::resize(const size_t n){
 	}
 }
 
+// calculate the rms value of all the audio data in the buffer
+template <typename T>
+float Buffer<T>::rms(){
+	auto lock = this->lock();
+	float rms = 0;
+	unsigned i = 0;
+
+	constexpr unsigned N = 4;
+	// temp sum vector
+	alignas(16) std::array<float,N> vrms;
+	for(unsigned k=0; k<N; k++) vrms[k] = 0;
+
+	for(; i < size/N; i++){
+		// load 4 integers and convert them to float
+		alignas(16) std::array<float, N> vdata;
+		for(unsigned k=0; k<N; k++) vdata[k] = (float)v_buffer[i*N + k];
+
+		#pragma omp simd
+		for(unsigned k=0; k<N; k++) vrms[k] += vdata[k] * vdata[k];
+	}
+	// calculate sum
+	for(unsigned k=0; k<N; k++) rms += vrms[k];
+
+	// calculate remaining values
+	i *= N;
+	for(; i < size; i++){
+		 rms += v_buffer[i] * v_buffer[i];
+	}
+	return rms;
+}
+
 template class Buffer<int16_t>;

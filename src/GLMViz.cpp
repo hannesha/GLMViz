@@ -164,6 +164,8 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 	while(glfwWindowShouldClose(window) == 0);
 }
 
+inline float normalize_rms(float, float, float);
+
 // defines how many samples are read from the buffer during each loop iteration
 // this number has to be even in stereo mode
 #define SAMPLES 220
@@ -259,6 +261,8 @@ int main(int argc, char *argv[]){
 			[&]{
 				// update all locking renderer first
 				fft.calculate(buffer);
+				// test rms calculation
+				//std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
 				for(Oscilloscope& o : oscilloscopes){
 					o.update_buffer(buffer);
 				}
@@ -332,4 +336,9 @@ int main(int argc, char *argv[]){
 	}
 
 	return 0;
+}
+
+inline float normalize_rms(float sum, float length, float amplitude){
+	// rms normalization: divide sum by buffer length times 4^15(max amplitude)
+	return std::sqrt(sum/(length*amplitude*amplitude));
 }
