@@ -29,7 +29,12 @@
 
 // Include basic GL utility headers
 #include "GL_utils.hpp"
+
+#ifndef WITH_TRANSPARENCY
 #include <GLFW/glfw3.h>
+#else
+#include "GLXwindow.hpp"
+#endif
 
 // Include helper files
 #include "Program.hpp"

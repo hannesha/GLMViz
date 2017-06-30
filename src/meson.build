@@ -1,9 +1,11 @@
 dep_gl = dependency('gl')
 dep_threads = dependency('threads')
 dep_fftw = dependency('fftw3f')
-dep_glfw = dependency('glfw3')
 dep_cfgpp = dependency('libconfig++')
 dep_glm = dependency('glm', required: false)
+
+dep_glfw = []
+dep_X = []
 
 if not dep_glm.found()
 	message('Can\'t find glm pkg-config file, checking glm headers.')
@@ -14,6 +16,9 @@ if not dep_glm.found()
 		error('glm not found!')
 	endif
 endif
+
+# simd optimization (for rms calculation)
+add_project_arguments('-fopenmp-simd', language: 'cpp')
 
 opt_pulse = dependency('libpulse', required: false)
 opt_pulse_simple = dependency('libpulse-simple', required: false)
@@ -26,10 +31,17 @@ if opt_pulse.found() and opt_pulse_simple.found()
 	add_project_arguments('-DWITH_PULSE', language : 'cpp')
 endif
 
-add_project_arguments('-fopenmp-simd', language: 'cpp')
+glxsrc = []
+if get_option('transparency') 
+	glxsrc = 'GLXwindow.cpp'
+	dep_X = dependency('x11')
+	add_project_arguments('-DWITH_TRANSPARENCY', language: 'cpp')
+else
+	dep_glfw = dependency('glfw3')
+endif
 
-src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp']
+src = ['GLMViz.cpp', 'Program.cpp', 'FFT.cpp', 'Spectrum.cpp', 'Oscilloscope.cpp', 'Fifo.cpp', 'Buffer.cpp', 'Config.cpp', 'xdg.cpp', glxsrc]
 
-exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_glfw, dep_cfgpp, dep_pulse], install: true)
+exe = executable('glmviz', [src, src_pulse], dependencies: [dep_gl, dep_threads, dep_fftw, dep_cfgpp, dep_pulse, dep_X, dep_glfw], install: true)
 
 fft_ex = executable('fft_example', ['FFT_example.cpp', 'FFT.cpp', 'Buffer.cpp'], dependencies: [dep_fftw])

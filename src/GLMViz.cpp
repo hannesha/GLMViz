@@ -18,6 +18,7 @@
  */
 
 #include "GLMViz.hpp"
+#include "Multisampler.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -31,21 +32,6 @@ std::unique_ptr<T> make_unique(Args&&... args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
-
-typedef std::unique_ptr<Spectrum> Spec_ptr;
-typedef std::unique_ptr<Oscilloscope> Osc_ptr;
-
-class glfw_error : public std::runtime_error {
-public :
-	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
-};
-
-// glfw raii wrapper
-class GLFW{
-	public:
-		GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
-		~GLFW(){ glfwTerminate(); };
-};
 
 // input thread wrapper
 class Input_thread{
@@ -82,6 +68,8 @@ void sighandler(int signal){
 	config_reload = true;
 }
 
+// glfw specific code
+#ifndef WITH_TRANSPARENCY
 // config reload key handler
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	if(key == GLFW_KEY_R && action == GLFW_PRESS){
@@ -94,9 +82,21 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 }
 
+class glfw_error : public std::runtime_error {
+public :
+	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
+};
+// glfw raii wrapper
+class GLFW{
+	public:
+		GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
+		~GLFW(){ glfwTerminate(); };
+};
+#endif
+
 // set glClear color
 void set_bg_color(const Config::Color& color){
-	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], 0.f);
+	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], color.rgba[3]);
 }
 
 std::string generate_title(Config& config){
@@ -130,7 +130,8 @@ void update_render_configs(R_vector& renderer, C_vector& configs){
 	}
 }
 
-// mainloop template
+#ifndef WITH_TRANSPARENCY
+// glfw mainloop
 template <typename Fupdate, typename Fdraw>
 void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
 	do{
@@ -163,6 +164,79 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 	}
 	while(glfwWindowShouldClose(window) == 0);
 }
+#else
+// glx mainloop
+bool closing = false;
+template <typename Fupdate, typename Fdraw>
+void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw){
+	Atom wm_delete_window = XInternAtom(window.display, "WM_DELETE_WINDOW", 0);
+	XSetWMProtocols(window.display, window.win, &wm_delete_window, 1);
+
+	int width = config.w_width;
+	int height = config.w_height;
+	// create multisample framebuffer
+	GL::Multisampler msaa(config.w_aa, width, height);
+	glEnable(GL_MULTISAMPLE);
+
+	while(!closing){
+		// handle X events
+		while(XPending(window.display) > 0){
+			XEvent event;
+			XNextEvent(window.display, &event);
+
+			switch(event.type){
+			case ClientMessage:
+				if((Atom)event.xclient.data.l[0] == wm_delete_window){
+					closing = true;
+				}
+				break;
+
+			case Expose:
+				XWindowAttributes wattr;
+				XGetWindowAttributes(window.display, window.win, &wattr);
+				// resize viewport and multisample framebuffer
+				if(width != wattr.width || height != wattr.height){
+					width = wattr.width;
+					height = wattr.height;
+
+					glViewport(0, 0, width, height);
+					msaa.resize(config.w_aa, width, height);
+				}
+				break;
+			}
+		}
+
+		if(config_reload){
+			std::cout << "reloading config" << std::endl;
+			config_reload = false;
+			config.reload();
+
+			// generate new title
+			std::string title = generate_title(config);
+			window.set_title(title);
+
+			// update uniforms, resize buffers
+			f_update();
+		}
+
+		std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
+
+		msaa.bind();
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// draw
+		f_draw();
+
+		// Swap buffers
+		msaa.blit(width, height);
+		window.swapBuffers();
+		//glfwPollEvents();
+
+		// wait for fps timer
+		std::this_thread::sleep_until(t_fps);
+	}
+}
+#endif
 
 inline float normalize_rms(float, float, float);
 
@@ -196,6 +270,7 @@ int main(int argc, char *argv[]){
 		// attach SIGUSR1 signal handler
 		std::signal(SIGUSR1, sighandler);
 
+#ifndef WITH_TRANSPARENCY
 		// init GLFW
 		GLFW glfw;
 
@@ -214,18 +289,32 @@ int main(int argc, char *argv[]){
 		}
 
 		glfwMakeContextCurrent(window);
-
 		glfwSwapInterval(-1);
 
-		// set background color
+		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+		glfwSetKeyCallback(window, key_callback);
+#else
+		GLXwindow window(config.w_width, config.w_height);
+
+		{
+			std::string title = generate_title(config);
+			window.set_title(title);
+		}
+
+		// use adaptive vsync
+		bool mesa_swap_control = GLXwindow::hasExt(window.glx_exts, "GLX_MESA_swap_control");
+		if(mesa_swap_control){
+			using glXSwapIntervalMESAProc = int (*)(int interval);
+			glXSwapIntervalMESAProc glXSwapIntervalMESA = nullptr;
+			glXSwapIntervalMESA = (glXSwapIntervalMESAProc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+			glXSwapIntervalMESA(-1);
+		}
+#endif
+
 		set_bg_color(config.bg_color);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_BLEND);
-		// handle resizing
-		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
-		glfwSetKeyCallback(window, key_callback);
 
 		std::vector<Spectrum> spectra;
 		std::vector<Oscilloscope> oscilloscopes;
