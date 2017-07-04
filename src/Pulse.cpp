@@ -72,9 +72,13 @@ void Pulse::read(Buffer<int16_t>& buffer) const{
 }
 
 void Pulse::read(std::vector<Buffer<int16_t>>& buffers) const{
-	pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL);
-	buffers[0].write_offset(buf.get(), samples, 2, 0);
-	buffers[1].write_offset(buf.get(), samples, 2, 1);
+	if (buffers.size() > 1){
+		pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL);
+		buffers[0].write_offset(buf.get(), samples, 2, 0);
+		buffers[1].write_offset(buf.get(), samples, 2, 1);
+	}else{
+		read(buffers[0]);
+	}
 }
 
 std::string Pulse::get_default_sink(){

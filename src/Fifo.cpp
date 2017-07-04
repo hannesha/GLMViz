@@ -50,13 +50,17 @@ void Fifo::read(Buffer<int16_t>& buffer) const{
 }
 
 void Fifo::read(std::vector<Buffer<int16_t>>& buffers) const{
-	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
+	if(buffers.size() > 1){
+		size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
 
-	buffers[0].write_offset(buf.get(), s_read/2, 2, 0);
-	buffers[1].write_offset(buf.get(), s_read/2, 2, 1);
+		buffers[0].write_offset(buf.get(), s_read/2, 2, 0);
+		buffers[1].write_offset(buf.get(), s_read/2, 2, 1);
 
-	int diff = samples - s_read;
-	delay += diff/8;
-	delay = clamp(delay, DELAY_MIN, DELAY_MAX*2);
-	std::this_thread::sleep_for(std::chrono::microseconds(delay));
+		int diff = samples - s_read;
+		delay += diff/8;
+		delay = clamp(delay, DELAY_MIN, DELAY_MAX*2);
+		std::this_thread::sleep_for(std::chrono::microseconds(delay));
+	}else{
+		read(buffers[0]);
+	}
 }

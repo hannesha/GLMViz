@@ -111,7 +111,11 @@ void Spectrum::update_fft(FFT& fft){
 }
 
 void Spectrum::update_fft(std::vector<FFT>& ffts){
-	update_fft(ffts[channel]);
+	if(ffts.size() > channel){
+		update_fft(ffts[channel]);
+	}else{
+		update_fft(ffts[0]);
+	}
 }
 
 void Spectrum::resize_fft_buffer(const size_t size){

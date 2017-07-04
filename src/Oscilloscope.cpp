@@ -145,5 +145,9 @@ void Oscilloscope::update_buffer(Buffer<int16_t>& buffer){
 }
 
 void Oscilloscope::update_buffer(std::vector<Buffer<int16_t>>& buffers){
-	update_buffer(buffers[channel]);
+	if(buffers.size() > channel){
+		update_buffer(buffers[channel]);
+	}else{
+		update_buffer(buffers[0]);
+	}
 }

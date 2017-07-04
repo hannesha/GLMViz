@@ -36,15 +36,6 @@ std::unique_ptr<T> make_unique(Args&&... args)
 // input thread wrapper
 class Input_thread{
 	public:
-		// mono constructor
-		template <typename Buf> Input_thread(Input& i, Buf& buffer):
-			running(true),
-			th_input([&]{
-				while(running){
-					i.read(buffer);
-				};
-			}){};
-
 		// stereo constructor
 		template <typename Buf> Input_thread(Input& i, std::vector<Buf>& buffers):
 			running(true),
@@ -323,100 +314,59 @@ int main(int argc, char *argv[]){
 		update_render_configs(spectra, config.spectra);
 		update_render_configs(oscilloscopes, config.oscilloscopes);
 
-		if(!config.input.stereo){
-			// create audio buffer
-			Buffer<int16_t> buffer(config.buf_size);
+		// create audio buffer
+		std::vector<Buffer<int16_t>> buffers;
+		buffers.emplace_back(config.buf_size);
 
-			// start input thread
-			Input_thread inth(*input, buffer);
+		// create fft
+		//FFT fft(config.fft.size);
+		std::vector<FFT> ffts;
+		ffts.emplace_back(config.fft.size);
 
-			// create fft
-			FFT fft(config.fft.size);
-
-			// mono mainloop
-			mainloop(config, window,
-			[&]{
-				// resize buffers and reconfigure renderer
-				buffer.resize(config.buf_size);
-
-				// resize fft
-				fft.resize(config.fft.size);
-
-				update_render_configs(spectra, config.spectra);
-				update_render_configs(oscilloscopes, config.oscilloscopes);
-
-				set_bg_color(config.bg_color);
-			},
-			[&]{
-				// update all locking renderer first
-				fft.calculate(buffer);
-				// test rms calculation
-				//std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
-				for(Oscilloscope& o : oscilloscopes){
-					o.update_buffer(buffer);
-				}
-				// draw spectra and oscilloscopes
-				for(Spectrum& s : spectra){
-					s.update_fft(fft);
-					s.draw();
-				}
-				for(Oscilloscope& o : oscilloscopes){
-					o.draw();
-				}
-			});
-		}else{
-			// create left and right audio buffer
-			std::vector<Buffer<int16_t>> buffers;
-
-			//Buffer<int16_t> lbuffer(config.buf_size);
-			//Buffer<int16_t> rbuffer(config.buf_size);
+		if(config.input.stereo){
 			buffers.emplace_back(config.buf_size);
-			buffers.emplace_back(config.buf_size);
-
-
-			// start stereo input thread
-			Input_thread inth(*input, buffers);
-
-			// create FFT vector
-			std::vector<FFT> ffts;
 			ffts.emplace_back(config.fft.size);
-			ffts.emplace_back(config.fft.size);
-
-			// stereo mainloop
-			mainloop(config, window,
-			[&]{
-				// resize buffers
-				for(auto& buf : buffers){
-					buf.resize(config.buf_size);
-				}
-
-				for(auto& fft : ffts){
-					fft.resize(config.fft.size);
-				}
-
-				// update spectrum/oscilloscope renderer
-				update_render_configs(spectra, config.spectra);
-				update_render_configs(oscilloscopes, config.oscilloscopes);
-
-				set_bg_color(config.bg_color);
-			},
-			[&]{
-				ffts[0].calculate(buffers[0]);
-				ffts[1].calculate(buffers[1]);
-				for(Oscilloscope& o : oscilloscopes){
-					o.update_buffer(buffers);
-				}
-
-				for(Spectrum& s : spectra){
-					s.update_fft(ffts);
-					s.draw();
-				}
-
-				for(Oscilloscope& o : oscilloscopes){
-					o.draw();
-				}
-			});
 		}
+
+		// start input thread
+		Input_thread inth(*input, buffers);
+
+		mainloop(config, window,
+		[&]{
+			// resize buffers and reconfigure renderer
+			for(auto& buf : buffers){
+				buf.resize(config.buf_size);
+			}
+
+			for(auto& fft : ffts){
+				fft.resize(config.fft.size);
+			}
+
+			update_render_configs(spectra, config.spectra);
+			update_render_configs(oscilloscopes, config.oscilloscopes);
+
+			set_bg_color(config.bg_color);
+		},
+		[&]{
+			// update all locking renderer first
+			for(unsigned i = 0; i < ffts.size(); i++){
+				ffts[i].calculate(buffers[i]);
+			}
+
+			// test rms calculation
+			//std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
+			for(Oscilloscope& o : oscilloscopes){
+				o.update_buffer(buffers);
+			}
+			// draw spectra and oscilloscopes
+			for(Spectrum& s : spectra){
+				s.update_fft(ffts);
+				s.draw();
+			}
+			for(Oscilloscope& o : oscilloscopes){
+				o.draw();
+			}
+		});
 
 	}catch(std::runtime_error& e){
 		// print error message and terminate with error code 1
