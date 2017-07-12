@@ -102,6 +102,9 @@ void Oscilloscope::configure(const Config::Oscilloscope& ocfg){
 	GLint i_sigma = sh_crt.get_uniform("sigma");
 	glUniform1f(i_sigma, ocfg.sigma);
 
+	GLint i_sigma_c = sh_crt.get_uniform("sigma_coeff");
+	glUniform1f(i_sigma_c, ocfg.sigma_coeff);
+
 	set_transformation(ocfg.pos);
 
 	channel = ocfg.channel;

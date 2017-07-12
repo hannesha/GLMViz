@@ -172,7 +172,7 @@ void Config::Oscilloscope::parse(libconfig::Setting& cfg){
 	cfg.lookupValue("scale", scale);
 	cfg.lookupValue("width", width);
 	cfg.lookupValue("sigma", sigma);
-
+	cfg.lookupValue("sigma_coeff", sigma_coeff);
 
 	color.parse("color", cfg);
 	pos.parse("pos", cfg);
