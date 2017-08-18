@@ -24,33 +24,6 @@
 #include <stdexcept>
 #include <chrono>
 #include <csignal>
-#include <atomic>
-
-// make_unique template for backwards compatibility
-template<typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
-{
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-// input thread wrapper
-class Input_thread{
-	public:
-		// stereo constructor
-		template <typename Buf> Input_thread(Input& i, std::vector<Buf>& buffers):
-			running(true),
-			th_input([&]{
-				while(running){
-					i.read(buffers);
-				};
-			}){};
-
-		~Input_thread(){ running = false; th_input.join(); };
-
-	private:
-		std::atomic<bool> running;
-		std::thread th_input;
-};
 
 // config reload signal handler
 static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
@@ -58,6 +31,17 @@ std::atomic<bool> config_reload (false);
 void sighandler(int signal){
 	config_reload = true;
 }
+
+// set glClear color
+void set_bg_color(const Config::Color& color){
+	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], color.rgba[3]);
+}
+
+std::string generate_title(const Config&);
+
+// create or delete renderers to match the corresponding configs
+template <typename R_vector, typename C_vector>
+void update_render_configs(R_vector&, C_vector&);
 
 // glfw specific code
 #ifndef WITH_TRANSPARENCY
@@ -83,45 +67,7 @@ class GLFW{
 		GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
 		~GLFW(){ glfwTerminate(); };
 };
-#endif
 
-// set glClear color
-void set_bg_color(const Config::Color& color){
-	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], color.rgba[3]);
-}
-
-std::string generate_title(Config& config){
-	std::stringstream title;
-	title << "GLMViz:";
-	if (config.spectra.size() > 0){
-		title << " Spectrum (f_st=" << config.spec_default.data_offset * config.fft.d_freq << "Hz, \u0394f="
-			<< config.spec_default.output_size * config.fft.d_freq << "Hz)";
-	}
-	if (config.oscilloscopes.size() > 0){
-		title << " Oscilloscope (dur=" << config.duration << "ms)";
-	}
-	return title.str();
-}
-
-// create or delete renderers to match the corresponding configs
-template <typename R_vector, typename C_vector>
-void update_render_configs(R_vector& renderer, C_vector& configs){
-	for(unsigned i = 0; i < configs.size(); i++){
-		try{
-			//reconfigure renderer
-			renderer.at(i).configure(configs[i]);
-		}catch(std::out_of_range& e){
-			//make new renderer
-			renderer.emplace_back(configs[i], i);
-		}
-	}
-	//delete remaining renderers
-	if(renderer.size() > configs.size()){
-		renderer.erase(renderer.begin() + configs.size(), renderer.end());
-	}
-}
-
-#ifndef WITH_TRANSPARENCY
 // glfw mainloop
 template <typename Fupdate, typename Fdraw>
 void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
@@ -230,10 +176,7 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 #endif
 
 inline float normalize_rms(float, float, float);
-
-// defines how many samples are read from the buffer during each loop iteration
-// this number has to be even in stereo mode
-#define SAMPLES 220
+Input::Ptr make_input(const Config::Input&);
 
 int main(int argc, char *argv[]){
 	try{
@@ -245,18 +188,21 @@ int main(int argc, char *argv[]){
 		// read config
 		Config config(config_file);
 
-		Input::Ptr input;
+		// create audio buffer
+		std::vector<Buffer<int16_t>> buffers;
+		buffers.emplace_back(config.buf_size);
 
-		// audio source configuration
-		switch (config.input.source){
-#ifdef WITH_PULSE
-		case Source::PULSE:
-			input = ::make_unique<Pulse>(config.input.device, config.input.f_sample, SAMPLES, config.input.stereo);
-			break;
-#endif
-		default:
-			input = ::make_unique<Fifo>(config.input.file, SAMPLES);
+		// create fft
+		std::vector<FFT> ffts;
+		ffts.emplace_back(config.fft.size);
+
+		if(config.input.stereo){
+			buffers.emplace_back(config.buf_size);
+			ffts.emplace_back(config.fft.size);
 		}
+
+		// start input thread
+		std::unique_ptr<Input_thread> inth = ::make_unique<Input_thread>(make_input(config.input), buffers);
 
 		// attach SIGUSR1 signal handler
 		std::signal(SIGUSR1, sighandler);
@@ -301,7 +247,6 @@ int main(int argc, char *argv[]){
 			glXSwapIntervalMESA(-1);
 		}
 #endif
-
 		set_bg_color(config.bg_color);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -313,23 +258,6 @@ int main(int argc, char *argv[]){
 		// create new renderers
 		update_render_configs(spectra, config.spectra);
 		update_render_configs(oscilloscopes, config.oscilloscopes);
-
-		// create audio buffer
-		std::vector<Buffer<int16_t>> buffers;
-		buffers.emplace_back(config.buf_size);
-
-		// create fft
-		//FFT fft(config.fft.size);
-		std::vector<FFT> ffts;
-		ffts.emplace_back(config.fft.size);
-
-		if(config.input.stereo){
-			buffers.emplace_back(config.buf_size);
-			ffts.emplace_back(config.fft.size);
-		}
-
-		// start input thread
-		Input_thread inth(*input, buffers);
 
 		mainloop(config, window,
 		[&]{
@@ -380,4 +308,50 @@ int main(int argc, char *argv[]){
 inline float normalize_rms(float sum, float length, float amplitude){
 	// rms normalization: divide sum by buffer length times 4^15(max amplitude)
 	return std::sqrt(sum/(length*amplitude*amplitude));
+}
+
+Input::Ptr make_input(const Config::Input& i){
+// defines how many samples are read from the buffer during each loop iteration
+// this number has to be even in stereo mode
+const int SAMPLES = 220;
+
+	// audio source configuration
+	switch (i.source){
+#ifdef WITH_PULSE
+	case Source::PULSE:
+		return ::make_unique<Pulse>(i.device, i.f_sample, SAMPLES, i.stereo);
+#endif
+	default:
+		return ::make_unique<Fifo>(i.file, SAMPLES);
+	}
+}
+
+std::string generate_title(const Config& config){
+	std::stringstream title;
+	title << "GLMViz:";
+	if (config.spectra.size() > 0){
+		title << " Spectrum (f_st=" << config.spec_default.data_offset * config.fft.d_freq << "Hz, \u0394f="
+			<< config.spec_default.output_size * config.fft.d_freq << "Hz)";
+	}
+	if (config.oscilloscopes.size() > 0){
+		title << " Oscilloscope (dur=" << config.duration << "ms)";
+	}
+	return title.str();
+}
+
+template <typename R_vector, typename C_vector>
+void update_render_configs(R_vector& renderer, C_vector& configs){
+	for(unsigned i = 0; i < configs.size(); i++){
+		try{
+			//reconfigure renderer
+			renderer.at(i).configure(configs[i]);
+		}catch(std::out_of_range& e){
+			//make new renderer
+			renderer.emplace_back(configs[i], i);
+		}
+	}
+	//delete remaining renderers
+	if(renderer.size() > configs.size()){
+		renderer.erase(renderer.begin() + configs.size(), renderer.end());
+	}
 }

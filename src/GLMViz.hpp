@@ -26,6 +26,7 @@
 #include <thread>
 
 #include <iostream>
+#include <atomic>
 
 // Include basic GL utility headers
 #include "GL_utils.hpp"
@@ -49,3 +50,31 @@
 #ifdef WITH_PULSE
 #include "Pulse.hpp"
 #endif
+
+// make_unique template for backwards compatibility
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+// input thread wrapper
+class Input_thread{
+	public:
+		// stereo constructor
+		template <typename Buf> Input_thread(Input::Ptr&& i, std::vector<Buf>& buffers):
+			running(true),
+			input(std::move(i)),
+			th_input([&]{
+				while(running){
+					input->read(buffers);
+				};
+			}){};
+
+		~Input_thread(){ running = false; th_input.join(); };
+
+	private:
+		std::atomic<bool> running;
+		Input::Ptr input;
+		std::thread th_input;
+};
