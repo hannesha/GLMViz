@@ -40,6 +40,7 @@ Config::Config(const std::string& config_file){
 	if(file == "") file = "/etc/GLMViz/config";
 
 	reload();
+	old_input = input;
 }
 
 void Config::reload(){
@@ -50,6 +51,7 @@ void Config::reload(){
 		cfg.lookupValue("Window.height", w_height);
 		cfg.lookupValue("Window.width", w_width);
 
+		old_input = input;
 		try{
 			input.parse(cfg.lookup("Input"));
 		}catch(const libconfig::SettingNotFoundException& e){}

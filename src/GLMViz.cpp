@@ -269,6 +269,13 @@ int main(int argc, char *argv[]){
 			for(auto& fft : ffts){
 				fft.resize(config.fft.size);
 			}
+			// check if input configuration has changed
+			if(config.old_input != config.input){
+				// stop input thread
+				inth.reset(nullptr);
+				// start new input thread
+				inth.reset(new Input_thread(make_input(config.input), buffers));
+			}
 
 			update_render_configs(spectra, config.spectra);
 			update_render_configs(oscilloscopes, config.oscilloscopes);

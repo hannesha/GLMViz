@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <libconfig.h++>
+#include <tuple>
 
 #define MAX_OSCILLOSCOPES 4
 #define MAX_SPECTRA 4
@@ -47,8 +48,13 @@ class Config {
 			long long f_sample = 44100;
 
 			void parse(libconfig::Setting&);
+			inline bool operator!=(const Input& rhs) const{
+				return std::tie(source, stereo, f_sample)
+					!= std::tie(rhs.source, rhs.stereo, rhs.f_sample);
+			}
 		};
 		Input input;
+		Input old_input;
 
 		int duration = 50;
 		int fps = 60;
