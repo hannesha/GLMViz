@@ -20,12 +20,12 @@
 #pragma once
 
 #include "Buffer.hpp"
-#include "Config.hpp"
+#include "Module_Config.hpp"
 #include "Program.hpp"
 
 class Oscilloscope {
 	public:
-		Oscilloscope(const Config::Oscilloscope&, const unsigned);
+		Oscilloscope(const Module_Config::Oscilloscope&, const unsigned);
 		// disable copy construction
 		Oscilloscope(const Oscilloscope&) = delete;
 		Oscilloscope(Oscilloscope&&) = default;
@@ -35,7 +35,7 @@ class Oscilloscope {
 		void draw();
 		void update_buffer(Buffer<int16_t>&);
 		void update_buffer(std::vector<Buffer<int16_t>>&);
-		void configure(const Config::Oscilloscope&);
+		void configure(const Module_Config::Oscilloscope&);
 
 	private:
 		GL::Program sh_crt;
@@ -46,5 +46,5 @@ class Oscilloscope {
 
 		void init_crt();
 		void resize_x_buffer(const size_t);
-		void set_transformation(const Config::Transformation&);
+		void set_transformation(const Module_Config::Transformation&);
 };

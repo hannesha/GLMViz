@@ -27,7 +27,7 @@
 #include <vector>
 #include <iostream>
 
-Spectrum::Spectrum(const Config::Spectrum& config, const unsigned s_id): output_size(0), id(s_id){
+Spectrum::Spectrum(const Module_Config::Spectrum& config, const unsigned s_id): output_size(0), id(s_id){
 	init_bar_shader();
 	init_line_shader();
 	init_bar_pre_shader();
@@ -123,7 +123,7 @@ void Spectrum::resize_fft_buffer(const size_t size){
 	glBufferData(GL_TEXTURE_BUFFER, output_size * sizeof(fftwf_complex), 0, GL_DYNAMIC_DRAW);
 }
 
-void Spectrum::configure(const Config::Spectrum& scfg){
+void Spectrum::configure(const Module_Config::Spectrum& scfg){
 	//const Config::Spectrum& scfg = cfg.spectra[id];
 	bar_shader_id = scfg.rainbow;
 	sh_bars[bar_shader_id].use();
@@ -200,7 +200,7 @@ void Spectrum::resize(const size_t size){
 	}
 }
 
-void Spectrum::set_transformation(const Config::Transformation& t){
+void Spectrum::set_transformation(const Module_Config::Transformation& t){
 	// apply simple ortho transformation
 	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
 

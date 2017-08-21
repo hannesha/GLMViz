@@ -1,5 +1,5 @@
 /*
- *	Copyright (C) 2016  Hannes Haberl
+ *	Copyright (C) 2016,2017  Hannes Haberl
  *
  *	This file is part of GLMViz.
  *
@@ -19,15 +19,9 @@
 
 #pragma once
 
-#include <string>
 #include <vector>
 #include <libconfig.h++>
-#include <tuple>
-
-#define MAX_OSCILLOSCOPES 4
-#define MAX_SPECTRA 4
-
-enum class Source {FIFO, PULSE};
+#include "Module_Config.hpp"
 
 class Config {
 	public:
@@ -40,101 +34,38 @@ class Config {
 		int w_height = 768;
 		int w_width = 1024;
 
-		struct Input {
-			Source source = Source::PULSE;
-			std::string file = "/tmp/mpd.fifo";
-			std::string device = "";
-			bool stereo = false;
-			long long f_sample = 44100;
-
-			void parse(libconfig::Setting&);
-			inline bool operator!=(const Input& rhs) const{
-				return std::tie(source, stereo, f_sample)
-					!= std::tie(rhs.source, rhs.stereo, rhs.f_sample);
-			}
-		};
-		Input input;
-		Input old_input;
+		Module_Config::Input input;
+		Module_Config::Input old_input;
 
 		int duration = 50;
 		int fps = 60;
-		//long long fft_size = 2<<12;
+
 		long long buf_size = input.f_sample * duration / 1000;
-		//long long fft_output_size = fft_size/2+1;
-		//float d_freq = (float) input.f_sample / (float) fft_size;
-		//float fft_scale = 1.0f/((float)(buf_size/2+1)*32768.0f);
 
-		struct FFT {
-			long long size = 1<<13;
-			size_t output_size = size/2+1;
-			float scale = 2.76678e-08;
-			float d_freq = 44100./(float) size;
-		};
-		FFT fft;
+		Module_Config::FFT fft;
 
-		struct Transformation {
-			float Xmin = -1, Xmax = 1, Ymin = -1, Ymax = 1;
 
-			void parse(const std::string&, libconfig::Setting&);
-		};
+		Module_Config::Color bg_color = {0, 0, 0, 1};
 
-		struct Color {
-			float rgba[4];
+		Module_Config::Oscilloscope osc_default;
+		Module_Config::Spectrum spec_default;
 
-			void parse(const std::string&, libconfig::Setting&);
-			void normalize(const Color&);
-			void normalize();
-		};
-
-		struct Oscilloscope {
-			int channel = 0;
-			float scale = 1;
-			float width = 0.01;
-			float sigma = 4;
-			float sigma_coeff = 2;
-			Color color = {211, 38, 46, 1};
-			Transformation pos;
-
-			void parse(libconfig::Setting&);
-		};
-
-		struct Spectrum {
-			int channel = 0;
-			float min_db = -80, max_db = 0;
-			float scale = 2.76678e-08;
-			float slope = 0.5;
-			float offset = 1.0;
-			int output_size = 100;
-			int data_offset = 0;
-			float log_start = 5;
-			float log_enabled = 0;
-
-			Color top_color = {0.91, 0.42, 0.45, 1};
-			Color bot_color = {0.91, 0.42, 0.45, 1};
-			Color line_color = {0.57, 0.57, 0.57, 1};
-			Transformation pos;
-			float gradient = 1.0;
-			float gravity = 8.0 / (60*60);
-			float bar_width = 0.75;
-
-			bool rainbow = false;
-			Color freq_d = {1, 1, 1, 1};
-			Color phase_d = {0, 0, 0, 1};
-			bool dB_lines = true;
-
-			void parse(libconfig::Setting&, const FFT&, const int);
-			void parse_rainbow(libconfig::Setting&);
-		};
-
-		Color bg_color = {0, 0, 0, 1};
-
-		Oscilloscope osc_default;
-		Spectrum spec_default;
-
-		std::vector<Oscilloscope> oscilloscopes;
-		std::vector<Spectrum> spectra;
+		std::vector<Module_Config::Oscilloscope> oscilloscopes;
+		std::vector<Module_Config::Spectrum> spectra;
 
 	private:
 		libconfig::Config cfg;
 		std::string file;
+
+		void parse_input(Module_Config::Input&, libconfig::Setting&);
+		void parse_fft(Module_Config::FFT&, libconfig::Setting&);
+		void parse_color(Module_Config::Color&, const std::string&, libconfig::Setting&);
+		void parse_rainbow(Module_Config::Spectrum&, libconfig::Setting&);
+		void parse_transformation(Module_Config::Transformation&, const std::string&, libconfig::Setting&);
+		void parse_oscilloscope(Module_Config::Oscilloscope&, libconfig::Setting&);
+		void parse_spectrum(Module_Config::Spectrum&, libconfig::Setting&, const Module_Config::FFT&, const int);
+
+
+		static const unsigned MAX_SPECTRA = 4;
+		static const unsigned MAX_OSCILLOSCOPES = 4;
 };

@@ -20,14 +20,14 @@
 #pragma once
 
 #include "FFT.hpp"
-#include "Config.hpp"
+#include "Module_Config.hpp"
 #include "Program.hpp"
 #include <memory>
 #include <array>
 
 class Spectrum {
 	public:
-		Spectrum(const Config::Spectrum&, const unsigned);
+		Spectrum(const Module_Config::Spectrum&, const unsigned);
 		// disable copy construction
 		Spectrum(const Spectrum&) = delete;
 		Spectrum(Spectrum&&) = default;
@@ -37,7 +37,7 @@ class Spectrum {
 		void draw();
 		void update_fft(FFT&);
 		void update_fft(std::vector<FFT>&);
-		void configure(const Config::Spectrum&);
+		void configure(const Module_Config::Spectrum&);
 
 	private:
 		GL::Program sh_bars_pre, sh_lines;
@@ -66,5 +66,5 @@ class Spectrum {
 		void resize_x_buffer(const size_t);
 		void resize_fft_buffer(const size_t);
 		void resize(const size_t);
-		void set_transformation(const Config::Transformation&);
+		void set_transformation(const Module_Config::Transformation&);
 };

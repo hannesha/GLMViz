@@ -27,7 +27,7 @@
 #include <vector>
 #include <iostream>
 
-Oscilloscope::Oscilloscope(const Config::Oscilloscope& config, const unsigned o_id): size(0), id(o_id){
+Oscilloscope::Oscilloscope(const Module_Config::Oscilloscope& config, const unsigned o_id): size(0), id(o_id){
 	init_crt();
 
 	configure(config);
@@ -86,7 +86,7 @@ void Oscilloscope::init_crt(){
 	GL::VAO::unbind();
 }
 
-void Oscilloscope::configure(const Config::Oscilloscope& ocfg){
+void Oscilloscope::configure(const Module_Config::Oscilloscope& ocfg){
 	//const Config::Oscilloscope ocfg = config.oscilloscopes[id];
 	sh_crt();
 
@@ -123,7 +123,7 @@ void Oscilloscope::resize_x_buffer(const size_t size){
 	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
 }
 
-void Oscilloscope::set_transformation(const Config::Transformation& t){
+void Oscilloscope::set_transformation(const Module_Config::Transformation& t){
 	glm::mat4 transformation = glm::ortho(t.Xmin, t.Xmax, t.Ymin, t.Ymax);
 
 	sh_crt();

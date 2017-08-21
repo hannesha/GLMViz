@@ -33,7 +33,7 @@ void sighandler(int signal){
 }
 
 // set glClear color
-void set_bg_color(const Config::Color& color){
+void set_bg_color(const Module_Config::Color& color){
 	glClearColor(color.rgba[0], color.rgba[1], color.rgba[2], color.rgba[3]);
 }
 
@@ -176,7 +176,7 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 #endif
 
 inline float normalize_rms(float, float, float);
-Input::Ptr make_input(const Config::Input&);
+Input::Ptr make_input(const Module_Config::Input&);
 
 int main(int argc, char *argv[]){
 	try{
@@ -317,7 +317,7 @@ inline float normalize_rms(float sum, float length, float amplitude){
 	return std::sqrt(sum/(length*amplitude*amplitude));
 }
 
-Input::Ptr make_input(const Config::Input& i){
+Input::Ptr make_input(const Module_Config::Input& i){
 // defines how many samples are read from the buffer during each loop iteration
 // this number has to be even in stereo mode
 const int SAMPLES = 220;
@@ -325,7 +325,7 @@ const int SAMPLES = 220;
 	// audio source configuration
 	switch (i.source){
 #ifdef WITH_PULSE
-	case Source::PULSE:
+	case Module_Config::Source::PULSE:
 		return ::make_unique<Pulse>(i.device, i.f_sample, SAMPLES, i.stereo);
 #endif
 	default:
