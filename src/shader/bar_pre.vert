@@ -32,11 +32,21 @@ void main(){
 		// log fetch
 		float i = log_params.x * exp(log_params.y * gl_VertexID);
 		int i_f = int(floor(i));
-		// fetch both indices
+		// fetch both indices and tangents
+		float a_0 = length(texelFetch(tbo_fft, i_f - 1).xy) * fft_scale;
 		float a_1 = length(texelFetch(tbo_fft, i_f).xy) * fft_scale;
 		float a_2 = length(texelFetch(tbo_fft, i_f + 1).xy) * fft_scale;
+		float a_3 = length(texelFetch(tbo_fft, i_f + 2).xy) * fft_scale;
+		float t0 = a_1 - a_0;
+		float t1 = a_3 - a_2;
 		// interpolate fft values
-		a = mix(a_1, a_2, i - float(i_f));
+		float x = fract(i);
+		float x2 = x * x;
+		float x3 = x2 * x;
+		// cubic interpolation
+		a = (2. * x3 -3. * x2 +1.) * a_1 + (x3 -2. * x2 +x) * t0 +
+			(-2. * x3 +3. * x2) * a_2 + (x3 - x2) * t1;
+		//a = mix(a_1, a_2, i - float(i_f));
 	}else{
 		// linear fetch
 		a = length(texelFetch(tbo_fft, gl_VertexID).xy) * fft_scale;
