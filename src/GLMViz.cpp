@@ -201,6 +201,7 @@ int main(int argc, char *argv[]){
 			ffts.emplace_back(config.fft.size);
 		}
 
+		std::unique_ptr<Config_Monitor> cm = ::make_unique<Config_Monitor>(config.get_file(), config_reload);
 		// start input thread
 		std::unique_ptr<Input_thread> inth = ::make_unique<Input_thread>(make_input(config.input), buffers);
 

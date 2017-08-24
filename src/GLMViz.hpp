@@ -44,6 +44,7 @@
 #include "Fifo.hpp"
 #include "Buffer.hpp"
 #include "Config.hpp"
+#include "Config_Monitor.hpp"
 #include "Spectrum.hpp"
 #include "Oscilloscope.hpp"
 
@@ -69,7 +70,8 @@ class Input_thread{
 				while(running){
 					input->read(buffers);
 				};
-			}){};
+			})
+		{};
 
 		~Input_thread(){ running = false; th_input.join(); };
 
@@ -77,4 +79,17 @@ class Input_thread{
 		std::atomic<bool> running;
 		Input::Ptr input;
 		std::thread th_input;
+};
+class Config_Monitor{
+	public:
+		Config_Monitor(const std::string& file, std::atomic<bool>& reload):
+			running(true),
+			th_monitor(monitor, file, std::ref(running), std::ref(reload))
+		{};
+
+		~Config_Monitor(){ running = false; th_monitor.join(); };
+
+	private:
+		std::atomic<bool> running;
+		std::thread th_monitor;
 };

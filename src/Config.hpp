@@ -44,7 +44,6 @@ class Config {
 
 		Module_Config::FFT fft;
 
-
 		Module_Config::Color bg_color = {0, 0, 0, 1};
 
 		Module_Config::Oscilloscope osc_default;
@@ -53,6 +52,9 @@ class Config {
 		std::vector<Module_Config::Oscilloscope> oscilloscopes;
 		std::vector<Module_Config::Spectrum> spectra;
 
+		std::string get_file(){
+			return file;
+		}
 	private:
 		libconfig::Config cfg;
 		std::string file;
