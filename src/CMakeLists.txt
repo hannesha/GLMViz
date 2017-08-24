@@ -43,7 +43,7 @@ if(PULSEAUDIO_FOUND)
 	set(PULSE_FILES "Pulse.cpp")
 endif(PULSEAUDIO_FOUND)
 
-add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp xdg.cpp ${GLX_SRC})
+add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp Config_Monitor.cpp Inotify.cpp xdg.cpp ${GLX_SRC})
 
 target_link_libraries(glmviz ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${PULSE_LIBS} ${WIN_LIBS})
 
