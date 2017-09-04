@@ -38,5 +38,7 @@ install:
 
 script:
     - export CXX=g++-6
-    - mkdir cbuild && cd cbuild && cmake .. && make -j2 && cd ..
+    - mkdir cbuild && cd cbuild
+    - cmake .. && make -j2
+    - cd ..
     - meson build && ninja -C build
