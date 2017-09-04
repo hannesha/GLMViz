@@ -22,8 +22,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
 
-//#define DEBUG
-#ifdef DEBUG
+#ifndef NDEBUG
 #include <vector>
 #include <string>
 #include <iostream>
@@ -74,7 +73,7 @@ namespace GL {
 				glShaderSource(id, 1, &code, nullptr);
 				glCompileShader(id);
 
-#ifdef DEBUG
+#ifndef NDEBUG
 				GLint status;
 				glGetShaderiv(id, GL_COMPILE_STATUS, &status);
 				if(status == GL_FALSE){
