@@ -1,11 +1,10 @@
 R"(
 #version 150
 // old values from TF
-in float gravity_old;
 in float time_old;
+in float y_old;
 
 // new TF values + current y value
-out float v_gravity;
 out float v_time;
 out float v_y;
 
@@ -17,12 +16,17 @@ uniform float gravity;
 // fft texture buffer
 uniform samplerBuffer tbo_fft;
 uniform vec3 log_params; //{ a, b, log_switch}
+uniform float dt;
 
-const float lg = 1 / log(10.);
+const float lg = 1. / log(10.);
 
 // greater than comparison function
 float gt(float x, float y){
 	return max(sign(x - y), 0.0);
+}
+
+float acc(float t){
+	return -gravity * t;
 }
 
 void main(){
@@ -46,29 +50,33 @@ void main(){
 		// cubic interpolation
 		a = (2. * x3 -3. * x2 +1.) * a_1 + (x3 -2. * x2 +x) * t0 +
 			(-2. * x3 +3. * x2) * a_2 + (x3 - x2) * t1;
-		//a = mix(a_1, a_2, i - float(i_f));
 	}else{
 		// linear fetch
 		a = length(texelFetch(tbo_fft, gl_VertexID).xy) * fft_scale;
 	}
 
-	// normalize fft output
-	//float a_norm = a * fft_scale;
-
 	// convert fft output into dB
 	float y = slope * log(a) * lg + offset;
 
 	// clamp values
-	float y_old = clamp(gravity_old, -0.5, 0.7);
+	float y_o = clamp(y_old, -0.5, 0.7);
 	y = clamp(y, -0.5, 0.7);
+	float time = max(time_old, 0.0);
+
+	// RK4 integration
+	float k1 = acc(time);
+	float k2 = acc(time + dt * 0.5);
+	float k4 = acc(time + dt);
+	float dydt = 1./6. * (k1 + 4. * k2 + k4);
 
 	// calculate gravity
-	float yg = y_old - gravity * time_old * time_old;
+	float yg = y_o + dydt * dt;
+	// update time
+	time = time + dt;
 
 	// set output variables
 	float gt_y = gt(y, yg);
-	v_gravity = mix(y_old, y, gt_y);
-	v_time = mix(time_old + 1.0, 0.0, gt_y);
+	v_time = mix(time, 0., gt_y);
 	v_y = max(yg, y);
 }
 )"

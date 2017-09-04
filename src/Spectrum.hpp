@@ -34,7 +34,7 @@ class Spectrum {
 		Spectrum& operator=(Spectrum&&) = default;
 		~Spectrum(){};
 
-		void draw();
+		void draw(const float);
 		void update_fft(FFT&);
 		void update_fft(std::vector<FFT>&);
 		void configure(const Module_Config::Spectrum&);

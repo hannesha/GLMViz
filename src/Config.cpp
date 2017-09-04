@@ -102,7 +102,7 @@ void Config::reload(){
 		}
 
 		try{
-			parse_spectrum(spec_default, cfg.lookup("Spectrum"), fft, fps);
+			parse_spectrum(spec_default, cfg.lookup("Spectrum"), fft);
 		}
 		catch(const libconfig::SettingNotFoundException& e){}
 
@@ -112,7 +112,7 @@ void Config::reload(){
 				// init new Spectrum with default parameters
 				Module_Config::Spectrum tmp = spec_default;
 				// parse Spectrum and add it to the list
-				parse_spectrum(tmp, cfg.lookup(path), fft, fps);
+				parse_spectrum(tmp, cfg.lookup(path), fft);
 
 				// reuse old values if possible
 				try{
@@ -180,7 +180,7 @@ void Config::parse_oscilloscope(Module_Config::Oscilloscope& o, libconfig::Setti
 	parse_transformation(o.pos, "pos", cfg);
 }
 
-void Config::parse_spectrum(Module_Config::Spectrum& s, libconfig::Setting& cfg, const Module_Config::FFT& fft, const int fps){
+void Config::parse_spectrum(Module_Config::Spectrum& s, libconfig::Setting& cfg, const Module_Config::FFT& fft){
 	cfg.lookupValue("channel", s.channel);
 	s.channel = std::min(s.channel, 1);
 	//cfg.lookupValue("output_size", output_size);
@@ -222,10 +222,7 @@ void Config::parse_spectrum(Module_Config::Spectrum& s, libconfig::Setting& cfg,
 
 	cfg.lookupValue("gradient", s.gradient);
 	cfg.lookupValue("bar_width", s.bar_width);
-	bool have_gravity = cfg.lookupValue("gravity", s.gravity);
-	if(have_gravity){
-		s.gravity = s.gravity / (float)(fps * fps);
-	}
+	cfg.lookupValue("gravity", s.gravity);
 
 	try{
 		libconfig::Setting& rb_setting = cfg.lookup("rainbow");

@@ -39,7 +39,7 @@ Spectrum::Spectrum(const Module_Config::Spectrum& config, const unsigned s_id): 
 	init_lines();
 }
 
-void Spectrum::draw(){
+void Spectrum::draw(const float dt){
 	/* render lines */
 	if(draw_lines){
 		sh_lines.use();
@@ -49,6 +49,10 @@ void Spectrum::draw(){
 
 	/* gravity processing shader */
 	sh_bars_pre.use();
+
+	GLint i_dt = sh_bars_pre.get_uniform("dt");
+	glUniform1f(i_dt, dt);
+
 	v_bars_pre[tf_index].bind();
 	// bind first feedback buffer as TF buffer
 	b_fb[tf_index].tfbind();
@@ -85,10 +89,10 @@ void Spectrum::draw(){
 
 void Spectrum::resize_tf_buffers(const size_t size){
 	b_fb[0].bind();
-	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size * 2 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 
 	b_fb[1].bind();
-	glBufferData(GL_ARRAY_BUFFER, size * 3 * sizeof(float), 0, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, size * 2 * sizeof(float), 0, GL_DYNAMIC_DRAW);
 }
 
 void Spectrum::resize_x_buffer(const size_t size){
@@ -260,7 +264,7 @@ void Spectrum::init_bars(){
 		// enable the preprocessed y attribute
 		b_fb[i].bind();
 		GLint arg_y = sh_bars[0].get_attrib("y");
-		glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(2*sizeof(float)));
+		glVertexAttribPointer(arg_y, 1, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (const GLvoid*)(sizeof(float)));
 		glEnableVertexAttribArray(arg_y);
 
 		GL::Buffer::unbind();
@@ -275,8 +279,8 @@ void Spectrum::init_bar_pre_shader(){
 	GL::Shader vs(vertex_shader, GL_VERTEX_SHADER);
 
 	try{
-		const char* varyings[3] = {"v_gravity", "v_time", "v_y"};
-		sh_bars_pre.link_TF(3, varyings, {vs});
+		const char* varyings[2] = {"v_time", "v_y"};
+		sh_bars_pre.link_TF(2, varyings, {vs});
 	}
 	catch(std::invalid_argument& e){
 		std::cerr << "Can't link bar_pre shader!" << std::endl << e.what() << std::endl;
@@ -297,13 +301,13 @@ void Spectrum::init_bars_pre(){
 		// enable precompute shader attributes
 		b_fb[!i].bind();
 
-		GLint arg_gravity_old = sh_bars_pre.get_attrib("gravity_old");
-		glVertexAttribPointer(arg_gravity_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-		glEnableVertexAttribArray(arg_gravity_old);
-
 		GLint arg_time_old = sh_bars_pre.get_attrib("time_old");
-		glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (const GLvoid*)(sizeof(float)));
+		glVertexAttribPointer(arg_time_old, 1, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
 		glEnableVertexAttribArray(arg_time_old);
+
+		GLint arg_y_old = sh_bars_pre.get_attrib("y_old");
+		glVertexAttribPointer(arg_y_old, 1, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (const GLvoid*)sizeof(float));
+		glEnableVertexAttribArray(arg_y_old);
 
 		GL::Buffer::unbind();
 		GL::VAO::unbind();

@@ -71,6 +71,8 @@ class GLFW{
 // glfw mainloop
 template <typename Fupdate, typename Fdraw>
 void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
+	std::chrono::time_point<std::chrono::steady_clock> t_start;
+	std::chrono::time_point<std::chrono::steady_clock> t_stop;
 	do{
 		if(config_reload){
 			std::cout << "reloading config" << std::endl;
@@ -85,19 +87,21 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 			f_update();
 		}
 
-		std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
+		t_start = std::chrono::steady_clock::now();
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// draw
-		f_draw();
+		std::chrono::duration<float> dt = (t_start - t_stop);
+		f_draw(dt.count());
 
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 		// wait for fps timer
-		std::this_thread::sleep_until(t_fps);
+		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps -100));
+		t_stop = t_start;
 	}
 	while(glfwWindowShouldClose(window) == 0);
 }
@@ -115,6 +119,8 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 	GL::Multisampler msaa(config.w_aa, width, height);
 	glEnable(GL_MULTISAMPLE);
 
+	std::chrono::time_point<std::chrono::steady_clock> t_start;
+	std::chrono::time_point<std::chrono::steady_clock> t_stop;
 	while(!closing){
 		// handle X events
 		while(XPending(window.display) > 0){
@@ -156,13 +162,14 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 			f_update();
 		}
 
-		std::chrono::time_point<std::chrono::steady_clock> t_fps = std::chrono::steady_clock::now() + std::chrono::microseconds(1000000 / config.fps -100);
+		t_start = std::chrono::steady_clock::now();
 
 		msaa.bind();
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		// draw
-		f_draw();
+		std::chrono::duration<float> dt = (t_start - t_stop);
+		f_draw(dt.count());
 
 		// Swap buffers
 		msaa.blit(width, height);
@@ -170,7 +177,8 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 		//glfwPollEvents();
 
 		// wait for fps timer
-		std::this_thread::sleep_until(t_fps);
+		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps -100));
+		t_stop = t_start;
 	}
 }
 #endif
@@ -283,7 +291,7 @@ int main(int argc, char *argv[]){
 
 			set_bg_color(config.bg_color);
 		},
-		[&]{
+		[&](const float dt){
 			// update all locking renderer first
 			for(unsigned i = 0; i < ffts.size(); i++){
 				ffts[i].calculate(buffers[i]);
@@ -297,7 +305,7 @@ int main(int argc, char *argv[]){
 			// draw spectra and oscilloscopes
 			for(Spectrum& s : spectra){
 				s.update_fft(ffts);
-				s.draw();
+				s.draw(dt);
 			}
 			for(Oscilloscope& o : oscilloscopes){
 				o.draw();

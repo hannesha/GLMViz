@@ -65,7 +65,7 @@ class Config {
 		void parse_rainbow(Module_Config::Spectrum&, libconfig::Setting&);
 		void parse_transformation(Module_Config::Transformation&, const std::string&, libconfig::Setting&);
 		void parse_oscilloscope(Module_Config::Oscilloscope&, libconfig::Setting&);
-		void parse_spectrum(Module_Config::Spectrum&, libconfig::Setting&, const Module_Config::FFT&, const int);
+		void parse_spectrum(Module_Config::Spectrum&, libconfig::Setting&, const Module_Config::FFT&);
 
 
 		static const unsigned MAX_SPECTRA = 4;
