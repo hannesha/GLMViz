@@ -20,7 +20,7 @@
 #pragma once
 
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 #include <mutex>
 
 template<typename T>
@@ -45,4 +45,8 @@ class Buffer {
 
 	private:
 		std::mutex m;
+		void i_write(T buf[], const size_t);
+		void i_write(const std::vector<T>&, const size_t);
 };
+
+template class Buffer<int16_t>;
