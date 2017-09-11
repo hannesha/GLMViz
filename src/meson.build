@@ -39,6 +39,9 @@ else
 endif
 
 
-exe = executable('glmviz', src, dependencies: deps, install: true)
+glmviz_exe = executable('glmviz', src, dependencies: deps, install: true)
+fft_exe = executable('fft_example', ['FFT_example.cpp', 'FFT.cpp', 'Buffer.cpp'], dependencies: [dep_fftw])
 
-fft_ex = executable('fft_example', ['FFT_example.cpp', 'FFT.cpp', 'Buffer.cpp'], dependencies: [dep_fftw])
+buffer_src = files('Buffer.cpp')
+src_dir = include_directories('.')
+subdir('tests')
