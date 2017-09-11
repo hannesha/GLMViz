@@ -43,3 +43,4 @@ script:
     - cmake .. && make -j2
     - cd ..
     - meson build && ninja -C build
+    - cd build && meson test
