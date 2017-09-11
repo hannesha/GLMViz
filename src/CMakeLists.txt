@@ -45,7 +45,7 @@ endif(PULSEAUDIO_FOUND)
 
 add_executable(glmviz GLMViz.cpp Program.cpp FFT.cpp Spectrum.cpp Oscilloscope.cpp Fifo.cpp ${PULSE_FILES} Buffer.cpp Config.cpp Config_Monitor.cpp Inotify.cpp xdg.cpp ${GLX_SRC})
 
-target_link_libraries(glmviz ${OPENGL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${PULSE_LIBS} ${WIN_LIBS})
+target_link_libraries(glmviz ${OPENGL_gl_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${FFTW3_LIBRARIES} ${CONFIG++_LIBRARIES} ${PULSE_LIBS} ${WIN_LIBS})
 
 # fft test program
 add_executable(fft_example FFT_example.cpp FFT.cpp Buffer.cpp)
