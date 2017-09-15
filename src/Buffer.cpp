@@ -35,6 +35,29 @@ std::unique_lock<std::mutex> Buffer<T>::lock(){
 	return std::unique_lock<std::mutex>(m);
 }
 
+// ceiling division
+template<typename T>
+static inline T ceil_div(const T x, const T y){
+	return x/y + (x % y !=0);
+}
+
+
+template<typename T>
+inline void Buffer<T>::i_write(T buf[], const size_t n){
+	// move old data
+	std::copy(v_buffer.begin() + n, v_buffer.end(), v_buffer.begin());
+	// append new data
+	std::copy(buf, buf + n, v_buffer.end() - n);
+}
+
+template<typename T>
+inline void Buffer<T>::i_write(const std::vector<T>& buf, const size_t n){
+	// move old data
+	std::copy(v_buffer.begin() + n, v_buffer.end(), v_buffer.begin());
+	// append new data
+	std::copy(buf.begin(), buf.begin() + n, v_buffer.end() - n);
+}
+
 template<typename T>
 void Buffer<T>::write(T buf[], const size_t n){
 	auto lock = this->lock();
@@ -42,8 +65,7 @@ void Buffer<T>::write(T buf[], const size_t n){
 
 	// limit data to write
 	size_t length = std::min(n, size);
-	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + length);
-	v_buffer.insert(v_buffer.end(), buf, buf + length);
+	i_write(buf, length);
 }
 
 template<typename T>
@@ -53,8 +75,7 @@ void Buffer<T>::write(const std::vector<T>& buf){
 
 	// limit data to write
 	size_t length = std::min(buf.size(), size);
-	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + length);
-	v_buffer.insert(v_buffer.end(), buf.begin(), buf.begin() + length);
+	i_write(buf, length);
 }
 
 template<typename T>
@@ -63,13 +84,16 @@ void Buffer<T>::write_offset(T buf[], const size_t n, const size_t gap, const si
 	new_data = true;
 
 	// limit data to write
-	size_t length = std::min(n, size);
-	size_t written = 0;
-	for(size_t i = offset; i<length; i += gap){
-		v_buffer.push_back(buf[i]);
-		written++;
+	size_t length = std::min(ceil_div(n - offset, gap), size);
+	size_t current = offset;
+
+	// resize intermediate buffer
+	if(ibuf.size() < length) ibuf.resize(length);
+	for(size_t i = 0; i<length; i++){
+		ibuf[i] = buf[current];
+		current += gap;
 	}
-	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + written);
+	i_write(ibuf, length);
 }
 
 template<typename T>
@@ -78,13 +102,16 @@ void Buffer<T>::write_offset(const std::vector<T>& buf, const size_t gap, const 
 	new_data = true;
 
 	// limit data to write
-	size_t length = std::min(buf.size(), size);
-	size_t written = 0;
-	for(size_t i = offset; i<length; i += gap){
-		v_buffer.push_back(buf[i]);
-		written++;
+	size_t length = std::min(ceil_div(buf.size() - offset, gap), size);
+	size_t current = offset;
+
+	// resize intermediate buffer
+	if(ibuf.size() < length) ibuf.resize(length);
+	for(size_t i = 0; i<length; i++){
+		ibuf[i] = buf[current];
+		current += gap;
 	}
-	v_buffer.erase(v_buffer.begin(), v_buffer.begin() + written);
+	i_write(ibuf, length);
 }
 
 template<typename T>
@@ -127,5 +154,3 @@ float Buffer<T>::rms(){
 	}
 	return rms;
 }
-
-template class Buffer<int16_t>;
