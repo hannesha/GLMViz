@@ -86,8 +86,9 @@ void Buffer<T>::write_offset(T buf[], const size_t n, const size_t gap, const si
 	// limit data to write
 	size_t length = std::min(ceil_div(n - offset, gap), size);
 	size_t current = offset;
-	// intermediate buffer
-	std::vector<T> ibuf(length);
+
+	// resize intermediate buffer
+	if(ibuf.size() < length) ibuf.resize(length);
 	for(size_t i = 0; i<length; i++){
 		ibuf[i] = buf[current];
 		current += gap;
@@ -103,8 +104,9 @@ void Buffer<T>::write_offset(const std::vector<T>& buf, const size_t gap, const 
 	// limit data to write
 	size_t length = std::min(ceil_div(buf.size() - offset, gap), size);
 	size_t current = offset;
-	// intermediate buffer
-	std::vector<T> ibuf(length);
+
+	// resize intermediate buffer
+	if(ibuf.size() < length) ibuf.resize(length);
 	for(size_t i = 0; i<length; i++){
 		ibuf[i] = buf[current];
 		current += gap;
