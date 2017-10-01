@@ -1,0 +1,8 @@
+Source: glmviz
+Maintainer: Hannes Haberl
+Build-Depends: debhelper (>=10), meson(>=0.40), g++, libx11-dev, mesa-common-dev, libglm-dev, libfftw3-dev, libconfig++-dev 
+
+Package: glmviz
+Depends: ${X11:Depends}
+Architecture: any
+Description: high framerate, fully configurable OpenGL music visualizer

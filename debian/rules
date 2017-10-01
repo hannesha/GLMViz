@@ -1,0 +1,24 @@
+#!/usr/bin/make -f
+
+DISTRIBUTION = $(shell lsb_release -sr)
+VERSION = 1.2
+PACKAGEVERSION = $(VERSION)-0~$(DISTRIBUTION)0
+URL = https://github.com/hannesha/GLMViz
+
+BUILDDIR = build
+BUILDOPTIONS = -Dtransparency=true -Db_lto=true -Dbuildtype=release
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf $(BUILDDIR)
+
+override_dh_auto_configure:
+	meson $(BUILDOPTIONS) $(BUILDDIR)
+
+override_dh_auto_build:
+	ninja -C $(BUILDDIR)
+
+override_dh_auto_test:
+	meson test -C $(BUILDDIR)

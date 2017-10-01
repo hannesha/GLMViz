@@ -1,0 +1,36 @@
+glmviz (1.2) UNRELEASED; urgency=medium
+
+  * Implement move constructors
+  * Implement move constructor for buffer object
+  * Use adaptive Vsync
+  * Implement logarithmic frequency spectrum
+  * Fix #5
+  * Fix fft scale for small ffts
+  * Add transparency support
+  * Add license notice, Fix default background transparency
+  * Remove xrender dependency
+  * Use adaptive vsync
+  * Disable off-screen MSAA if samples <= 0
+  * Update default config
+  * Buffer: Implement RMS calculation function
+  * Unify stereo/mono mainloop
+  * Add sigma coefficient variable to oscilloscope shader
+  * Restructure main source file
+  * Implement runtime input source reconfiguration
+  * Split config header files
+  * Implement cubic interpolation for log spectrum
+  * Implement automatic config reloading
+  * Fix cmake build file, add license notice
+  * Remove unique_ptr to config monitor thread
+  * Check shaders in debug builds
+  * Use delta time for rendering, improve gravity calculation
+  * Travis: fix cmake build script
+  * Travis: use latest build environment
+  * Decrease audio buffer relocations
+  * Add buffer object tests
+  * Travis: run buffer unit test
+  * Remove libGLU dependency
+  * Minimize memory allocations for intermediate buffers
+  * Travis: fix pip3 command
+
+ -- Hannes Haberl  Fri, 22 Sep 2017 22:00:13 +0200
