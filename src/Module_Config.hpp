@@ -90,7 +90,7 @@ namespace Module_Config {
 		Color line_color = {0.57, 0.57, 0.57, 1};
 		Transformation pos;
 		float gradient = 1.0;
-		float gravity = 8.0 / (60*60);
+		float gravity = 8.0;
 		float bar_width = 0.75;
 
 		bool rainbow = false;
