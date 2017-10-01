@@ -1,0 +1,125 @@
+/* copy this file into your ~/.config/GLMViz/ folder */
+
+// Window settings
+Window = {
+	AA = 4
+}
+
+Input = {
+	// Source selection, can be "pulse" or "fifo"
+	source = "PULSE"
+
+	// Path to fifo file
+	file = "/tmp/mpd.fifo"
+
+	// Pulse device name. The default sink monitor is used if given an empty string.
+	device = ""
+
+	f_sample = 44100L // 44.1kHz sampling rate
+	stereo = true
+}
+
+fps = 60;
+duration = 50; // buffer length in ms
+
+//fft_size = 8192L; // 2^13
+fft_size = 2048L; // 2^12
+
+bg_color = "DD000000"
+
+// Spectrum default values
+Spectrum = {
+	// Specifies the highest and lowest signal level
+	max_db = -5.0
+	min_db = -50.0
+
+	// Specifies the start and stop frequency of the spectrum
+	f_start = 0
+	f_stop = 1200
+
+	// Logarithmic frequency scaling
+	log_enabled = 0.
+	// Log start index
+	log_start = 5.
+
+	top_color = "D3262E"
+	//top_color = "FFFFFF"
+	bot_color = "D3262E"
+	//bot_color = "000000"
+	line_color = "46484B"
+	dB_lines = false
+
+	bar_width = 0.5
+	gravity = 8.
+
+	// gradient = 0 - each bar has the full gradient
+	// gradient = 1 - bar color changes with the height of the bar (0db = top_color)
+	// Values in-between 0 and 1 are possible
+	gradient = 1.0
+
+	// Rainbow attributes
+	rainbow = {
+		enabled = false
+
+		// Relative phase shift of each color
+		phase = {
+			r = 0.0
+			g = 0.0
+			b = 0.0
+		};
+
+		// Color frequency
+		freq = {
+			r = 1.0
+			g = 1.0
+			b = 1.0
+		};
+	}
+}
+
+// Standard Spectrum
+Spectrum1 = {
+	channel = 0
+	pos = {
+		ymin = -3.
+		ymax = 1.
+	}
+}
+Spectrum2 = {
+	channel = 1 
+	pos = {
+		ymax = -3.
+		ymin = 1.
+	}
+}
+
+// Spectrum rendered in the upper half of the window
+/*Spectrum2 = {
+	pos = {
+		ymin = -3.0
+		ymax = 1.0
+	}
+	dB_lines = false;
+}*/
+
+// Oscilloscope default values
+Osc = {
+	// Line color
+	color = "FFFFFF"
+
+	// Line width
+	width = 0.01;
+	sigma = 2.
+	scale = 0.7
+}
+
+// Standard Oscilloscope
+//Osc1 = {}
+
+// Oscilloscope rendered in the upper half of the window
+/*Osc2 = {
+	pos = {
+		ymin = -3.0; ymax = 1.0;	
+	}
+}*/
+// vim: set ft=cfg:
