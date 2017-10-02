@@ -20,27 +20,40 @@
 #pragma once
 
 #include "GL_utils.hpp"
-#include <initializer_list>
-#include <functional>
 
 namespace GL {
 	class Program {
 		public:
 			Program();
-			~Program();
+			~Program(){ glDeleteProgram(id); };
 			Program(const Program&) = delete;
 			Program(Program&& p): id(p.id){ p.id = 0; };
 			Program& operator=(Program&&) = default;
 
-			void link(std::initializer_list<const std::reference_wrapper<GL::Shader>>);
-			void link_TF(const size_t, const char**, std::initializer_list<const std::reference_wrapper<GL::Shader>>);
+			template<typename ... T> void link(T&... shs){
+				attach(shs...);
+				glLinkProgram(id);
+				detach(shs...);
+				check_link_status();
+			}
+
+			template<typename ... T> void link_TF(const size_t n, const char** varyings, T&... shs){
+				glTransformFeedbackVaryings(id, n, varyings, GL_INTERLEAVED_ATTRIBS);
+				link(shs...);
+			}
+			void check_link_status();
 
 			inline void use(){ glUseProgram(id); };
-			inline GLuint get_id(){ return id; };
+			inline GLuint get_id() const { return id; };
 			inline void operator()(){ use(); };
 			inline GLint get_uniform(const char* name) const { return glGetUniformLocation(id, name); };
 			inline GLint get_attrib(const char* name) const { return glGetAttribLocation(id, name); };
 		private:
 			GLuint id;
+
+			template<typename ... T> inline void attach(Shader& sh, T& ... shs){ attach(sh); attach(shs...); };
+			inline void attach(Shader& sh){ glAttachShader(id, sh.id); };
+			template<typename ... T> inline void detach(Shader& sh, T& ... shs){ detach(sh); detach(shs...); };
+			inline void detach(Shader& sh){ glDetachShader(id, sh.id); };
 	};
 }

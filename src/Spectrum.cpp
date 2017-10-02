@@ -243,8 +243,8 @@ void Spectrum::init_bar_shader(){
 
 	// link shaders
 	try{
-		sh_bars[0].link({fs, vs, gs});
-		sh_bars[1].link({fs_rb, vs, gs});
+		sh_bars[0].link(fs, vs, gs);
+		sh_bars[1].link(fs_rb, vs, gs);
 	}
 	catch(std::invalid_argument& e){
 		std::cerr << "Can't link bar shaders!" << std::endl << e.what() << std::endl;
@@ -280,7 +280,7 @@ void Spectrum::init_bar_pre_shader(){
 
 	try{
 		const char* varyings[2] = {"v_time", "v_y"};
-		sh_bars_pre.link_TF(2, varyings, {vs});
+		sh_bars_pre.link_TF(2, varyings, vs);
 	}
 	catch(std::invalid_argument& e){
 		std::cerr << "Can't link bar_pre shader!" << std::endl << e.what() << std::endl;
@@ -331,7 +331,7 @@ void Spectrum::init_line_shader(){
 	GL::Shader vs_lines(vs_lines_code, GL_VERTEX_SHADER);
 
 	try{
-		sh_lines.link({fs, vs_lines});
+		sh_lines.link(fs, vs_lines);
 	}
 	catch(std::invalid_argument& e){
 		std::cerr << "Can't link dB line shader!" << std::endl << e.what() << std::endl;

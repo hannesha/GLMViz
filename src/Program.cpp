@@ -23,23 +23,12 @@
 #include <vector>
 
 namespace GL {
-
 	Program::Program(){
 		id = glCreateProgram();
+		if(id == 0) throw std::runtime_error("Failed to create shader program!");
 	}
 
-	Program::~Program(){
-		glDeleteProgram(id);
-	}
-
-	void Program::link(std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
-		// attach compiled shaders
-		for (GL::Shader& sh : shaders){
-			glAttachShader(id, sh.id);
-		}
-
-		glLinkProgram(id);
-
+	void Program::check_link_status(){
 		// check link status and throw if the shaders can't be linked
 		GLint link_status;
 		glGetProgramiv(id, GL_LINK_STATUS, &link_status);
@@ -53,19 +42,5 @@ namespace GL {
 			std::string err(log.begin(), log.end());
 			throw std::invalid_argument(err);
 		}
-
-		// detach shaders for later cleanup
-		for (GL::Shader& sh : shaders){
-			glDetachShader(id, sh.id);
-		}
-	}
-
-	void Program::link_TF(const size_t n, const char** fb_varyings, std::initializer_list<const std::reference_wrapper<GL::Shader>> shaders){
-		// link with transform feedback varyings
-		// set TF varyings
-		glTransformFeedbackVaryings(id, n, fb_varyings, GL_INTERLEAVED_ATTRIBS);
-		//std::cout << glGetError() << std::endl;
-
-		link(shaders);
 	}
 }

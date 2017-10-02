@@ -65,7 +65,7 @@ void Oscilloscope::init_crt(){
 	GL::Shader frag(frag_code, GL_FRAGMENT_SHADER);
 
 	try{
-		sh_crt.link({vert, geom, frag});
+		sh_crt.link(vert, geom, frag);
 	}
 	catch(std::invalid_argument& e){
 		std::cerr << "Can't link oscilloscope shader!" << std::endl << e.what() << std::endl;
