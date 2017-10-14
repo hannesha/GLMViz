@@ -282,6 +282,18 @@ int main(int argc, char *argv[]){
 			if(config.old_input != config.input){
 				// stop input thread
 				inth.reset(nullptr);
+				
+				// create new buffers/ffts
+				if(config.input.stereo && buffers.size() < 2){
+					buffers.emplace_back(config.buf_size);
+					ffts.emplace_back(config.fft.size);
+				}
+				// destroy buffers/ffts
+				if(!config.input.stereo && buffers.size() > 1){
+					buffers.pop_back();
+					ffts.pop_back();
+				}
+				
 				// start new input thread
 				inth.reset(new Input_thread(make_input(config.input), buffers));
 			}
