@@ -27,8 +27,8 @@
 static const int timeout = 100;
 void monitor(const std::string& file, std::atomic<bool>& running, std::atomic<bool>& changed){
 	try{
-		Inotify<char> inotify;
-		inotify.add_watch(0, file, IN_MODIFY | IN_IGNORED);
+		Inotify inotify;
+		int wd = inotify.add_watch(file, IN_MODIFY | IN_IGNORED);
 		int fd = inotify.get_fd();
 
 		while(running){
@@ -40,15 +40,14 @@ void monitor(const std::string& file, std::atomic<bool>& running, std::atomic<bo
 			if(ret > 0){
 				struct inotify_event e;
 				read(fd, reinterpret_cast<char*>(&e), sizeof(struct inotify_event));
-				if(inotify.match(e.wd, 0)){
+				if(e.wd == wd){
+					// vim edit workaround
 					if(e.mask == IN_IGNORED){
 						// delete ignored watch descriptor
-						inotify.rm_watch(0);
+						inotify.rm_watch(wd);
 						// make new watch descriptor on same file
-						inotify.add_watch(0, file, IN_MODIFY | IN_IGNORED);
-						//std::cout << "Vim edit" << std::endl;
+						wd = inotify.add_watch(file, IN_MODIFY | IN_IGNORED);
 					}
-					//std::cout << "Edited" << std::endl;
 					changed = true;
 				}
 			}

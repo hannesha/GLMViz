@@ -18,10 +18,10 @@
  */
 
 #include "Inotify.hpp"
-//#include <memory>
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
+#include <algorithm>
 
 inline std::string err_str(int& errnum){
 	int err = errnum;
@@ -29,39 +29,41 @@ inline std::string err_str(int& errnum){
 	return std::string(std::strerror(err));
 }
 
-template<typename K>
-Inotify<K>::Inotify(){
+Inotify::Inotify(){
 	instance_fd = inotify_init();
 	if(instance_fd < 0){
 		throw std::runtime_error("inotify init failed!, err: " + ::err_str(errno));
 	}
 }
 
-template<typename K>
-Inotify<K>::~Inotify(){
+Inotify::~Inotify(){
 	// remove all watches
-	for(auto& watch : wds){
-		inotify_rm_watch(instance_fd, watch.second);
+	for(int& wd : wds){
+		rm_watch(wd);
 	}
 	// destroy instance
 	if(instance_fd >= 0) close(instance_fd);
 }
 
-template<typename K>
-void Inotify<K>::add_watch(K key, const std::string& file, uint32_t mask){
+int Inotify::add_watch(const std::string& file, uint32_t mask){
 	int wd = inotify_add_watch(instance_fd, file.c_str(), mask);
 	if(wd >= 0){
-		wds.emplace(key, wd);
+		wds.push_back(wd);
+		return wd;
 	}else{
 		throw std::runtime_error("Can't add watch, err: " + ::err_str(errno));
 	}
 }
 
-template<typename K>
-void Inotify<K>::rm_watch(K key){
-	int rc = inotify_rm_watch(instance_fd, wds.at(key));
-	if(rc != 0){
+void Inotify::rm_watch(const int wd){
+	int rc = inotify_rm_watch(instance_fd, wd);
+	// find key and remove it
+	auto key = find(wds.begin(), wds.end(), wd);
+	if(key != wds.end()){
 		wds.erase(key);
+	}
+	// ingore errors
+	if(rc != 0){
 		errno = 0;
 		//throw std::runtime_error("Can't remove watch, err: " + ::err_str(errno));
 	}

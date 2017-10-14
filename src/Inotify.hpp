@@ -19,30 +19,22 @@
 
 #pragma once
 
-#include <map>
+#include <vector>
 #include <string>
 #include <sys/inotify.h>
 
-template<typename K>
 class Inotify{
 	public:
 		Inotify();
 		~Inotify();
 
-		void add_watch(K, const std::string&, uint32_t mask);
-		void rm_watch(K);
-		inline bool match(int wd, K key){
-			return wd == wds.at(key);
-		}
+		int add_watch(const std::string&, uint32_t mask);
+		void rm_watch(const int);
 
-		inline int get_fd(){
+		inline int get_fd() const{
 			return instance_fd;
 		}
-
-		std::map<K, int> wds;
 	private:
+		std::vector<int> wds;
 		int instance_fd;
 };
-
-template class Inotify<int>;
-template class Inotify<char>;
