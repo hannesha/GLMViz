@@ -31,7 +31,10 @@ Config::Config(const std::string& config_file){
 		if(xdg::verify_path(config_file)){
 			file = config_file;
 		}else{
-			std::cerr << "The specified config file doesn't exist, falling back to default config!" << std::endl;
+			file = xdg::find_config("/GLMViz/" + config_file);
+			if (file == ""){
+				std::cerr << "The specified config file doesn't exist, falling back to default config!" << std::endl;
+			}
 		}
 	}
 
