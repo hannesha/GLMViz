@@ -67,13 +67,17 @@ bool Pulse::is_open() const{
 }
 
 void Pulse::read(Buffer<int16_t>& buffer) const{
-	pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL);
+	if(pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL) < 0){
+		throw std::runtime_error("Can't read from pulseaudio stream !");
+	}
 	buffer.write(buf.get(), samples);
 }
 
 void Pulse::read(std::vector<Buffer<int16_t>>& buffers) const{
 	if (buffers.size() > 1){
-		pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL);
+		if(pa_simple_read(stream, buf.get(), samples * sizeof(int16_t), NULL) < 0){
+			throw std::runtime_error("Can't read from pulseaudio stream !");
+		}
 		buffers[0].write_offset(buf.get(), samples, 2, 0);
 		buffers[1].write_offset(buf.get(), samples, 2, 1);
 	}else{
@@ -110,15 +114,27 @@ std::string Pulse::get_default_sink(){
 		throw std::runtime_error(msg.str());
 	}
 
-	pa_context_disconnect(context);
-	pa_context_unref(context);
-	pa_mainloop_free(mainloop);
+	if(context) pa_context_unref(context);
+	if(mainloop){
+		pa_signal_done();
+		pa_mainloop_free(mainloop);
+	}
 	return device;
 }
 
 void Pulse::state_cb(pa_context* context, void* userdata){
+	struct Pulse::usr_data *data = reinterpret_cast<struct Pulse::usr_data*>(userdata);
 	//make sure loop is ready
 	switch (pa_context_get_state(context)){
+		case PA_CONTEXT_FAILED:
+			pa_mainloop_quit(data->mainloop, 1);
+			break;
+
+		case PA_CONTEXT_TERMINATED:
+			//quit mainloop
+			pa_mainloop_quit(data->mainloop, 0);
+			break;
+
 		case PA_CONTEXT_READY:
 		// read server info
 		pa_operation_unref(pa_context_get_server_info(
@@ -137,6 +153,7 @@ void Pulse::info_cb(pa_context* context, const pa_server_info* info, void* userd
 	//append .monitor sufix
 	data->device->append(".monitor");
 
+	pa_context_disconnect(context);
 	//quit mainloop
-	pa_mainloop_quit(data->mainloop, 0);
+	//pa_mainloop_quit(data->mainloop, 0);
 }
