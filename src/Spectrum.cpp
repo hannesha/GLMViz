@@ -96,16 +96,20 @@ void Spectrum::resize_tf_buffers(const size_t size){
 }
 
 void Spectrum::resize_x_buffer(const size_t size){
-	std::vector<float> x_data(size);
-	float f_size = (float)size;
+	//std::vector<float> x_data(size);
+	//float f_size = (float)size;
 
 	// generate x positions ranging from -1 to 1
-	for(unsigned int i = 0; i < size; i++){
-		x_data[i] = (((float) i + 0.5) - (f_size * 0.5)) / (f_size * 0.5);
-	}
+	//for(unsigned int i = 0; i < size; i++){
+	//	x_data[i] = (((float) i + 0.5) - (f_size * 0.5)) / (f_size * 0.5);
+	//}
 
-	b_x.bind();
-	glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[0], GL_STATIC_DRAW);
+	//b_x.bind();
+	//glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[2], GL_STATIC_DRAW);
+	GL::Program& sh = sh_bars[bar_shader_id];
+	sh();
+	GLint i_length = sh.get_uniform("length_1");
+	glUniform1f(i_length, 1./size);
 }
 
 void Spectrum::update_fft(FFT& fft){
@@ -255,11 +259,11 @@ void Spectrum::init_bars(){
 	for(unsigned i = 0; i<2; i++){
 		v_bars[i].bind();
 
-		b_x.bind();
+		//b_x.bind();
 		// set x position data in bar VAO
-		GLint arg_x_data = sh_bars[0].get_attrib("x");
-		glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
-		glEnableVertexAttribArray(arg_x_data);
+		//GLint arg_x_data = sh_bars[0].get_attrib("x");
+		//glVertexAttribPointer(arg_x_data, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
+		//glEnableVertexAttribArray(arg_x_data);
 
 		// enable the preprocessed y attribute
 		b_fb[i].bind();

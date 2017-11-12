@@ -40,7 +40,7 @@ class Oscilloscope {
 	private:
 		GL::Program sh_crt;
 		GL::VAO v_crt;
-		GL::Buffer b_crt_x, b_crt_y;
+		GL::Buffer b_crt_y;
 		size_t size;
 		unsigned id, channel;
 
