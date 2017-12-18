@@ -19,7 +19,6 @@
 
 // Include standard headers
 #include <stdio.h>
-#include <stdlib.h>
 #include <vector>
 #include <unistd.h>
 #include <sstream>
@@ -49,7 +48,7 @@
 #include "Oscilloscope.hpp"
 
 #ifdef WITH_PULSE
-#include "Pulse.hpp"
+#include "Pulse_Async.hpp"
 #endif
 
 // make_unique template for backwards compatibility

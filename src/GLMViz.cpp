@@ -197,21 +197,24 @@ int main(int argc, char *argv[]){
 		Config config(config_file);
 
 		// create audio buffer
-		std::vector<Buffer<int16_t>> buffers;
-		buffers.emplace_back(config.buf_size);
+//		std::vector<Buffer<int16_t>> buffers;
+		Buffers::Ptr p_buffers = std::make_shared<Buffers>();
+		p_buffers->bufs.emplace_back(config.buf_size);
 
 		// create fft
 		std::vector<FFT> ffts;
 		ffts.emplace_back(config.fft.size);
 
 		if(config.input.stereo){
-			buffers.emplace_back(config.buf_size);
+			p_buffers->bufs.emplace_back(config.buf_size);
 			ffts.emplace_back(config.fft.size);
 		}
 
 		Config_Monitor cm(config.get_file(), config_reload);
 		// start input thread
-		std::unique_ptr<Input_thread> inth = ::make_unique<Input_thread>(make_input(config.input), buffers);
+//		std::unique_ptr<Input_thread> inth = ::make_unique<Input_thread>(make_input(config.input), buffers);
+		Pulse_Async pulse_async(p_buffers);
+		pulse_async.start_stream(config.input);
 
 		// attach SIGUSR1 signal handler
 		std::signal(SIGUSR1, sighandler);
@@ -271,7 +274,7 @@ int main(int argc, char *argv[]){
 		mainloop(config, window,
 		[&]{
 			// resize buffers and reconfigure renderer
-			for(auto& buf : buffers){
+			for(auto& buf : p_buffers->bufs){
 				buf.resize(config.buf_size);
 			}
 
@@ -281,21 +284,28 @@ int main(int argc, char *argv[]){
 			// check if input configuration has changed
 			if(config.old_input != config.input){
 				// stop input thread
-				inth.reset(nullptr);
-				
-				// create new buffers/ffts
-				if(config.input.stereo && buffers.size() < 2){
-					buffers.emplace_back(config.buf_size);
-					ffts.emplace_back(config.fft.size);
+//				inth.reset(nullptr);
+				pulse_async.stop_stream();
+
+				{
+					// start stream after releasing the lock
+					std::lock_guard<std::mutex> lock(p_buffers->mut);
+					// create new buffers/ffts
+					if(config.input.stereo && p_buffers->bufs.size() < 2){
+						p_buffers->bufs.emplace_back(config.buf_size);
+						ffts.emplace_back(config.fft.size);
+					}
+					// destroy buffers/ffts
+					if(!config.input.stereo && p_buffers->bufs.size() > 1){
+						p_buffers->bufs.pop_back();
+						ffts.pop_back();
+					}
+					std::cout << "Input Buffers: " << p_buffers->bufs.size() << std::endl;
 				}
-				// destroy buffers/ffts
-				if(!config.input.stereo && buffers.size() > 1){
-					buffers.pop_back();
-					ffts.pop_back();
-				}
-				
+
 				// start new input thread
-				inth.reset(new Input_thread(make_input(config.input), buffers));
+				pulse_async.start_stream(config.input);
+//				inth.reset(new Input_thread(make_input(config.input), buffers));
 			}
 
 			update_render_configs(spectra, config.spectra);
@@ -306,13 +316,13 @@ int main(int argc, char *argv[]){
 		[&](const float dt){
 			// update all locking renderer first
 			for(unsigned i = 0; i < ffts.size(); i++){
-				ffts[i].calculate(buffers[i]);
+				ffts[i].calculate(p_buffers->bufs[i]);
 			}
 
 			// test rms calculation
 			//std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
 			for(Oscilloscope& o : oscilloscopes){
-				o.update_buffer(buffers);
+				o.update_buffer(p_buffers->bufs);
 			}
 			// draw spectra and oscilloscopes
 			for(Spectrum& s : spectra){
@@ -338,21 +348,21 @@ inline float normalize_rms(float sum, float length, float amplitude){
 	return std::sqrt(sum/(length*amplitude*amplitude));
 }
 
-Input::Ptr make_input(const Module_Config::Input& i){
-// defines how many samples are read from the buffer during each loop iteration
-// this number has to be even in stereo mode
-const int SAMPLES = 220;
-
-	// audio source configuration
-	switch (i.source){
-#ifdef WITH_PULSE
-	case Module_Config::Source::PULSE:
-		return ::make_unique<Pulse>(i.device, i.f_sample, SAMPLES, i.stereo);
-#endif
-	default:
-		return ::make_unique<Fifo>(i.file, SAMPLES);
-	}
-}
+//Input::Ptr make_input(const Module_Config::Input& i){
+//// defines how many samples are read from the buffer during each loop iteration
+//// this number has to be even in stereo mode
+//const int SAMPLES = 220;
+//
+//	// audio source configuration
+//	switch (i.source){
+//#ifdef WITH_PULSE
+//	case Module_Config::Source::PULSE:
+//		return ::make_unique<Pulse>(i.device, i.f_sample, SAMPLES, i.stereo);
+//#endif
+//	default:
+//		return ::make_unique<Fifo>(i.file, SAMPLES);
+//	}
+//}
 
 std::string generate_title(const Config& config){
 	std::stringstream title;
