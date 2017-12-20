@@ -18,13 +18,12 @@
  */
 
 // Include standard headers
-#include <stdio.h>
 #include <vector>
 #include <unistd.h>
-#include <sstream>
 #include <thread>
 
 #include <iostream>
+#include <sstream>
 #include <atomic>
 
 // Include basic GL utility headers

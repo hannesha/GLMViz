@@ -20,8 +20,6 @@
 #include "GLMViz.hpp"
 #include "Multisampler.hpp"
 
-#include <memory>
-#include <stdexcept>
 #include <chrono>
 #include <csignal>
 
@@ -189,7 +187,7 @@ Input::Ptr make_input(const Module_Config::Input&);
 int main(int argc, char *argv[]){
 	try{
 		// construct config file path from first argument
-		std::string config_file = "";
+		std::string config_file;
 		if(argc > 1){
 			config_file = argv[1];
 		}

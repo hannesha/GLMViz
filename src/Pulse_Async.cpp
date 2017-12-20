@@ -25,7 +25,7 @@
 
 namespace PA{
 	struct Lock{
-		Lock(pa_threaded_mainloop* m) : mainloop(m){
+		explicit Lock(pa_threaded_mainloop* m) : mainloop(m){
 			pa_threaded_mainloop_lock(mainloop);
 		}
 
@@ -70,7 +70,8 @@ Pulse_Async::Pulse_Async(Buffers::Ptr& p_buffers) : stream(nullptr){
 	userdata->context = context;
 
 	pa_context_set_state_callback(context, state_cb, userdata.get());
-	if(pa_context_connect(context, NULL, PA_CONTEXT_NOFLAGS, NULL) < 0 || pa_threaded_mainloop_start(mainloop) < 0){
+	if(pa_context_connect(context, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0 ||
+	   pa_threaded_mainloop_start(mainloop) < 0){
 		pa_context_disconnect(context);
 		pa_context_unref(context);
 		lock.unlock();
@@ -106,7 +107,8 @@ Pulse_Async::~Pulse_Async(){
 }
 
 void Pulse_Async::state_cb(pa_context* context, void* userdata){
-	struct Pulse_Async::usr_data* data = reinterpret_cast<struct Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+
 	switch (pa_context_get_state(context)){
 		case PA_CONTEXT_READY:
 		case PA_CONTEXT_TERMINATED:
@@ -121,7 +123,8 @@ void Pulse_Async::state_cb(pa_context* context, void* userdata){
 }
 
 void Pulse_Async::info_cb(pa_context* context, const pa_server_info* info, void* userdata){
-	struct Pulse_Async::usr_data* data = reinterpret_cast<struct Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+
 	//get default sink name
 	data->device = info->default_sink_name;
 	//append .monitor sufix
@@ -162,9 +165,11 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 	pa_stream_set_read_callback(stream, stream_read_cb, userdata.get());
 
 	std::string dev;
-	if(config.device == ""){
+	if(config.device.empty()){
+		// get default monitor
 		dev = userdata->device;
 	}else{
+		// use device specified in config
 		dev = config.device;
 	}
 
@@ -174,7 +179,7 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 			(uint32_t) -1,
 			(uint32_t) -1,
 			(uint32_t) -1,
-			(uint32_t) 1100,
+			(uint32_t) config.latency,
 	};
 
 
@@ -191,7 +196,8 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 }
 
 void Pulse_Async::stream_state_cb(pa_stream* stream, void* userdata){
-	struct Pulse_Async::usr_data* data = reinterpret_cast<struct Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+
 	switch (pa_stream_get_state(stream)){
 		case PA_STREAM_READY:
 		case PA_STREAM_TERMINATED:
@@ -218,7 +224,7 @@ static void i_read(std::vector<Buffer<T>>& buffers, T buf[], size_t size){
 }
 
 void Pulse_Async::stream_read_cb(pa_stream* stream, size_t len, void* userdata){
-	struct Pulse_Async::usr_data* data = reinterpret_cast<struct Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
 
 	while (pa_stream_readable_size(stream)){
 		// read stream buffer
