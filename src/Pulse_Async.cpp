@@ -142,7 +142,7 @@ void Pulse_Async::stop_stream(){
 	}
 }
 
-void Pulse_Async::start_stream(const Module_Config::Input &config){
+void Pulse_Async::start_stream(const Module_Config::Input& config){
 	PA::Lock lock(userdata->mainloop);
 
 	pa_sample_spec sample_spec = {
@@ -207,7 +207,7 @@ void Pulse_Async::stream_state_cb(pa_stream* stream, void* userdata){
 
 // internal read function
 template<typename T>
-static void i_read(std::vector<Buffer<T>> &buffers, T buf[], size_t size){
+static void i_read(std::vector<Buffer<T>>& buffers, T buf[], size_t size){
 	size = size / 2;
 	if(buffers.size() > 1){
 		buffers[0].write_offset(buf, size, 2, 0);
