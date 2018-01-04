@@ -30,18 +30,15 @@
 
 class Pulse_Async{
 public:
-	Pulse_Async(Buffers::Ptr&);
+	explicit Pulse_Async(Buffers::Ptr&);
 
 	~Pulse_Async();
 
+	void start_stream(const Module_Config::Input&);
 
-	struct usr_data{
-		std::string device;
-		pa_threaded_mainloop* mainloop;
-		pa_context* context;
-		Buffers::Ptr p_buffers;
-	};
+	void stop_stream();
 
+private:
 	static void state_cb(pa_context*, void*);
 
 	static void info_cb(pa_context*, const pa_server_info*, void*);
@@ -50,11 +47,9 @@ public:
 
 	static void stream_read_cb(pa_stream*, size_t, void*);
 
-	void start_stream(const Module_Config::Input &);
-
-	void stop_stream();
-
-private:
+	std::string device;
+	pa_threaded_mainloop* mainloop;
+	pa_context* context;
+	Buffers::Ptr p_buffers;
 	pa_stream* stream;
-	std::unique_ptr<usr_data> userdata;
 };

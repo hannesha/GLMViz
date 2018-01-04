@@ -46,9 +46,9 @@ namespace PA{
 	};
 }
 
-Pulse_Async::Pulse_Async(Buffers::Ptr& p_buffers) : stream(nullptr){
+Pulse_Async::Pulse_Async(Buffers::Ptr& buffers): p_buffers(buffers){
 	// make threaded mainloop
-	pa_threaded_mainloop* mainloop = pa_threaded_mainloop_new();
+	mainloop = pa_threaded_mainloop_new();
 	if(!mainloop){
 
 		throw std::runtime_error("Can't create Pulseaudio mainloop!");
@@ -56,20 +56,14 @@ Pulse_Async::Pulse_Async(Buffers::Ptr& p_buffers) : stream(nullptr){
 
 
 	PA::Lock lock(mainloop);
-	pa_context* context = pa_context_new(pa_threaded_mainloop_get_api(mainloop), "GLMViz (async)");
+	context = pa_context_new(pa_threaded_mainloop_get_api(mainloop), "GLMViz (async)");
 	if(!context){
 		lock.unlock();
 		pa_threaded_mainloop_free(mainloop);
 		throw std::runtime_error("Can't create Pulseaudio context!");
 	}
 
-	userdata = std::unique_ptr<usr_data>(new usr_data);
-	userdata->device = "";
-	userdata->p_buffers = p_buffers;
-	userdata->mainloop = mainloop;
-	userdata->context = context;
-
-	pa_context_set_state_callback(context, state_cb, userdata.get());
+	pa_context_set_state_callback(context, state_cb, this);
 	if(pa_context_connect(context, nullptr, PA_CONTEXT_NOFLAGS, nullptr) < 0 ||
 	   pa_threaded_mainloop_start(mainloop) < 0){
 		pa_context_disconnect(context);
@@ -90,7 +84,7 @@ Pulse_Async::Pulse_Async(Buffers::Ptr& p_buffers) : stream(nullptr){
 
 	// get server info
 	pa_operation* operation;
-	operation = pa_context_get_server_info(context, Pulse_Async::info_cb, userdata.get());
+	operation = pa_context_get_server_info(context, Pulse_Async::info_cb, this);
 	while (pa_operation_get_state(operation) != PA_OPERATION_DONE){
 		pa_threaded_mainloop_wait(mainloop);
 	}
@@ -99,15 +93,15 @@ Pulse_Async::Pulse_Async(Buffers::Ptr& p_buffers) : stream(nullptr){
 
 Pulse_Async::~Pulse_Async(){
 	stop_stream();
-	pa_threaded_mainloop_stop(userdata->mainloop);
-	pa_context_disconnect(userdata->context);
-	pa_context_unref(userdata->context);
+	pa_threaded_mainloop_stop(mainloop);
+	pa_context_disconnect(context);
+	pa_context_unref(context);
 
-	pa_threaded_mainloop_free(userdata->mainloop);
+	pa_threaded_mainloop_free(mainloop);
 }
 
 void Pulse_Async::state_cb(pa_context* context, void* userdata){
-	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async*>(userdata);
 
 	switch (pa_context_get_state(context)){
 		case PA_CONTEXT_READY:
@@ -123,7 +117,7 @@ void Pulse_Async::state_cb(pa_context* context, void* userdata){
 }
 
 void Pulse_Async::info_cb(pa_context* context, const pa_server_info* info, void* userdata){
-	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async*>(userdata);
 
 	//get default sink name
 	data->device = info->default_sink_name;
@@ -135,7 +129,7 @@ void Pulse_Async::info_cb(pa_context* context, const pa_server_info* info, void*
 
 void Pulse_Async::stop_stream(){
 	if(stream){
-		PA::Lock lock(userdata->mainloop);
+		PA::Lock lock(mainloop);
 
 		pa_stream_disconnect(stream);
 		pa_stream_unref(stream);
@@ -146,7 +140,7 @@ void Pulse_Async::stop_stream(){
 }
 
 void Pulse_Async::start_stream(const Module_Config::Input& config){
-	PA::Lock lock(userdata->mainloop);
+	PA::Lock lock(mainloop);
 
 	pa_sample_spec sample_spec = {
 			format : PA_SAMPLE_S16LE,
@@ -155,19 +149,19 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 	};
 
 
-	stream = pa_stream_new(userdata->context, "GLMViz input", &sample_spec, nullptr);
+	stream = pa_stream_new(context, "GLMViz input", &sample_spec, nullptr);
 	if(!stream){
 		throw std::runtime_error("Can't create Audio stream!");
 	}
 
 
-	pa_stream_set_state_callback(stream, stream_state_cb, userdata.get());
-	pa_stream_set_read_callback(stream, stream_read_cb, userdata.get());
+	pa_stream_set_state_callback(stream, stream_state_cb, this);
+	pa_stream_set_read_callback(stream, stream_read_cb, this);
 
 	std::string dev;
 	if(config.device.empty()){
 		// get default monitor
-		dev = userdata->device;
+		dev = device;
 	}else{
 		// use device specified in config
 		dev = config.device;
@@ -187,7 +181,7 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 		throw std::runtime_error("Can't connect Audio stream!");
 	}
 
-	pa_threaded_mainloop_wait(userdata->mainloop);
+	pa_threaded_mainloop_wait(mainloop);
 	if(pa_stream_get_state(stream) != PA_STREAM_READY){
 		throw std::runtime_error("Can't connect Audio stream!");
 	}
@@ -196,7 +190,7 @@ void Pulse_Async::start_stream(const Module_Config::Input& config){
 }
 
 void Pulse_Async::stream_state_cb(pa_stream* stream, void* userdata){
-	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async*>(userdata);
 
 	switch (pa_stream_get_state(stream)){
 		case PA_STREAM_READY:
@@ -224,7 +218,7 @@ static void i_read(std::vector<Buffer<T>>& buffers, T buf[], size_t size){
 }
 
 void Pulse_Async::stream_read_cb(pa_stream* stream, size_t len, void* userdata){
-	auto* data = reinterpret_cast<Pulse_Async::usr_data*>(userdata);
+	auto* data = reinterpret_cast<Pulse_Async*>(userdata);
 
 	while (pa_stream_readable_size(stream)){
 		// read stream buffer
