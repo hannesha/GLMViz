@@ -19,25 +19,44 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <string>
 #include <fstream>
 
 #include "Input.hpp"
+#include <thread>
+#include <atomic>
 
 #define DELAY_MIN 500
 #define DELAY_MAX 5000
 
 class Fifo : public Input{
-	public:
-		Fifo(const std::string&, const size_t);
-		~Fifo(){};
-		bool is_open() const;
-		void read(Buffer<int16_t>&) const;
-		void read(std::vector<Buffer<int16_t>>&) const;
-	private:
-		mutable std::ifstream file;
-		mutable std::unique_ptr<int16_t[]> buf;
-		mutable int delay = 100;
-		size_t samples;
+public:
+	explicit Fifo(Buffers::Ptr& buffers) : buffers(buffers){};
+
+	~Fifo() override;
+
+	void start_stream(const Module_Config::Input&) override;
+
+	void stop_stream() override;
+private:
+	struct fifo_stream{
+		std::atomic<bool> running;
+		std::unique_ptr<int16_t[]> pre_buffer;
+		int buffer_length;
+
+		Buffers::Ptr& buffers;
+
+		std::thread thread;
+		std::ifstream file;
+
+		int delay = 100;
+
+		explicit fifo_stream(Buffers::Ptr&, const std::string&, const size_t);
+
+		~fifo_stream();
+
+		void read();
+	};
+
+	std::unique_ptr<fifo_stream> stream;
+	Buffers::Ptr buffers;
 };

@@ -25,7 +25,8 @@
 
 // config reload signal handler
 static_assert(ATOMIC_BOOL_LOCK_FREE, "std::atomic<bool> isn't lock free!");
-std::atomic<bool> config_reload (false);
+std::atomic<bool> config_reload(false);
+
 void sighandler(int signal){
 	config_reload = true;
 }
@@ -38,11 +39,12 @@ void set_bg_color(const Module_Config::Color& color){
 std::string generate_title(const Config&);
 
 // create or delete renderers to match the corresponding configs
-template <typename R_vector, typename C_vector>
+template<typename R_vector, typename C_vector>
 void update_render_configs(R_vector&, C_vector&);
 
 // glfw specific code
 #ifndef WITH_TRANSPARENCY
+
 // config reload key handler
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	if(key == GLFW_KEY_R && action == GLFW_PRESS){
@@ -55,19 +57,21 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	glViewport(0, 0, width, height);
 }
 
-class glfw_error : public std::runtime_error {
+class glfw_error : public std::runtime_error{
 public :
 	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
 };
+
 // glfw raii wrapper
 class GLFW{
-	public:
-		GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
-		~GLFW(){ glfwTerminate(); };
+public:
+	GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
+
+	~GLFW(){ glfwTerminate(); };
 };
 
 // glfw mainloop
-template <typename Fupdate, typename Fdraw>
+template<typename Fupdate, typename Fdraw>
 void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
 	std::chrono::time_point<std::chrono::steady_clock> t_start;
 	std::chrono::time_point<std::chrono::steady_clock> t_stop;
@@ -98,11 +102,11 @@ void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw
 		glfwPollEvents();
 
 		// wait for fps timer
-		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps -100));
+		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps - 100));
 		t_stop = t_start;
-	}
-	while(glfwWindowShouldClose(window) == 0);
+	}while (glfwWindowShouldClose(window) == 0);
 }
+
 #else
 // glx mainloop
 bool closing = false;
@@ -182,9 +186,10 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 #endif
 
 inline float normalize_rms(float, float, float);
-Input::Ptr make_input(const Module_Config::Input&);
+Input::Ptr make_input(const Module_Config::Input&, Buffers::Ptr&);
+void configure_input(const Config&, Input::Ptr&, Buffers::Ptr&, std::vector<FFT>&);
 
-int main(int argc, char *argv[]){
+int main(int argc, char* argv[]){
 	try{
 		// construct config file path from first argument
 		std::string config_file;
@@ -195,7 +200,6 @@ int main(int argc, char *argv[]){
 		Config config(config_file);
 
 		// create audio buffer
-//		std::vector<Buffer<int16_t>> buffers;
 		Buffers::Ptr p_buffers = std::make_shared<Buffers>();
 		p_buffers->bufs.emplace_back(config.buf_size);
 
@@ -210,9 +214,8 @@ int main(int argc, char *argv[]){
 
 		Config_Monitor cm(config.get_file(), config_reload);
 		// start input thread
-//		std::unique_ptr<Input_thread> inth = ::make_unique<Input_thread>(make_input(config.input), buffers);
-		Pulse_Async pulse_async(p_buffers);
-		pulse_async.start_stream(config.input);
+		std::unique_ptr<Input> input = make_input(config.input, p_buffers);
+		input->start_stream(config.input);
 
 		// attach SIGUSR1 signal handler
 		std::signal(SIGUSR1, sighandler);
@@ -231,7 +234,7 @@ int main(int argc, char *argv[]){
 		// create GLFW window
 		GLFWwindow* window;
 		window = glfwCreateWindow(config.w_width, config.w_height, title.c_str(), NULL, NULL);
-		if( window == NULL ){
+		if(window == NULL){
 			throw glfw_error("Failed to create GLFW Window!");
 		}
 
@@ -270,69 +273,45 @@ int main(int argc, char *argv[]){
 		update_render_configs(oscilloscopes, config.oscilloscopes);
 
 		mainloop(config, window,
-		[&]{
-			// resize buffers and reconfigure renderer
-			for(auto& buf : p_buffers->bufs){
-				buf.resize(config.buf_size);
-			}
+				 [&]{
+					 // resize buffers and reconfigure renderer
+					 for (auto& buf : p_buffers->bufs){
+						 buf.resize(config.buf_size);
+					 }
 
-			for(auto& fft : ffts){
-				fft.resize(config.fft.size);
-			}
-			// check if input configuration has changed
-			if(config.old_input != config.input){
-				// stop input thread
-//				inth.reset(nullptr);
-				pulse_async.stop_stream();
+					 for (auto& fft : ffts){
+						 fft.resize(config.fft.size);
+					 }
 
-				{
-					// start stream after releasing the lock
-					std::lock_guard<std::mutex> lock(p_buffers->mut);
-					// create new buffers/ffts
-					if(config.input.stereo && p_buffers->bufs.size() < 2){
-						p_buffers->bufs.emplace_back(config.buf_size);
-						ffts.emplace_back(config.fft.size);
-					}
-					// destroy buffers/ffts
-					if(!config.input.stereo && p_buffers->bufs.size() > 1){
-						p_buffers->bufs.pop_back();
-						ffts.pop_back();
-					}
-					std::cout << "Input Buffers: " << p_buffers->bufs.size() << std::endl;
-				}
+					 configure_input(config, input, p_buffers, ffts);
 
-				// start new input thread
-				pulse_async.start_stream(config.input);
-//				inth.reset(new Input_thread(make_input(config.input), buffers));
-			}
+					 update_render_configs(spectra, config.spectra);
+					 update_render_configs(oscilloscopes, config.oscilloscopes);
 
-			update_render_configs(spectra, config.spectra);
-			update_render_configs(oscilloscopes, config.oscilloscopes);
+					 set_bg_color(config.bg_color);
+				 },
+				 [&](const float dt){
+					 // update all locking renderer first
+					 for (unsigned i = 0; i < ffts.size(); i++){
+						 ffts[i].calculate(p_buffers->bufs[i]);
+					 }
 
-			set_bg_color(config.bg_color);
-		},
-		[&](const float dt){
-			// update all locking renderer first
-			for(unsigned i = 0; i < ffts.size(); i++){
-				ffts[i].calculate(p_buffers->bufs[i]);
-			}
+					 // test rms calculation
+					 //std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
+					 for (Oscilloscope& o : oscilloscopes){
+						 o.update_buffer(p_buffers->bufs);
+					 }
+					 // draw spectra and oscilloscopes
+					 for (Spectrum& s : spectra){
+						 s.update_fft(ffts);
+						 s.draw(dt);
+					 }
+					 for (Oscilloscope& o : oscilloscopes){
+						 o.draw();
+					 }
+				 });
 
-			// test rms calculation
-			//std::cout << "RMS: " << 20 * std::log10(normalize_rms(buffer.rms(), buffer.size, 1<<15)) << "dB" << std::endl;
-			for(Oscilloscope& o : oscilloscopes){
-				o.update_buffer(p_buffers->bufs);
-			}
-			// draw spectra and oscilloscopes
-			for(Spectrum& s : spectra){
-				s.update_fft(ffts);
-				s.draw(dt);
-			}
-			for(Oscilloscope& o : oscilloscopes){
-				o.draw();
-			}
-		});
-
-	}catch(std::runtime_error& e){
+	}catch (std::runtime_error& e){
 		// print error message and terminate with error code 1
 		std::cerr << e.what() << std::endl;
 		return 1;
@@ -343,45 +322,81 @@ int main(int argc, char *argv[]){
 
 inline float normalize_rms(float sum, float length, float amplitude){
 	// rms normalization: divide sum by buffer length times 4^15(max amplitude)
-	return std::sqrt(sum/(length*amplitude*amplitude));
+	return std::sqrt(sum / (length * amplitude * amplitude));
 }
 
-//Input::Ptr make_input(const Module_Config::Input& i){
-//// defines how many samples are read from the buffer during each loop iteration
-//// this number has to be even in stereo mode
-//const int SAMPLES = 220;
-//
-//	// audio source configuration
-//	switch (i.source){
-//#ifdef WITH_PULSE
-//	case Module_Config::Source::PULSE:
-//		return ::make_unique<Pulse>(i.device, i.f_sample, SAMPLES, i.stereo);
-//#endif
-//	default:
-//		return ::make_unique<Fifo>(i.file, SAMPLES);
-//	}
-//}
+Input::Ptr make_input(const Module_Config::Input& i, Buffers::Ptr& buffers){
+
+	// audio source configuration
+	switch (i.source){
+#ifdef WITH_PULSE
+		case Module_Config::Source::PULSE:
+			return ::make_unique<Pulse_Async>(buffers);
+#endif
+		default:
+			return ::make_unique<Fifo>(buffers);
+	}
+}
+
+void configure_input(const Config& config, Input::Ptr& input, Buffers::Ptr& buffers, std::vector<FFT>& ffts){
+	// check if input configuration has changed
+	if(config.old_input == config.input){
+		return;
+	}
+
+	if(config.old_input.source == config.input.source){
+		// stop stream
+		input->stop_stream();
+	}else{
+		// create new stream using different audio API
+		input.reset(nullptr);
+	}
+
+	{
+		// start stream after releasing the lock
+		std::lock_guard<std::mutex> lock(buffers->mut);
+		// create new buffers/ffts
+		if(config.input.stereo && buffers->bufs.size() < 2){
+			buffers->bufs.emplace_back(config.buf_size);
+			ffts.emplace_back(config.fft.size);
+		}
+		// destroy buffers/ffts
+		if(!config.input.stereo && buffers->bufs.size() > 1){
+			buffers->bufs.pop_back();
+			ffts.pop_back();
+		}
+		std::cout << "Input Buffers: " << buffers->bufs.size() << std::endl;
+	}
+
+	if(config.old_input.source != config.input.source){
+		// create new audio stream
+		input = make_input(config.input, buffers);
+	}
+
+	input->start_stream(config.input);
+
+}
 
 std::string generate_title(const Config& config){
 	std::stringstream title;
 	title << "GLMViz:";
-	if (config.spectra.size() > 0){
+	if(config.spectra.size() > 0){
 		title << " Spectrum (f_st=" << config.spec_default.data_offset * config.fft.d_freq << "Hz, \u0394f="
-			<< config.spec_default.output_size * config.fft.d_freq << "Hz)";
+			  << config.spec_default.output_size * config.fft.d_freq << "Hz)";
 	}
-	if (config.oscilloscopes.size() > 0){
+	if(config.oscilloscopes.size() > 0){
 		title << " Oscilloscope (dur=" << config.duration << "ms)";
 	}
 	return title.str();
 }
 
-template <typename R_vector, typename C_vector>
+template<typename R_vector, typename C_vector>
 void update_render_configs(R_vector& renderer, C_vector& configs){
-	for(unsigned i = 0; i < configs.size(); i++){
+	for (unsigned i = 0; i < configs.size(); i++){
 		try{
 			//reconfigure renderer
 			renderer.at(i).configure(configs[i]);
-		}catch(std::out_of_range& e){
+		}catch (std::out_of_range& e){
 			//make new renderer
 			renderer.emplace_back(configs[i], i);
 		}

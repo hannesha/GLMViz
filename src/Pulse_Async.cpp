@@ -142,11 +142,11 @@ void Pulse_Async::stop_stream(){
 void Pulse_Async::start_stream(const Module_Config::Input& config){
 	PA::Lock lock(mainloop);
 
-	pa_sample_spec sample_spec = {
-			format : PA_SAMPLE_S16LE,
-			rate :  (uint32_t) config.f_sample,
-			channels : (uint8_t) (config.stereo ? 2 : 1)
-	};
+	pa_sample_spec sample_spec = {};
+	sample_spec.format = PA_SAMPLE_S16LE;
+	sample_spec.rate =  (uint32_t) config.f_sample;
+	sample_spec.channels = (uint8_t) (config.stereo ? 2 : 1);
+
 
 
 	stream = pa_stream_new(context, "GLMViz input", &sample_spec, nullptr);

@@ -57,27 +57,6 @@ std::unique_ptr<T> make_unique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-// input thread wrapper
-class Input_thread{
-	public:
-		// stereo constructor
-		template <typename Buf> Input_thread(Input::Ptr&& i, std::vector<Buf>& buffers):
-			running(true),
-			input(std::move(i)),
-			th_input([&]{
-				while(running){
-					input->read(buffers);
-				};
-			})
-		{};
-
-		~Input_thread(){ running = false; th_input.join(); };
-
-	private:
-		std::atomic<bool> running;
-		Input::Ptr input;
-		std::thread th_input;
-};
 class Config_Monitor{
 	public:
 		Config_Monitor(const std::string& file, std::atomic<bool>& reload):

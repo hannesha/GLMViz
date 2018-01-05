@@ -33,9 +33,9 @@ namespace Module_Config {
 		long long f_sample = 44100;
 		long long latency = 1100; // f_sample * s_latency(0.025 s)
 
-		inline bool operator!=(const Input& rhs) const{
+		inline bool operator==(const Input& rhs) const{
 			return std::tie(source, stereo, f_sample)
-				!= std::tie(rhs.source, rhs.stereo, rhs.f_sample);
+				== std::tie(rhs.source, rhs.stereo, rhs.f_sample);
 		}
 	};
 

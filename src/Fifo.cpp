@@ -20,47 +20,69 @@
 #include "Fifo.hpp"
 
 #include <stdexcept>
-#include <thread>
 #include <chrono>
 
-Fifo::Fifo(const std::string& file_name, const size_t nsamples):buf(new int16_t[nsamples]){
-	samples = nsamples;
-	file.open(file_name, std::ifstream::in | std::ifstream::binary);
+Fifo::~Fifo(){
+	stop_stream();
+};
 
-	if(!file.is_open()) throw std::runtime_error("Unable to open FIFO file: " + file_name + " !");
+void Fifo::stop_stream(){
+	stream.reset(nullptr);
 }
 
-bool Fifo::is_open() const {
-	return file.is_open();
+void Fifo::start_stream(const Module_Config::Input& input_config){
+	stop_stream();
+
+	stream.reset(new fifo_stream(buffers, input_config.file, input_config.latency));
 }
+
+Fifo::fifo_stream::fifo_stream(Buffers::Ptr& buffs, const std::string& filename, const size_t buff_len) :
+		running(true),
+		pre_buffer(new int16_t[buff_len]),
+		buffer_length(buff_len),
+		buffers(buffs){
+	file.open(filename, std::ifstream::in | std::ifstream::binary);
+
+	if(!file.is_open()) throw std::runtime_error("Unable to open FIFO file: " + filename + " !");
+
+	thread = std::thread([&]{
+		while (running){
+			read();
+		};
+	});
+}
+Fifo::fifo_stream::~fifo_stream(){
+	running = false;
+	thread.join();
+};
 
 template<typename T>
 inline T clamp(const T n, const T min, const T max){
 	return std::max(min, std::min(n, max));
 }
 
-void Fifo::read(Buffer<int16_t>& buffer) const{
-	size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
-
-	buffer.write(buf.get(), s_read/2);
-	int diff = samples - s_read;
-	delay += diff/4;
-	delay = clamp(delay, DELAY_MIN, DELAY_MAX);
-	std::this_thread::sleep_for(std::chrono::microseconds(delay));
+// internal read function
+template<typename T>
+static void i_read(std::vector<Buffer<T>>& buffers, T buf[], size_t size){
+	size = size / 2;
+	if(buffers.size() > 1){
+		buffers[0].write_offset(buf, size, 2, 0);
+		buffers[1].write_offset(buf, size, 2, 1);
+	}else{
+		buffers[0].write(buf, size);
+	}
 }
 
-void Fifo::read(std::vector<Buffer<int16_t>>& buffers) const{
-	if(buffers.size() > 1){
-		size_t s_read = file.readsome(reinterpret_cast<char *>(buf.get()), samples * sizeof(int16_t));
+void Fifo::fifo_stream::read(){
+	long s_read = file.readsome(reinterpret_cast<char*>(pre_buffer.get()), buffer_length * sizeof(int16_t));
 
-		buffers[0].write_offset(buf.get(), s_read/2, 2, 0);
-		buffers[1].write_offset(buf.get(), s_read/2, 2, 1);
-
-		int diff = samples - s_read;
-		delay += diff/8;
-		delay = clamp(delay, DELAY_MIN, DELAY_MAX*2);
-		std::this_thread::sleep_for(std::chrono::microseconds(delay));
-	}else{
-		read(buffers[0]);
+	if(s_read > 0){
+		std::lock_guard<std::mutex> lock(buffers->mut);
+		i_read(buffers->bufs, pre_buffer.get(), s_read);
 	}
+
+	int diff = buffer_length - s_read;
+	delay += diff / 4;
+	delay = clamp(delay, DELAY_MIN, DELAY_MAX);
+	std::this_thread::sleep_for(std::chrono::microseconds(delay));
 }

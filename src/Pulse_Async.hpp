@@ -19,24 +19,22 @@
 
 #pragma once
 
-#include "Buffer.hpp"
-#include "Module_Config.hpp"
-#include <string>
+#include "Input.hpp"
 #include <pulse/pulseaudio.h>
 
 #ifdef WITH_PULSE
 #pragma message("Pulse support enabled")
 #endif
 
-class Pulse_Async{
+class Pulse_Async : public Input{
 public:
 	explicit Pulse_Async(Buffers::Ptr&);
 
-	~Pulse_Async();
+	~Pulse_Async() override;
 
-	void start_stream(const Module_Config::Input&);
+	void start_stream(const Module_Config::Input&) override;
 
-	void stop_stream();
+	void stop_stream() override;
 
 private:
 	static void state_cb(pa_context*, void*);
