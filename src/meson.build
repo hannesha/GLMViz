@@ -22,11 +22,10 @@ src = ['Buffer.cpp', 'Config.cpp', 'Config_Monitor.cpp', 'FFT.cpp', 'Fifo.cpp', 
 add_project_arguments('-fopenmp-simd', language: 'cpp')
 
 opt_pulse = dependency('libpulse', required: false)
-opt_pulse_simple = dependency('libpulse-simple', required: false)
 
-if opt_pulse.found() and opt_pulse_simple.found()
-	src += 'Pulse.cpp'
-	deps += [opt_pulse, opt_pulse_simple]
+if opt_pulse.found()
+	src += 'Pulse_Async.cpp'
+	deps += [opt_pulse]
 	add_project_arguments('-DWITH_PULSE', language : 'cpp')
 endif
 

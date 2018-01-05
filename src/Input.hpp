@@ -21,11 +21,13 @@
 
 #include "Buffer.hpp"
 #include <memory>
+#include "Module_Config.hpp"
 
 class Input {
 	public:
 		typedef std::unique_ptr<Input> Ptr;
+
 		virtual ~Input() {};
-		virtual bool is_open() const = 0;
-		virtual void read(std::vector<Buffer<int16_t>>&) const = 0;
+		virtual void start_stream(const Module_Config::Input&) = 0;
+		virtual void stop_stream() = 0;
 };

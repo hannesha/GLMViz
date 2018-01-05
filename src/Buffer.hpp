@@ -22,6 +22,7 @@
 #include <vector>
 #include <cstdint>
 #include <mutex>
+#include <memory>
 
 template<typename T>
 class Buffer {
@@ -49,6 +50,14 @@ class Buffer {
 		std::vector<T> ibuf; // intermediate buffer for interleaved writes
 		void i_write(T buf[], const size_t);
 		void i_write(const std::vector<T>&, const size_t);
+};
+
+struct Buffers{
+	using Ptr = std::shared_ptr<Buffers>;
+	std::vector<Buffer<int16_t>> bufs;
+	std::mutex mut;
+
+	Buffers():bufs(), mut(){};
 };
 
 template class Buffer<int16_t>;

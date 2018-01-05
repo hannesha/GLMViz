@@ -17,38 +17,37 @@
  *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <pulse/pulseaudio.h>
-#include <pulse/simple.h>
+#pragma once
 
-#include <string>
-
-#include "Buffer.hpp"
 #include "Input.hpp"
+#include <pulse/pulseaudio.h>
 
 #ifdef WITH_PULSE
 #pragma message("Pulse support enabled")
 #endif
 
-class Pulse : public Input{
-	public:
-		Pulse(const std::string&, const size_t, const size_t, const bool);
-		~Pulse();
+class Pulse_Async : public Input{
+public:
+	explicit Pulse_Async(Buffers::Ptr&);
 
-		bool is_open() const;
-		void read(Buffer<int16_t>&) const;
-		void read(std::vector<Buffer<int16_t>>&) const;
+	~Pulse_Async() override;
 
-		static std::string get_default_sink();
-		struct usr_data{
-			std::string* device;
-			pa_mainloop* mainloop;
-		};
-	private:
-		size_t samples;
-		mutable std::unique_ptr<int16_t[]> buf;
+	void start_stream(const Module_Config::Input&) override;
 
-		static void info_cb(pa_context*, const pa_server_info*, void*);
-		static void state_cb(pa_context* , void*);
+	void stop_stream() override;
 
-		pa_simple *stream;
+private:
+	static void state_cb(pa_context*, void*);
+
+	static void info_cb(pa_context*, const pa_server_info*, void*);
+
+	static void stream_state_cb(pa_stream*, void*);
+
+	static void stream_read_cb(pa_stream*, size_t, void*);
+
+	std::string device;
+	pa_threaded_mainloop* mainloop;
+	pa_context* context;
+	Buffers::Ptr p_buffers;
+	pa_stream* stream;
 };
