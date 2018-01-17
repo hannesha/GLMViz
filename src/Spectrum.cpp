@@ -106,10 +106,6 @@ void Spectrum::resize_x_buffer(const size_t size){
 
 	//b_x.bind();
 	//glBufferData(GL_ARRAY_BUFFER, x_data.size() * sizeof(float), &x_data[2], GL_STATIC_DRAW);
-	GL::Program& sh = sh_bars[bar_shader_id];
-	sh();
-	GLint i_length = sh.get_uniform("length_1");
-	glUniform1f(i_length, 1./size);
 }
 
 void Spectrum::update_fft(FFT& fft){
@@ -134,20 +130,24 @@ void Spectrum::resize_fft_buffer(const size_t size){
 void Spectrum::configure(const Module_Config::Spectrum& scfg){
 	//const Config::Spectrum& scfg = cfg.spectra[id];
 	bar_shader_id = scfg.rainbow;
-	sh_bars[bar_shader_id].use();
+	GL::Program& sh = sh_bars[bar_shader_id];
+	sh();
 	// Post compute specific uniforms
-	GLint i_width = sh_bars[bar_shader_id].get_uniform("width");
+	GLint i_width = sh.get_uniform("width");
 	glUniform1f(i_width, scfg.bar_width/(float)scfg.output_size);
 
 	// set bar color gradients
-	GLint i_top_color = sh_bars[bar_shader_id].get_uniform("top_color");
+	GLint i_top_color = sh.get_uniform("top_color");
 	glUniform4fv(i_top_color, 1, scfg.top_color.rgba);
 
-	GLint i_bot_color = sh_bars[bar_shader_id].get_uniform("bot_color");
+	GLint i_bot_color = sh.get_uniform("bot_color");
 	glUniform4fv(i_bot_color, 1, scfg.bot_color.rgba);
 
-	GLint i_gradient = sh_bars[bar_shader_id].get_uniform("gradient");
+	GLint i_gradient = sh.get_uniform("gradient");
 	glUniform1f(i_gradient, scfg.gradient);
+
+	GLint i_length = sh.get_uniform("length_1");
+	glUniform1f(i_length, 1./scfg.output_size);
 
 
 	sh_bars_pre.use();
