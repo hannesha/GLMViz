@@ -11,7 +11,7 @@ pkg_search_module(X11 REQUIRED x11)
 
 find_package(PulseAudio)
 
-option(transparency "Build with transparency support" [ON])
+option(transparency "Build with transparency support" ON)
 if(transparency)
 	Message("Building with transparency support")
 	add_definitions(-DWITH_TRANSPARENCY)
