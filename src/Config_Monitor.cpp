@@ -39,8 +39,8 @@ void monitor(const std::string& file, std::atomic<bool>& running, std::atomic<bo
 			int ret = poll(&pfd, 1, timeout);
 			if(ret > 0){
 				struct inotify_event e;
-				read(fd, reinterpret_cast<char*>(&e), sizeof(struct inotify_event));
-				if(e.wd == wd){
+				size_t n_read = read(fd, reinterpret_cast<char*>(&e), sizeof(struct inotify_event));
+				if(n_read && e.wd == wd){
 					// vim edit workaround
 					if(e.mask == IN_IGNORED){
 						// delete ignored watch descriptor
