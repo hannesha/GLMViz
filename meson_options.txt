@@ -1,1 +1,1 @@
-option('transparency', type: 'boolean', value: false)
+option('transparency', type: 'boolean', value: true)

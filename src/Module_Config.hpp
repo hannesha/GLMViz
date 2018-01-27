@@ -40,7 +40,7 @@ namespace Module_Config {
 	};
 
 	struct FFT {
-		long long size = 1<<13;
+		long long size = 1<<12;
 		size_t output_size = size/2+1;
 		float scale = 2.76678e-08;
 		float d_freq = 44100./(float) size;
@@ -71,13 +71,13 @@ namespace Module_Config {
 		float width = 0.01;
 		float sigma = 4;
 		float sigma_coeff = 2;
-		Color color = {211, 38, 46, 1};
+		Color color = {1, 1, 1, 1};
 		Transformation pos;
 	};
 
 	struct Spectrum {
 		int channel = 0;
-		float min_db = -80, max_db = 0;
+		float min_db = -60, max_db = -5;
 		float scale = 2.76678e-08;
 		float slope = 0.5;
 		float offset = 1.0;
@@ -86,17 +86,17 @@ namespace Module_Config {
 		float log_start = 5;
 		float log_enabled = 0;
 
-		Color top_color = {0.91, 0.42, 0.45, 1};
-		Color bot_color = {0.91, 0.42, 0.45, 1};
+		Color top_color = {1, 1, 1, 1};
+		Color bot_color = {1, 1, 1, 1};
 		Color line_color = {0.57, 0.57, 0.57, 1};
 		Transformation pos;
 		float gradient = 1.0;
 		float gravity = 8.0;
-		float bar_width = 0.75;
+		float bar_width = 0.5;
 
 		bool rainbow = false;
 		Color freq_d = {1, 1, 1, 1};
 		Color phase_d = {0, 0, 0, 1};
-		bool dB_lines = true;
+		bool dB_lines = false;
 	};
 }
