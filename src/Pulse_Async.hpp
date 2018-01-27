@@ -22,10 +22,6 @@
 #include "Input.hpp"
 #include <pulse/pulseaudio.h>
 
-#ifdef WITH_PULSE
-#pragma message("Pulse support enabled")
-#endif
-
 class Pulse_Async : public Input{
 public:
 	explicit Pulse_Async(Buffers::Ptr&);
