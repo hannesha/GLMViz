@@ -185,6 +185,7 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 }
 #endif
 
+void print_fps(int&, const int, float&, const float);
 inline float normalize_rms(float, float, float);
 Input::Ptr make_input(const Module_Config::Input&, Buffers::Ptr&);
 void configure_input(const Config&, Input::Ptr&, Buffers::Ptr&, std::vector<FFT>&);
@@ -272,6 +273,9 @@ int main(int argc, char* argv[]){
 		update_render_configs(spectra, config.spectra);
 		update_render_configs(oscilloscopes, config.oscilloscopes);
 
+		float fps_sum = 0;
+		int fps_interval = 0;
+
 		mainloop(config, window,
 				 [&]{
 					 // resize buffers and reconfigure renderer
@@ -291,6 +295,9 @@ int main(int argc, char* argv[]){
 					 set_bg_color(config.bg_color);
 				 },
 				 [&](const float dt){
+					 if(config.show_fps){
+						 print_fps(fps_interval, config.show_fps_interval, fps_sum, dt);
+					 }
 					 // update all locking renderer first
 					 for (unsigned i = 0; i < ffts.size(); i++){
 						 ffts[i].calculate(p_buffers->bufs[i]);
@@ -318,6 +325,17 @@ int main(int argc, char* argv[]){
 	}
 
 	return 0;
+}
+
+void print_fps(int& fps_interval, const int max_count, float& sum, const float dt){
+	if(fps_interval >= max_count){
+		fps_interval = 0;
+
+		std::cout << max_count/sum << " FPS" << std::endl;
+		sum = 0;
+	}
+	fps_interval++;
+	sum += dt;
 }
 
 inline float normalize_rms(float sum, float length, float amplitude){

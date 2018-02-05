@@ -63,6 +63,9 @@ void Config::reload(){
 		cfg.lookupValue("fps", fps);
 		cfg.lookupValue("fft_size", fft.size);
 
+		cfg.lookupValue("show_fps", show_fps);
+		cfg.lookupValue("show_fps_interval", show_fps_interval);
+
 		buf_size = input.f_sample * duration / 1000;
 		fft.output_size = fft.size/2+1;
 		fft.d_freq = (float) input.f_sample / (float) fft.size;

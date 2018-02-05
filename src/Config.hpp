@@ -40,6 +40,9 @@ class Config {
 		int duration = 50;
 		int fps = 60;
 
+		bool show_fps = false;
+		int show_fps_interval = 60;
+
 		long long buf_size = input.f_sample * duration / 1000;
 
 		Module_Config::FFT fft;
