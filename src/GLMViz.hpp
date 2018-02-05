@@ -29,10 +29,14 @@
 // Include basic GL utility headers
 #include "GL_utils.hpp"
 
-#ifndef WITH_TRANSPARENCY
-#include <GLFW/glfw3.h>
-#else
+#if defined WITH_WAYLAND
+#include "Wayland.hpp"
+#include "EGL.hpp"
+#elif defined WITH_GLX
 #include "GLXwindow.hpp"
+#include "Multisampler.hpp"
+#else
+#include <GLFW/glfw3.h>
 #endif
 
 // Include helper files

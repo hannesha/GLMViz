@@ -1,1 +1,2 @@
-option('transparency', type: 'boolean', value: true)
+option('glx', type: 'boolean', value: true)
+option('wayland', type: 'boolean', value: false)

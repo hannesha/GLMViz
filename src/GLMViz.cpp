@@ -18,7 +18,7 @@
  */
 
 #include "GLMViz.hpp"
-#include "Multisampler.hpp"
+
 
 #include <chrono>
 #include <csignal>
@@ -42,72 +42,107 @@ std::string generate_title(const Config&);
 template<typename R_vector, typename C_vector>
 void update_render_configs(R_vector&, C_vector&);
 
-// glfw specific code
-#ifndef WITH_TRANSPARENCY
+#ifdef WITH_WAYLAND
+void shell_ping(void* data, wl_shell_surface* shell_surface, uint32_t serial){
+	wl_shell_surface_pong(shell_surface, serial);
+}
 
-// config reload key handler
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-	if(key == GLFW_KEY_R && action == GLFW_PRESS){
-		config_reload = true;
+void shell_configure(void* data, wl_shell_surface* shell_surface, uint32_t edges, int32_t width, int32_t height){
+	auto* window = reinterpret_cast<Wayland::EGL_window*>(data);
+	wl_egl_window_resize(window->handle, width, height, 0, 0);
+	glViewport(0, 0, width, height);
+	window->width = width;
+	window->height = height;
+}
+
+void shell_popup(void* data, wl_shell_surface* shell_surface){
+}
+
+const wl_shell_surface_listener shell_listeners = {
+		.ping = shell_ping,
+		.configure = shell_configure,
+		.popup_done = shell_popup
+};
+
+volatile bool running = true;
+
+void inthandler(int signal){
+	running = false;
+}
+
+struct Frame_cb_data{
+	wl_callback** frame_cb;
+	std::atomic<bool>* repaint;
+};
+
+void redraw(void* data, wl_callback *callback, uint32_t time){
+	auto* cb_data = reinterpret_cast<Frame_cb_data*>(data);
+
+	wl_callback_destroy(callback);
+	*(cb_data->frame_cb) = nullptr;
+	*(cb_data->repaint) = true;
+}
+
+const wl_callback_listener frame_cb_listeners = {
+		redraw
+};
+
+template<typename Fupdate, typename Fdraw>
+void mainloop(Config& config, std::tuple<Wayland::Surface&, EGL::Surface&, Wayland::Client&> window, Fupdate f_update, Fdraw f_draw){
+	std::signal(SIGINT, inthandler);
+
+	wl_callback* frame_cb;
+
+	std::atomic<bool> redraw(true);
+	Frame_cb_data cb_data;
+	cb_data.repaint = &redraw;
+	cb_data.frame_cb = &frame_cb;
+
+	std::chrono::time_point<std::chrono::steady_clock> t_start;
+	std::chrono::time_point<std::chrono::steady_clock> t_stop = std::chrono::steady_clock::now();
+
+	glEnable(GL_MULTISAMPLE);
+
+	long ret = 1;
+	while (running && ret != -1){
+		t_start = std::chrono::steady_clock::now();
+		float dt = std::chrono::duration<float>(t_start - t_stop).count();
+
+		if(redraw || dt > 0.016){
+			redraw = false;
+
+			if(config_reload){
+				std::cout << "reloading config" << std::endl;
+				config_reload = false;
+				config.reload();
+
+				// generate new title
+				std::string title = generate_title(config);
+				//TODO set shellsurface title
+
+				// update uniforms, resize buffers
+				f_update();
+			}
+
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			// draw
+			f_draw(dt);
+
+			frame_cb = wl_surface_frame(std::get<0>(window).get());
+			wl_callback_add_listener(frame_cb, &frame_cb_listeners, &cb_data);
+
+			std::get<1>(window).swap_buffers();
+			// wait for fps timer
+
+			t_stop = t_start;
+		}
+		ret = std::get<2>(window).dispatch_pending();
+		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps - 100));
 	}
 }
 
-// handle window resizing
-void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-	glViewport(0, 0, width, height);
-}
-
-class glfw_error : public std::runtime_error{
-public :
-	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
-};
-
-// glfw raii wrapper
-class GLFW{
-public:
-	GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
-
-	~GLFW(){ glfwTerminate(); };
-};
-
-// glfw mainloop
-template<typename Fupdate, typename Fdraw>
-void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
-	std::chrono::time_point<std::chrono::steady_clock> t_start;
-	std::chrono::time_point<std::chrono::steady_clock> t_stop;
-	do{
-		if(config_reload){
-			std::cout << "reloading config" << std::endl;
-			config_reload = false;
-			config.reload();
-
-			// generate new title
-			std::string title = generate_title(config);
-			glfwSetWindowTitle(window, title.c_str());
-
-			// update uniforms, resize buffers
-			f_update();
-		}
-
-		t_start = std::chrono::steady_clock::now();
-
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		// draw
-		std::chrono::duration<float> dt = (t_start - t_stop);
-		f_draw(dt.count());
-
-		// Swap buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-
-		// wait for fps timer
-		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps - 100));
-		t_stop = t_start;
-	}while (glfwWindowShouldClose(window) == 0);
-}
-
-#else
+#elif defined WITH_GLX
 // glx mainloop
 bool closing = false;
 template <typename Fupdate, typename Fdraw>
@@ -122,7 +157,7 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 	glEnable(GL_MULTISAMPLE);
 
 	std::chrono::time_point<std::chrono::steady_clock> t_start;
-	std::chrono::time_point<std::chrono::steady_clock> t_stop;
+	std::chrono::time_point<std::chrono::steady_clock> t_stop = std::chrono::steady_clock::now();
 	while(!closing){
 		// handle X events
 		while(XPending(window.display) > 0){
@@ -183,12 +218,75 @@ void mainloop(Config& config, GLXwindow& window, Fupdate f_update, Fdraw f_draw)
 		t_stop = t_start;
 	}
 }
+#else
+// config reload key handler
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+	if(key == GLFW_KEY_R && action == GLFW_PRESS){
+		config_reload = true;
+	}
+}
+
+// handle window resizing
+void framebuffer_size_callback(GLFWwindow* window, int width, int height){
+	glViewport(0, 0, width, height);
+}
+
+class glfw_error : public std::runtime_error{
+public :
+	glfw_error(const char* what_arg) : std::runtime_error(what_arg){};
+};
+
+// glfw raii wrapper
+class GLFW{
+public:
+	GLFW(){ if(!glfwInit()) throw std::runtime_error("GLFW init failed!"); };
+
+	~GLFW(){ glfwTerminate(); };
+};
+
+// glfw mainloop
+template<typename Fupdate, typename Fdraw>
+void mainloop(Config& config, GLFWwindow* window, Fupdate f_update, Fdraw f_draw){
+	std::chrono::time_point<std::chrono::steady_clock> t_start;
+	std::chrono::time_point<std::chrono::steady_clock> t_stop = std::chrono::steady_clock::now();
+	do{
+		if(config_reload){
+			std::cout << "reloading config" << std::endl;
+			config_reload = false;
+			config.reload();
+
+			// generate new title
+			std::string title = generate_title(config);
+			glfwSetWindowTitle(window, title.c_str());
+
+			// update uniforms, resize buffers
+			f_update();
+		}
+
+		t_start = std::chrono::steady_clock::now();
+
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		// draw
+		std::chrono::duration<float> dt = (t_start - t_stop);
+		f_draw(dt.count());
+
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+
+		// wait for fps timer
+		std::this_thread::sleep_until(t_start + std::chrono::microseconds(1000000 / config.fps - 100));
+		t_stop = t_start;
+	}while (glfwWindowShouldClose(window) == 0);
+}
 #endif
 
 void print_fps(int&, const int, float&, const float);
 inline float normalize_rms(float, float, float);
 Input::Ptr make_input(const Module_Config::Input&, Buffers::Ptr&);
 void configure_input(const Config&, Input::Ptr&, Buffers::Ptr&, std::vector<FFT>&);
+void print_fps(int&, const int, float&, const float);
 
 int main(int argc, char* argv[]){
 	try{
@@ -221,8 +319,41 @@ int main(int argc, char* argv[]){
 		// attach SIGUSR1 signal handler
 		std::signal(SIGUSR1, sighandler);
 
-#ifndef WITH_TRANSPARENCY
-		// init GLFW
+#ifdef WITH_WAYLAND
+		Wayland::Client client;
+		Wayland::Surface surface(wl_compositor_create_surface(client.resources.compositor));
+
+		Wayland::Shell_surface shell_surface(wl_shell_get_shell_surface(client.resources.shell, surface.get()));
+		wl_shell_surface_set_toplevel(shell_surface.get());
+
+		EGL::Context context(client.display.get());
+		std::cout << (eglGetError() == EGL_SUCCESS) << std::endl;
+
+		Wayland::EGL_window egl_window(surface, config.w_height, config.w_width);
+
+		wl_shell_surface_add_listener(shell_surface.get(), &shell_listeners, &egl_window);
+
+		EGL::Surface egl_surface = context.make_surface(egl_window.get());
+		context.makeCurrent(egl_surface, egl_surface);
+
+		auto window = std::tie(surface, egl_surface, client);
+#elif defined WITH_GLX
+		GLXwindow window(config.w_width, config.w_height);
+
+		{
+			std::string title = generate_title(config);
+			window.set_title(title);
+		}
+
+		// use adaptive vsync
+		bool mesa_swap_control = GLXwindow::hasExt(window.glx_exts, "GLX_MESA_swap_control");
+		if(mesa_swap_control){
+			using glXSwapIntervalMESAProc = int (*)(int interval);
+			glXSwapIntervalMESAProc glXSwapIntervalMESA = nullptr;
+			glXSwapIntervalMESA = (glXSwapIntervalMESAProc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+			glXSwapIntervalMESA(-1);
+		}
+#else
 		GLFW glfw;
 
 		glfwWindowHint(GLFW_SAMPLES, config.w_aa);
@@ -244,22 +375,6 @@ int main(int argc, char* argv[]){
 
 		glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 		glfwSetKeyCallback(window, key_callback);
-#else
-		GLXwindow window(config.w_width, config.w_height);
-
-		{
-			std::string title = generate_title(config);
-			window.set_title(title);
-		}
-
-		// use adaptive vsync
-		bool mesa_swap_control = GLXwindow::hasExt(window.glx_exts, "GLX_MESA_swap_control");
-		if(mesa_swap_control){
-			using glXSwapIntervalMESAProc = int (*)(int interval);
-			glXSwapIntervalMESAProc glXSwapIntervalMESA = nullptr;
-			glXSwapIntervalMESA = (glXSwapIntervalMESAProc)glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
-			glXSwapIntervalMESA(-1);
-		}
 #endif
 		set_bg_color(config.bg_color);
 

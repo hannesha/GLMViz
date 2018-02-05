@@ -29,10 +29,16 @@ if opt_pulse.found()
 	add_project_arguments('-DWITH_PULSE', language : 'cpp')
 endif
 
-if get_option('transparency') 
+if get_option('wayland')
+	src += ['Wayland.cpp', 'EGL.cpp']
+	deps += dependency('wayland-client')
+	deps += dependency('wayland-egl')
+	deps += dependency('egl')
+	add_project_arguments('-DWITH_WAYLAND', language: 'cpp')
+elif get_option('glx') 
 	src += 'GLXwindow.cpp'
 	deps += dependency('x11')
-	add_project_arguments('-DWITH_TRANSPARENCY', language: 'cpp')
+	add_project_arguments('-DWITH_GLX', language: 'cpp')
 else
 	deps += dependency('glfw3')
 endif
