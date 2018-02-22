@@ -66,7 +66,8 @@ void FFT::resize(const size_t nsize){
 template<typename T>
 void FFT::calculate(Buffer<T>& buffer){
 	// find smallest value for window function
-	size_t window_size = std::min(size, buffer.size);
+	unsigned window_size = std::min(size, buffer.size);
+	unsigned buffer_start = std::max(0u, static_cast<unsigned>(buffer.size) - window_size);
 
 	if (window.size() != window_size){
 		calculate_window(window_size);
@@ -79,7 +80,7 @@ void FFT::calculate(Buffer<T>& buffer){
 		unsigned int i;
 		for(i = 0; i < window_size; i++){
 			// apply hann window with corrected factors (a * 2)
-			input[i] = static_cast<float>(buffer.v_buffer[i]) * window[i];
+			input[i] = static_cast<float>(buffer.v_buffer[i+buffer_start]) * window[i];
 		}
 
 		lock.unlock();
