@@ -20,6 +20,7 @@
 #pragma once
 
 #include "GL_utils.hpp"
+#include <stdexcept>
 
 namespace GL{
 	class Multisampler{
@@ -50,12 +51,16 @@ namespace GL{
 				if(samples > 0){
 					tex_fb.bind(GL_TEXTURE_2D_MULTISAMPLE);
 					glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, nsamples, GL_RGBA, w, h, GL_TRUE);
+					if(glGetError()){
+						throw std::invalid_argument("Wrong number of Samples");
+					}
 					Texture::unbind(GL_TEXTURE_2D_MULTISAMPLE);
 				}else{
 					tex_fb.bind(GL_TEXTURE_2D);
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_BYTE, nullptr);
 					Texture::unbind(GL_TEXTURE_2D);
 				}
+				samples = nsamples;
 				};
 
 			FBO fbms;
