@@ -61,21 +61,21 @@ void Config::reload(){
 
 		cfg.lookupValue("duration", duration);
 		cfg.lookupValue("fps", fps);
-		cfg.lookupValue("fft_size", fft.size);
 
 		cfg.lookupValue("show_fps", show_fps);
 		cfg.lookupValue("show_fps_interval", show_fps_interval);
 
-		buf_size = input.f_sample * duration / 1000;
+		cfg.lookupValue("fft_size", fft.size);
+		buf_size = Util::buffer_size(input.f_sample, static_cast<float>(duration) / 1000);
 		fft.output_size = fft.size/2+1;
-		fft.d_freq = (float) input.f_sample / (float) fft.size;
+		fft.d_freq = Util::fft_df<float>(input.f_sample, fft.size);
 
 		parse_color(bg_color, "bg_color", cfg.getRoot());
 
 		// normalization value for the fft output
 		// calculate effective fft input data size
 		float isize = std::min(buf_size, fft.size)/2+1;
-		fft.scale = 1.0f/(isize*32768.0f);
+		fft.scale = Util::fft_scale(isize, 32768.0f);
 
 		try{
 			parse_oscilloscope(osc_default, cfg.lookup("Osc"));
@@ -210,14 +210,9 @@ void Config::parse_spectrum(Module_Config::Spectrum& s, libconfig::Setting& cfg,
 	cfg.lookupValue("log_start", s.log_start);
 	cfg.lookupValue("log_enabled", s.log_enabled);
 
-	cfg.lookupValue("min_db", s.min_db);
-	cfg.lookupValue("max_db", s.max_db);
-
-	if(s.max_db > s.min_db){
-		float max_n = s.max_db * 0.05;
-		float min_n = s.min_db * 0.05;
-		s.slope = -2.0 / (min_n - max_n);
-		s.offset = 1.0 - s.slope * max_n;
+	bool conf_db = cfg.lookupValue("min_db", s.min_db) | cfg.lookupValue("max_db", s.max_db);
+	if(conf_db){
+		s.calculate_slope_offset(s.max_db, s.min_db);
 	}
 
 	parse_color(s.top_color, "top_color", cfg);

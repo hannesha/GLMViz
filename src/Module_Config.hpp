@@ -21,6 +21,7 @@
 
 #include <string>
 #include <tuple>
+#include "Utils.hpp"
 
 namespace Module_Config {
 	enum class Source {FIFO, PULSE};
@@ -98,5 +99,22 @@ namespace Module_Config {
 		Color freq_d = {1, 1, 1, 1};
 		Color phase_d = {0, 0, 0, 1};
 		bool dB_lines = false;
+
+		void calculate_slope_offset(const float max_db, const float min_db){
+			constexpr float norm = 0.05; // 1/20
+			constexpr float out_max = 1.0;
+			constexpr float out_min = -1.0;
+
+			float min = std::min(min_db, max_db) * norm;
+			float max = std::max(min_db, max_db) * norm;
+
+			if(min == max){
+				// avoid div by 0
+				max = max + norm;
+			}
+
+			slope = Util::slope(min, max, out_min, out_max);
+			offset = Util::offset(min, out_min, slope);
+		}
 	};
 }
