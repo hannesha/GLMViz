@@ -36,7 +36,6 @@
 #endif
 
 // Include helper files
-#include "Program.hpp"
 #include "FFT.hpp"
 #include "Input.hpp"
 #include "Fifo.hpp"

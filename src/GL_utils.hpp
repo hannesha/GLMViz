@@ -1,136 +1,253 @@
-/*
- *	Copyright (C) 2016  Hannes Haberl
- *
- *	This file is part of GLMViz.
- *
- *	GLMViz is free software: you can redistribute it and/or modify
- *	it under the terms of the GNU General Public License as published by
- *	the Free Software Foundation, either version 3 of the License, or
- *	(at your option) any later version.
- *
- *	GLMViz is distributed in the hope that it will be useful,
- *	but WITHOUT ANY WARRANTY; without even the implied warranty of
- *	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *	GNU General Public License for more details.
- *
- *	You should have received a copy of the GNU General Public License
- *	along with GLMViz.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 #pragma once
 
+#ifndef USE_GLEW
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glcorearb.h>
+#else
+#include <GL/glew.h>
+#endif
 
-#ifndef NDEBUG
 #include <vector>
-#include <string>
-#include <iostream>
-#endif
+
+/*!
+	\file
+
+	OpenGL RAII wrappers and convenience functions.
+*/
+
+#define GLDEBUG_S(x) #x
+#define GLDEBUG_S_(x) GLDEBUG_S(x)
+#define GLDEBUGSTRING "GL: err " __FILE__ ", line " GLDEBUG_S_(__LINE__)
+#define GLDEBUG GL::get_error(GLDEBUGSTRING, __PRETTY_FUNCTION__)
+
 namespace GL {
-	// VBO RAII wrapper
-	class Buffer{
-		public:
-			inline Buffer() { glGenBuffers(1, &id); };
-			inline ~Buffer() { glDeleteBuffers(1, &id); };
-			// disable copying
-			Buffer(const Buffer&) = delete;
-			Buffer(Buffer&& b):id(b.id){ b.id = 0; };
-			Buffer& operator=(Buffer&&) = default;
+//! Buffer RAII wrapper
+struct Buffer {
+	inline Buffer() noexcept { glGenBuffers(1, &id); };
+	inline ~Buffer() noexcept { glDeleteBuffers(1, &id); };
+	//! move ctor
+	Buffer(Buffer&& b) noexcept: id(b.id) { b.id = 0; };
 
-			inline void bind() { glBindBuffer(GL_ARRAY_BUFFER, id); };
-			inline void bind(GLenum target) { glBindBuffer(target, id); };
-			inline void operator()(){ bind(); };
-			inline void operator()(GLenum target){ bind(target); };
-			inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
+	Buffer(const Buffer&) = delete; //!< disable copying
+	Buffer& operator=(Buffer&&) = default; //!< move assignment
 
-			static inline void unbind() { glBindBuffer(GL_ARRAY_BUFFER, 0); };
-			static inline void unbind(GLenum target) { glBindBuffer(target, 0); };
-			GLuint id;
-	};
+	/*!
+		Binds the buffer to the GL_ARRAY_BUFFER target.
+	*/
+	inline void bind() const noexcept { glBindBuffer(GL_ARRAY_BUFFER, id); };
 
-	// VAO RAII wrapper
-	class VAO{
-		public:
-			inline VAO() { glGenVertexArrays(1, &id); };
-			inline ~VAO() { glDeleteVertexArrays(1, &id); };
-			// disable copying
-			VAO(const VAO&) = delete;
-			VAO(VAO&& v):id(v.id){ v.id = 0; };
-			VAO& operator=(VAO&&) = default;
+	inline void tfbind() { glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, id); };
 
-			inline void bind() { glBindVertexArray(id); };
-			static inline void unbind() { glBindVertexArray(0); };
-			inline void operator()(){ bind(); };
-			GLuint id;
-	};
+	/*!
+		Binds the buffer to the GL_ARRAY_BUFFER target.
+	*/
+	inline void operator()() const noexcept { bind(); };
 
-	// Shader RAII wrapper
-	class Shader {
-		public:
-			inline Shader(const char* code, GLuint type){
-				id = glCreateShader(type);
-				glShaderSource(id, 1, &code, nullptr);
-				glCompileShader(id);
+	/*!
+		Binds the buffer to the specified target.
+		\param target the target to bind to
+	*/
+	inline void bind(GLenum target) const noexcept { glBindBuffer(target, id); };
+	/*!
+		Binds the buffer to the specified target.
+		\param target the target to bind to
+	*/
+	inline void operator()(GLenum target) const noexcept { bind(target); };
 
-#ifndef NDEBUG
-				GLint status;
-				glGetShaderiv(id, GL_COMPILE_STATUS, &status);
-				if(status == GL_FALSE){
-					GLint length;
-					glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+	/*!
+		Binds the default buffer to the GL_ARRAY_BUFFER target.
+	*/
+	static inline void unbind() noexcept { glBindBuffer(GL_ARRAY_BUFFER, 0); };
 
-					std::vector<GLchar> log(length);
-					glGetShaderInfoLog(id, length, &length, log.data());
+	/*!
+		Binds the default buffer to the specified target.
+		\param target the target to bind to
+	*/
+	static inline void unbind(GLenum target) noexcept { glBindBuffer(target, 0); };
 
-					std::string err(log.begin(), log.end());
-					std::cout << err << std::endl;
-				}
-#endif
-			};
-			inline ~Shader(){ glDeleteShader(id); };
-			// disable copying
-			Shader(const Shader&) = delete;
-			Shader(Shader&& s):id(s.id){ s.id = 0; };
-			Shader& operator=(Shader&&) = default;
+	GLuint id; //!< buffer handle
+};
 
-			GLuint id;
-	};
+//! VAO RAII wrapper
+struct VAO {
+	inline VAO() noexcept { glGenVertexArrays(1, &id); };
+	inline ~VAO() noexcept { glDeleteVertexArrays(1, &id); };
+	//! move ctor
+	VAO(VAO&& v) noexcept: id(v.id) { v.id = 0; };
 
-	// Texture RAII wrapper
-	class Texture{
-		public:
-			inline Texture() { glGenTextures(1, &id); };
-			inline ~Texture() { glDeleteTextures(1, &id); };
-			// disable copying
-			Texture(const Texture&) = delete;
-			// move constructor
-			Texture(Texture&& t):id(t.id){ t.id = 0; };
-			Texture& operator=(Texture&&) = default;
+	VAO(const VAO&) = delete; //!< disable copying
+	VAO& operator=(VAO&&) = default; //!< move assignment
 
-			inline void bind(GLenum target) { glBindTexture(target, id); };
-			static inline void unbind(GLenum target) { glBindTexture(target, 0); };
-			inline void operator()(GLenum target){ bind(target); };
-			GLuint id;
-	};
+	inline void bind() const noexcept { glBindVertexArray(id); };
+	//! bind VAO
+	inline void operator()() const noexcept { bind(); };
 
-	// Framebuffer RAII wrapper
-	class FBO{
-		public:
-			inline FBO() { glGenFramebuffers(1, &id); };
-			inline ~FBO() { glDeleteFramebuffers(1, &id); };
-			// disable copying
-			FBO(const FBO&) = delete;
-			// move constructor
-			FBO(FBO&& t):id(t.id){ t.id = 0; };
-			FBO& operator=(FBO&&) = default;
+	//! unbind VAO
+	static inline void unbind() noexcept { glBindVertexArray(0); };
 
-			inline void bind(GLenum target) { glBindFramebuffer(target, id); };
-			inline void bind() { bind(GL_FRAMEBUFFER); };
-			static inline void unbind(GLenum target) { glBindFramebuffer(target, 0); };
-			static inline void unbind() { unbind(GL_FRAMEBUFFER); };
-			inline void operator()(GLenum target){ bind(target); };
-			inline void operator()(){ bind(); };
-			GLuint id;
-	};
+	GLuint id; //!< VAO handle
+};
+
+//! Shader RAII wrapper
+struct Shader {
+public:
+	Shader(const char* code, GLuint type);
+	inline ~Shader() noexcept { glDeleteShader(id); };
+	//! move ctor
+	Shader(Shader&& s) noexcept: id(s.id) { s.id = 0; };
+
+	Shader(const Shader&) = delete; //!< disable copying
+	Shader& operator=(Shader&&) = default; //!< move assignment
+
+	GLuint id; //!< handle
+};
+
+//! Shader Program RAII wrapper
+class Program {
+public:
+	Program();
+	inline ~Program() noexcept { glDeleteProgram(id); };
+	//! move ctor
+	Program(Program&& p): id(p.id) { p.id = 0; };
+
+	Program(const Program&) = delete; //!< disable copying
+	Program& operator=(Program&&) = default; //!< move assignment
+
+	/*!
+		Link the specified shaders to the Program.
+		\param shs shaders to link
+	*/
+	template<typename ... T> void link(T& ... shs) {
+		attach(shs...);
+		glLinkProgram(id);
+		detach(shs...);
+		check_link_status();
+	}
+
+	template<typename ... T> void link_TF(const size_t n, const char** varyings, T&... shs){
+		glTransformFeedbackVaryings(id, n, varyings, GL_INTERLEAVED_ATTRIBS);
+		link(shs...);
+	}
+
+	/*!
+		Link the specified shaders to the Program.
+		\param shs shaders to link
+	*/
+	void link_vector(const std::vector<Shader>& shs) {
+		for(auto& sh : shs) {
+			attach(sh);
+		}
+
+		glLinkProgram(id);
+
+		for(auto& sh : shs) {
+			detach(sh);
+		}
+
+		check_link_status();
+	}
+
+	/*!
+		Check if the Program is linked correctly. Throws std::invalid_argument on failure.
+	*/
+	void check_link_status();
+
+	/*!
+		Attach multiple shaders to program.
+		\param shs shaders to attach
+	*/
+	template<typename ... T> inline void attach(const Shader& sh, T& ... shs) { attach(sh); attach(shs...); };
+	/*!
+		Attach specified shader to program.
+		\param sh shader to attach
+	*/
+	inline void attach(const Shader& sh) { glAttachShader(id, sh.id); };
+
+	/*!
+		Detach multiple shaders from the program.
+		\param shs shaders to detach
+	*/
+	template<typename ... T> inline void detach(const Shader& sh, T& ... shs) { detach(sh); detach(shs...); };
+	/*!
+		Detach specified shader from the program.
+		\param sh shader to detach
+	*/
+	inline void detach(const Shader& sh) { glDetachShader(id, sh.id); };
+
+	//! use shader
+	inline void use() const noexcept { glUseProgram(id); };
+	//! use shader
+	inline void operator()() const noexcept { use(); };
+
+	/*!
+		Get program id.
+		\return Program handle
+	*/
+	inline GLuint get_id() const noexcept { return id; };
+
+	/*!
+		Get the uniform location of the specified uniform name.
+		\param name Uniform name
+		\return Uniform location
+	*/
+	inline GLint get_uniform(const char* name) const { return glGetUniformLocation(id, name); };
+	/*!
+		Get the attribute location of the specified attribute name.
+		\param name Attribute name
+		\return Attribute location
+	*/
+	inline GLint get_attrib(const char* name) const { return glGetAttribLocation(id, name); };
+
+private:
+	GLuint id; //!< Program handle
+};
+
+//! Texture RAII wrapper
+struct Texture {
+	inline Texture() noexcept { glGenTextures(1, &id); };
+	inline ~Texture() noexcept { glDeleteTextures(1, &id); };
+	//! move ctor
+	Texture(Texture&& t) noexcept: id(t.id) { t.id = 0; };
+
+	Texture(const Texture&) = delete; //!< disable copying
+	Texture& operator=(Texture&&) = default; //!< move assignment
+
+	inline void bind(GLenum target) const noexcept { glBindTexture(target, id); };
+	inline void operator()(GLenum target) const noexcept { bind(target); };
+
+	static inline void unbind(GLenum target) noexcept { glBindTexture(target, 0); };
+
+	GLuint id; //!< handle
+};
+
+//! Framebuffer RAII wrapper
+struct FBO {
+	inline FBO() noexcept { glGenFramebuffers(1, &id); };
+	inline ~FBO() noexcept { glDeleteFramebuffers(1, &id); };
+	//! move ctor
+	FBO(FBO&& t) noexcept: id(t.id) { t.id = 0; };
+
+	FBO(const FBO&) = delete; //!< disable copying
+	FBO& operator=(FBO&&) = default; //!< move assignment
+
+	inline void bind() const noexcept { bind(GL_FRAMEBUFFER); };
+	inline void operator()() const noexcept { bind(); };
+
+	inline void bind(GLenum target) const noexcept { glBindFramebuffer(target, id); };
+	inline void operator()(GLenum target) const noexcept { bind(target); };
+
+	static inline void unbind() noexcept { unbind(GL_FRAMEBUFFER); };
+	static inline void unbind(GLenum target) noexcept { glBindFramebuffer(target, 0); };
+
+	GLuint id; //!< handle
+};
+
+/*!
+	Print error message if an opengl error occured.
+	\param str error message that gets printed
+*/
+void get_error(const char*, const char* function = nullptr);
+
+//! Initialize GL context
+void init();
 }

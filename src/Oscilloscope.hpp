@@ -21,7 +21,7 @@
 
 #include "Buffer.hpp"
 #include "Module_Config.hpp"
-#include "Program.hpp"
+#include "GL_utils.hpp"
 
 class Oscilloscope {
 	public:

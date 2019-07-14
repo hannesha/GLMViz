@@ -21,7 +21,7 @@
 
 #include "FFT.hpp"
 #include "Module_Config.hpp"
-#include "Program.hpp"
+#include "GL_utils.hpp"
 #include <memory>
 #include <array>
 

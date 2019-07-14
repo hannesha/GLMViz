@@ -49,8 +49,11 @@ namespace GL{
 
 			void resize(const int nsamples, const int w, const int h){
 				if(samples > 0){
+GLDEBUG;
 					tex_fb.bind(GL_TEXTURE_2D_MULTISAMPLE);
-					glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, nsamples, GL_RGBA, w, h, GL_TRUE);
+GLDEBUG;
+					glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, nsamples, GL_RGBA8, w, h, GL_TRUE);
+GLDEBUG;
 					if(glGetError()){
 						throw std::invalid_argument("Wrong number of Samples");
 					}

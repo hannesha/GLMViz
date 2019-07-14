@@ -17,7 +17,7 @@ if not dep_glm.found()
 	endif
 endif
 
-src = ['Buffer.cpp', 'Config.cpp', 'Config_Monitor.cpp', 'FFT.cpp', 'Fifo.cpp', 'GLMViz.cpp', 'Inotify.cpp', 'Oscilloscope.cpp', 'Program.cpp', 'Spectrum.cpp', 'xdg.cpp']
+src = ['Buffer.cpp', 'Config.cpp', 'Config_Monitor.cpp', 'FFT.cpp', 'Fifo.cpp', 'GLMViz.cpp', 'Inotify.cpp', 'Oscilloscope.cpp', 'Spectrum.cpp', 'xdg.cpp', 'GL_utils.cpp']
 # simd optimization (for rms calculation)
 add_project_arguments('-fopenmp-simd', language: 'cpp')
 
